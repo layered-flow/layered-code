@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/layered-flow/layered-code/internal/config"
+	"github.com/layered-flow/layered-code/internal/constants"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -23,22 +24,20 @@ type ListFilesResult struct {
 }
 
 type FileEntry struct {
-	Path        string     `json:"path"`
-	Name        string     `json:"name"`
-	IsDirectory bool       `json:"is_directory"`
-	MimeType    *string    `json:"mime_type,omitempty"`
-	LastTouched *time.Time `json:"last_touched,omitempty"`
-	Size        *string    `json:"size,omitempty"`
-	SizeBytes   *int64     `json:"size_bytes,omitempty"`
-	ChildCount  *int       `json:"child_count,omitempty"`
+	Path         string     `json:"path"`
+	Name         string     `json:"name"`
+	IsDirectory  bool       `json:"is_directory"`
+	MimeType     *string    `json:"mime_type,omitempty"`
+	LastModified *time.Time `json:"last_modified,omitempty"`
+	Size         *string    `json:"size,omitempty"`
+	SizeBytes    *int64     `json:"size_bytes,omitempty"`
+	ChildCount   *int       `json:"child_count,omitempty"`
 }
-
-const maxDepth = 10000
 
 var sizeCache = make(map[string]int64)
 var sizeCacheMutex sync.RWMutex
 
-func ListFiles(appName string, pattern *string, includeMimeTypes, includeLastTouched, includeSize, includeChildCount bool) (ListFilesResult, error) {
+func ListFiles(appName string, pattern *string, includeMimeTypes, includeLastModified, includeSize, includeChildCount bool) (ListFilesResult, error) {
 	if appName == "" {
 		return ListFilesResult{}, errors.New("app_name is required")
 	}
@@ -64,7 +63,7 @@ func ListFiles(appName string, pattern *string, includeMimeTypes, includeLastTou
 
 	err = walkWithDepth(appPath, appPath, func(path string, info os.FileInfo, currentDepth int) error {
 		// Check max depth
-		if currentDepth > maxDepth {
+		if currentDepth > constants.MaxDirectoryDepth {
 			return filepath.SkipDir
 		}
 
@@ -97,9 +96,9 @@ func ListFiles(appName string, pattern *string, includeMimeTypes, includeLastTou
 			entry.MimeType = &mimeType
 		}
 
-		if includeLastTouched {
+		if includeLastModified {
 			modTime := info.ModTime()
-			entry.LastTouched = &modTime
+			entry.LastModified = &modTime
 		}
 
 		if includeSize {
@@ -289,7 +288,7 @@ func ListFilesCli() error {
 
 	var appName string
 	var pattern *string
-	var includeMimeTypes, includeLastTouched, includeSize, includeChildCount bool
+	var includeMimeTypes, includeLastModified, includeSize, includeChildCount bool
 
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -309,8 +308,8 @@ func ListFilesCli() error {
 			}
 		case "--include-mime-types":
 			includeMimeTypes = true
-		case "--include-last-touched":
-			includeLastTouched = true
+		case "--include-last-modified":
+			includeLastModified = true
 		case "--include-size":
 			includeSize = true
 		case "--include-child-count":
@@ -326,7 +325,7 @@ func ListFilesCli() error {
 		return errors.New("--app-name is required")
 	}
 
-	result, err := ListFiles(appName, pattern, includeMimeTypes, includeLastTouched, includeSize, includeChildCount)
+	result, err := ListFiles(appName, pattern, includeMimeTypes, includeLastModified, includeSize, includeChildCount)
 	if err != nil {
 		return err
 	}
@@ -353,8 +352,8 @@ func ListFilesCli() error {
 		if file.MimeType != nil && *file.MimeType != "directory" {
 			metadata = append(metadata, *file.MimeType)
 		}
-		if file.LastTouched != nil {
-			metadata = append(metadata, file.LastTouched.Format("2006-01-02 15:04:05"))
+		if file.LastModified != nil {
+			metadata = append(metadata, file.LastModified.Format("2006-01-02 15:04:05"))
 		}
 		if file.ChildCount != nil && file.IsDirectory {
 			metadata = append(metadata, fmt.Sprintf("%d items", *file.ChildCount))
@@ -380,14 +379,14 @@ func printListFilesHelp() {
 	fmt.Println("Optional options:")
 	fmt.Println("  --pattern <glob>           Filter files using glob pattern (e.g. '*.txt', 'src/*.js')")
 	fmt.Println("  --include-mime-types       Include MIME types for files and 'directory' for directories")
-	fmt.Println("  --include-last-touched     Include last modification timestamps")
+	fmt.Println("  --include-last-modified    Include last modification timestamps")
 	fmt.Println("  --include-size             Include file/directory sizes in human-readable format")
 	fmt.Println("  --include-child-count      Include count of immediate children for directories")
 	fmt.Println("  --help, -h                 Show this help message")
 	fmt.Println()
 	fmt.Println("Notes:")
 	fmt.Println("  - Hidden files/folders (starting with '.') and symlinks are automatically skipped")
-	fmt.Println("  - Maximum directory depth is limited to 10,000 levels for safety")
+	fmt.Printf("  - Maximum directory depth is limited to %d levels for safety\n", constants.MaxDirectoryDepth)
 	fmt.Println("  - Directory sizes are cached for performance")
 	fmt.Println()
 	fmt.Println("Examples:")
@@ -395,7 +394,7 @@ func printListFilesHelp() {
 	fmt.Println("  layered-code tool list_files --app-name myapp")
 	fmt.Println()
 	fmt.Println("  # List files with all metadata")
-	fmt.Println("  layered-code tool list_files --app-name myapp --include-mime-types --include-size --include-last-touched --include-child-count")
+	fmt.Println("  layered-code tool list_files --app-name myapp --include-mime-types --include-size --include-last-modified --include-child-count")
 	fmt.Println()
 	fmt.Println("  # List files matching a pattern")
 	fmt.Println("  layered-code tool list_files --app-name myapp --pattern '*.js'")
@@ -406,19 +405,19 @@ func printListFilesHelp() {
 
 func ListFilesMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName            string  `json:"app_name"`
-		Pattern            *string `json:"pattern"`
-		IncludeMimeTypes   bool    `json:"include_mime_types"`
-		IncludeLastTouched bool    `json:"include_last_touched"`
-		IncludeSize        bool    `json:"include_size"`
-		IncludeChildCount  bool    `json:"include_child_count"`
+		AppName             string  `json:"app_name"`
+		Pattern             *string `json:"pattern"`
+		IncludeMimeTypes    bool    `json:"include_mime_types"`
+		IncludeLastModified bool    `json:"include_last_modified"`
+		IncludeSize         bool    `json:"include_size"`
+		IncludeChildCount   bool    `json:"include_child_count"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
 		return nil, err
 	}
 
-	result, err := ListFiles(args.AppName, args.Pattern, args.IncludeMimeTypes, args.IncludeLastTouched, args.IncludeSize, args.IncludeChildCount)
+	result, err := ListFiles(args.AppName, args.Pattern, args.IncludeMimeTypes, args.IncludeLastModified, args.IncludeSize, args.IncludeChildCount)
 	if err != nil {
 		return nil, err
 	}

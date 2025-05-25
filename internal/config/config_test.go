@@ -76,9 +76,9 @@ func TestIsWithinDirectory(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := isWithinDirectory(tt.target, tt.base)
+		got := IsWithinDirectory(tt.target, tt.base)
 		if got != tt.want {
-			t.Errorf("isWithinDirectory(%q, %q) = %v, want %v", tt.target, tt.base, got, tt.want)
+			t.Errorf("IsWithinDirectory(%q, %q) = %v, want %v", tt.target, tt.base, got, tt.want)
 		}
 	}
 }
