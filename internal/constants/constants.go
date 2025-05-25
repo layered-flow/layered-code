@@ -12,4 +12,11 @@ const (
 	// File permission constants
 	AppsDirectoryPerms   = 0755
 	OwnerWritePermission = 0200
+
+	// File size constants
+	MaxFileSize        = 1024 * 1024
+	MaxFileSizeInWords = "1MB"
+
+	// Directory traversal constants
+	MaxDirectoryDepth = 10000
 )

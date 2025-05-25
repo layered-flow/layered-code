@@ -134,7 +134,7 @@ Use layered-code directly from the command line:
 ./layered-code tool list_files --app-name myapp
 
 # List files with all metadata
-./layered-code tool list_files --app-name myapp --include-mime-types --include-size --include-last-touched --include-child-count
+./layered-code tool list_files --app-name myapp --include-size --include-last-modified --include-child-count
 
 # List files matching a pattern
 ./layered-code tool list_files --app-name myapp --pattern '*.js'

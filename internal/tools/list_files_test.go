@@ -33,7 +33,7 @@ func TestListFiles(t *testing.T) {
 	t.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
 
 	t.Run("basic listing", func(t *testing.T) {
-		result, err := ListFiles("testapp", nil, false, false, false, false)
+		result, err := ListFiles("testapp", nil, false, false, false)
 		if err != nil {
 			t.Fatalf("ListFiles() failed: %v", err)
 		}
@@ -48,7 +48,7 @@ func TestListFiles(t *testing.T) {
 
 	t.Run("pattern matching", func(t *testing.T) {
 		pattern := "*.go"
-		result, err := ListFiles("testapp", &pattern, false, false, false, false)
+		result, err := ListFiles("testapp", &pattern, false, false, false)
 		if err != nil {
 			t.Fatalf("ListFiles() failed: %v", err)
 		}
@@ -65,10 +65,10 @@ func TestListFiles(t *testing.T) {
 	})
 
 	t.Run("error cases", func(t *testing.T) {
-		if _, err := ListFiles("", nil, false, false, false, false); err == nil {
+		if _, err := ListFiles("", nil, false, false, false); err == nil {
 			t.Error("Expected error for empty app name")
 		}
-		if _, err := ListFiles("nonexistent", nil, false, false, false, false); err == nil {
+		if _, err := ListFiles("nonexistent", nil, false, false, false); err == nil {
 			t.Error("Expected error for non-existent app")
 		}
 	})

@@ -50,7 +50,7 @@ func GetAppsDirectory() (string, error) {
 	appsDir = filepath.Clean(appsDir)
 
 	// Final security check: ensure the resolved path is within the user's home directory
-	if !isWithinDirectory(appsDir, homeDir) {
+	if !IsWithinDirectory(appsDir, homeDir) {
 		return "", ErrOutsideHomeDirectory
 	}
 
@@ -91,8 +91,8 @@ func resolveSymlinks(path string) (string, error) {
 	return resolved, nil
 }
 
-// isWithinDirectory checks if the target path is within the base directory
-func isWithinDirectory(targetPath, baseDir string) bool {
+// IsWithinDirectory checks if the target path is within the base directory
+func IsWithinDirectory(targetPath, baseDir string) bool {
 	// Resolve symlinks first to prevent bypass attacks
 	resolvedTarget, err := resolveSymlinks(targetPath)
 	if err != nil {
@@ -134,7 +134,7 @@ func validateAppsDirectoryPath(appsDir, homeDir string) error {
 	if filepath.IsAbs(appsDir) {
 		// Allow absolute paths only if they're within the home directory
 		cleanPath := filepath.Clean(appsDir)
-		if !isWithinDirectory(cleanPath, homeDir) {
+		if !IsWithinDirectory(cleanPath, homeDir) {
 			return ErrAbsolutePathNotInHome
 		}
 	}
