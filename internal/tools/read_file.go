@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/layered-flow/layered-code/internal/config"
 	"github.com/layered-flow/layered-code/internal/constants"
@@ -23,9 +24,10 @@ var (
 
 // ReadFileResult represents the result of reading a file
 type ReadFileResult struct {
-	AppName  string `json:"app_name"`
-	FilePath string `json:"file_path"`
-	Content  string `json:"content"`
+	AppName      string     `json:"app_name"`
+	FilePath     string     `json:"file_path"`
+	Content      string     `json:"content"`
+	LastModified *time.Time `json:"last_modified,omitempty"`
 }
 
 // ReadFile reads the content of a file within an app directory
@@ -88,10 +90,12 @@ func ReadFile(appName, filePath string) (ReadFileResult, error) {
 		}
 	}
 
+	modTime := info.ModTime()
 	return ReadFileResult{
-		AppName:  appName,
-		FilePath: filePath,
-		Content:  string(content),
+		AppName:      appName,
+		FilePath:     filePath,
+		Content:      string(content),
+		LastModified: &modTime,
 	}, nil
 }
 

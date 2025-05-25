@@ -172,7 +172,7 @@ func getMimeType(path string, isDir bool) string {
 
 	mimeType := mime.TypeByExtension(filepath.Ext(path))
 	if mimeType == "" {
-		return "application/octet-stream"
+		return "file"
 	}
 	return mimeType
 }
