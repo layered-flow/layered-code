@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"mime"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,17 +26,15 @@ type FileEntry struct {
 	Path         string     `json:"path"`
 	Name         string     `json:"name"`
 	IsDirectory  bool       `json:"is_directory"`
-	MimeType     *string    `json:"mime_type,omitempty"`
 	LastModified *time.Time `json:"last_modified,omitempty"`
 	Size         *string    `json:"size,omitempty"`
-	SizeBytes    *int64     `json:"size_bytes,omitempty"`
 	ChildCount   *int       `json:"child_count,omitempty"`
 }
 
 var sizeCache = make(map[string]int64)
 var sizeCacheMutex sync.RWMutex
 
-func ListFiles(appName string, pattern *string, includeMimeTypes, includeLastModified, includeSize, includeChildCount bool) (ListFilesResult, error) {
+func ListFiles(appName string, pattern *string, includeLastModified, includeSize, includeChildCount bool) (ListFilesResult, error) {
 	if appName == "" {
 		return ListFilesResult{}, errors.New("app_name is required")
 	}
@@ -91,11 +88,6 @@ func ListFiles(appName string, pattern *string, includeMimeTypes, includeLastMod
 			IsDirectory: info.IsDir(),
 		}
 
-		if includeMimeTypes {
-			mimeType := getMimeType(path, info.IsDir())
-			entry.MimeType = &mimeType
-		}
-
 		if includeLastModified {
 			modTime := info.ModTime()
 			entry.LastModified = &modTime
@@ -108,7 +100,6 @@ func ListFiles(appName string, pattern *string, includeMimeTypes, includeLastMod
 			}
 			sizeStr := formatSize(size)
 			entry.Size = &sizeStr
-			entry.SizeBytes = &size
 		}
 
 		if includeChildCount {
@@ -163,18 +154,6 @@ func ListFiles(appName string, pattern *string, includeMimeTypes, includeLastMod
 		AppPath: appPath,
 		Files:   entries,
 	}, nil
-}
-
-func getMimeType(path string, isDir bool) string {
-	if isDir {
-		return "directory"
-	}
-
-	mimeType := mime.TypeByExtension(filepath.Ext(path))
-	if mimeType == "" {
-		return "file"
-	}
-	return mimeType
 }
 
 func walkWithDepth(root, basePath string, fn func(path string, info os.FileInfo, depth int) error) error {
@@ -288,7 +267,7 @@ func ListFilesCli() error {
 
 	var appName string
 	var pattern *string
-	var includeMimeTypes, includeLastModified, includeSize, includeChildCount bool
+	var includeLastModified, includeSize, includeChildCount bool
 
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -306,8 +285,6 @@ func ListFilesCli() error {
 			} else {
 				return errors.New("--pattern requires a value")
 			}
-		case "--include-mime-types":
-			includeMimeTypes = true
 		case "--include-last-modified":
 			includeLastModified = true
 		case "--include-size":
@@ -325,7 +302,7 @@ func ListFilesCli() error {
 		return errors.New("--app-name is required")
 	}
 
-	result, err := ListFiles(appName, pattern, includeMimeTypes, includeLastModified, includeSize, includeChildCount)
+	result, err := ListFiles(appName, pattern, includeLastModified, includeSize, includeChildCount)
 	if err != nil {
 		return err
 	}
@@ -348,9 +325,6 @@ func ListFilesCli() error {
 		var metadata []string
 		if file.Size != nil {
 			metadata = append(metadata, *file.Size)
-		}
-		if file.MimeType != nil && *file.MimeType != "directory" {
-			metadata = append(metadata, *file.MimeType)
 		}
 		if file.LastModified != nil {
 			metadata = append(metadata, file.LastModified.Format("2006-01-02 15:04:05"))
@@ -378,7 +352,6 @@ func printListFilesHelp() {
 	fmt.Println()
 	fmt.Println("Optional options:")
 	fmt.Println("  --pattern <glob>           Filter files using glob pattern (e.g. '*.txt', 'src/*.js')")
-	fmt.Println("  --include-mime-types       Include MIME types for files and 'directory' for directories")
 	fmt.Println("  --include-last-modified    Include last modification timestamps")
 	fmt.Println("  --include-size             Include file/directory sizes in human-readable format")
 	fmt.Println("  --include-child-count      Include count of immediate children for directories")
@@ -394,7 +367,7 @@ func printListFilesHelp() {
 	fmt.Println("  layered-code tool list_files --app-name myapp")
 	fmt.Println()
 	fmt.Println("  # List files with all metadata")
-	fmt.Println("  layered-code tool list_files --app-name myapp --include-mime-types --include-size --include-last-modified --include-child-count")
+	fmt.Println("  layered-code tool list_files --app-name myapp --include-size --include-last-modified --include-child-count")
 	fmt.Println()
 	fmt.Println("  # List files matching a pattern")
 	fmt.Println("  layered-code tool list_files --app-name myapp --pattern '*.js'")
@@ -407,7 +380,6 @@ func ListFilesMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 	var args struct {
 		AppName             string  `json:"app_name"`
 		Pattern             *string `json:"pattern"`
-		IncludeMimeTypes    bool    `json:"include_mime_types"`
 		IncludeLastModified bool    `json:"include_last_modified"`
 		IncludeSize         bool    `json:"include_size"`
 		IncludeChildCount   bool    `json:"include_child_count"`
@@ -417,7 +389,7 @@ func ListFilesMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 		return nil, err
 	}
 
-	result, err := ListFiles(args.AppName, args.Pattern, args.IncludeMimeTypes, args.IncludeLastModified, args.IncludeSize, args.IncludeChildCount)
+	result, err := ListFiles(args.AppName, args.Pattern, args.IncludeLastModified, args.IncludeSize, args.IncludeChildCount)
 	if err != nil {
 		return nil, err
 	}

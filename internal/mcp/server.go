@@ -52,7 +52,6 @@ func registerListFilesTool(s *server.MCPServer) {
 		mcp.WithDescription("List files and directories within an application (max depth: 10,000 levels)"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
 		mcp.WithString("pattern", mcp.Description("Glob pattern to filter files (e.g. '*.txt', 'src/*.js', '**/*.test.js')")),
-		mcp.WithBoolean("include_mime_types", mcp.Description("Include MIME types for files and directory indicators")),
 		mcp.WithBoolean("include_last_modified", mcp.Description("Include last modification timestamps")),
 		mcp.WithBoolean("include_size", mcp.Description("Include file and directory sizes")),
 		mcp.WithBoolean("include_child_count", mcp.Description("Include count of immediate children for each entry")),
