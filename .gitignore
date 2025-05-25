@@ -1,0 +1,4 @@
+/layered-code
+dist/
+.DS_Store
+coverage.out
