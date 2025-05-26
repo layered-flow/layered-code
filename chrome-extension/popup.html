@@ -8,70 +8,74 @@
       padding: 16px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-    
+
     .header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 20px;
     }
-    
+
     h1 {
       font-size: 18px;
       margin: 0;
     }
-    
+
     .status {
       display: flex;
       align-items: center;
       gap: 8px;
       font-size: 14px;
     }
-    
+
     .status-indicator {
       width: 10px;
       height: 10px;
       border-radius: 50%;
       background-color: #ccc;
     }
-    
+
     .status-indicator.connected {
       background-color: #4CAF50;
     }
-    
+
     .status-indicator.disconnected {
       background-color: #F44336;
     }
-    
+
     .section {
       margin-bottom: 20px;
     }
-    
+
+    .section:last-of-type {
+      margin-bottom: 0;
+    }
+
     .section-title {
       font-weight: 600;
       margin-bottom: 8px;
       font-size: 14px;
     }
-    
+
     .toggle-container {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
     }
-    
+
     .toggle-switch {
       position: relative;
       width: 48px;
       height: 24px;
     }
-    
+
     .toggle-switch input {
       opacity: 0;
       width: 0;
       height: 0;
     }
-    
+
     .slider {
       position: absolute;
       cursor: pointer;
@@ -83,7 +87,7 @@
       transition: .4s;
       border-radius: 24px;
     }
-    
+
     .slider:before {
       position: absolute;
       content: "";
@@ -95,15 +99,15 @@
       transition: .4s;
       border-radius: 50%;
     }
-    
+
     input:checked + .slider {
       background-color: #2196F3;
     }
-    
+
     input:checked + .slider:before {
       transform: translateX(24px);
     }
-    
+
     .domains-input {
       width: 100%;
       padding: 8px;
@@ -114,7 +118,7 @@
       resize: vertical;
       min-height: 60px;
     }
-    
+
     .button {
       padding: 8px 16px;
       border: none;
@@ -125,19 +129,19 @@
       color: white;
       margin-top: 8px;
     }
-    
+
     .button:hover {
       background-color: #1976D2;
     }
-    
+
     .button.secondary {
       background-color: #757575;
     }
-    
+
     .button.secondary:hover {
       background-color: #616161;
     }
-    
+
     .help-text {
       font-size: 12px;
       color: #666;
@@ -147,13 +151,13 @@
 </head>
 <body>
   <div class="header">
-    <h1>Layered Code Auto Refresh</h1>
+    <img src="logo.svg" alt="Layered Code" class="logo" width="170">
     <div class="status">
       <span class="status-indicator" id="statusIndicator"></span>
       <span id="statusText">Disconnected</span>
     </div>
   </div>
-  
+
   <div class="section">
     <div class="toggle-container">
       <span>Auto-refresh enabled</span>
@@ -163,19 +167,15 @@
       </label>
     </div>
   </div>
-  
+
   <div class="section">
     <div class="section-title">Enabled domains</div>
-    <textarea id="domainsInput" class="domains-input" placeholder="localhost&#10;127.0.0.1&#10;myapp.local"></textarea>
+    <textarea id="domainsInput" class="domains-input" placeholder="localhost&#10;127.0.0.1&#10;LayeredApps/*&#10;myapp.local"></textarea>
     <div class="help-text">One domain per line. Pages on these domains will refresh when files change.</div>
     <button id="saveDomainsBtn" class="button">Save Domains</button>
   </div>
-  
-  <div class="section">
-    <button id="reconnectBtn" class="button secondary">Reconnect to Server</button>
-    <button id="testRefreshBtn" class="button secondary" style="margin-left: 8px;">Test Refresh</button>
-  </div>
-  
+
+
   <script src="popup.js"></script>
 </body>
 </html>

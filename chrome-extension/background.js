@@ -2,7 +2,7 @@ let websocket = null;
 let isConnected = false;
 let reconnectInterval = null;
 let keepAliveInterval = null;
-let enabledDomains = ['localhost', '127.0.0.1'];
+let enabledDomains = ['localhost', '127.0.0.1', 'LayeredApps/*'];
 let autoRefreshEnabled = true;
 
 // Load saved settings on startup
@@ -26,15 +26,15 @@ function connectWebSocket() {
   websocket.onopen = () => {
     console.log('Connected to Layered Code WebSocket server');
     isConnected = true;
-    chrome.action.setBadgeText({ text: 'ON' });
+    chrome.action.setBadgeText({ text: ' ' });
     chrome.action.setBadgeBackgroundColor({ color: '#4CAF50' });
-    
+
     // Clear reconnect interval if exists
     if (reconnectInterval) {
       clearInterval(reconnectInterval);
       reconnectInterval = null;
     }
-    
+
     // Set up keep-alive ping every 30 seconds
     if (keepAliveInterval) {
       clearInterval(keepAliveInterval);
@@ -65,18 +65,18 @@ function connectWebSocket() {
   websocket.onclose = (event) => {
     console.log('Disconnected from Layered Code WebSocket server', event.code, event.reason);
     isConnected = false;
-    chrome.action.setBadgeText({ text: 'OFF' });
+    chrome.action.setBadgeText({ text: ' ' });
     chrome.action.setBadgeBackgroundColor({ color: '#F44336' });
-    
+
     // Clean up keep-alive interval
     if (keepAliveInterval) {
       clearInterval(keepAliveInterval);
       keepAliveInterval = null;
     }
-    
+
     // Clean up the closed websocket
     websocket = null;
-    
+
     // Attempt to reconnect every 2 seconds (faster reconnection)
     if (!reconnectInterval) {
       reconnectInterval = setInterval(() => {
@@ -105,30 +105,30 @@ async function refreshMatchingTabs(filename) {
     if (refreshDebounceTimer) {
       clearTimeout(refreshDebounceTimer);
     }
-    
+
     // Debounce rapid file changes
     refreshDebounceTimer = setTimeout(async () => {
       const tabs = await chrome.tabs.query({});
       console.log(`Checking ${tabs.length} tabs for refresh...`);
-      
+
       for (const tab of tabs) {
         if (!tab.url) continue;
-        
+
         // Skip if tab was recently refreshed
         if (recentlyRefreshedTabs.has(tab.id)) {
           console.log(`Skipping recently refreshed tab: ${tab.id}`);
           continue;
         }
-        
+
         try {
           const url = new URL(tab.url);
           let shouldRefresh = false;
-          
+
           // Handle file:// URLs
           if (url.protocol === 'file:') {
             // Check if any enabled domain is 'file://' or contains the file path
-            shouldRefresh = enabledDomains.some(domain => 
-              domain.toLowerCase() === 'file://' || 
+            shouldRefresh = enabledDomains.some(domain =>
+              domain.toLowerCase() === 'file://' ||
               domain.toLowerCase() === 'file' ||
               tab.url.includes(domain)
             );
@@ -139,7 +139,7 @@ async function refreshMatchingTabs(filename) {
             shouldRefresh = enabledDomains.some(domain => hostname.includes(domain));
             console.log(`Web URL ${tab.url} (hostname: ${hostname}) - shouldRefresh: ${shouldRefresh}`);
           }
-          
+
           if (shouldRefresh) {
             console.log(`Refreshing tab: ${tab.title} (${tab.url})`);
             recentlyRefreshedTabs.add(tab.id);
@@ -171,13 +171,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   } else if (request.type === 'updateDomains') {
     enabledDomains = request.domains;
     chrome.storage.local.set({ enabledDomains: enabledDomains });
-    sendResponse({ success: true });
-  } else if (request.type === 'reconnect') {
-    connectWebSocket();
-    sendResponse({ success: true });
-  } else if (request.type === 'testRefresh') {
-    console.log('Test refresh triggered manually');
-    refreshMatchingTabs('test-file.js');
     sendResponse({ success: true });
   }
   return true;

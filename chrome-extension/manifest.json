@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Layered Code Auto Refresh",
+  "name": "Layered Code",
   "version": "1.0",
-  "description": "Auto-refresh pages when files are changed by Layered Code MCP tool",
+  "description": "Browser extension for enhanced Layered Code development workflow and tooling support",
   "permissions": [
     "tabs",
     "activeTab",
@@ -28,6 +28,7 @@
   },
   "icons": {
     "16": "icon16.png",
+    "32": "icon32.png",
     "48": "icon48.png",
     "128": "icon128.png"
   }

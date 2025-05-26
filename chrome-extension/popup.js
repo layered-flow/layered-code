@@ -4,7 +4,6 @@ const statusText = document.getElementById('statusText');
 const autoRefreshToggle = document.getElementById('autoRefreshToggle');
 const domainsInput = document.getElementById('domainsInput');
 const saveDomainsBtn = document.getElementById('saveDomainsBtn');
-const reconnectBtn = document.getElementById('reconnectBtn');
 
 // Load current status
 chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
@@ -53,24 +52,3 @@ saveDomainsBtn.addEventListener('click', () => {
   });
 });
 
-// Handle reconnect
-reconnectBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: 'reconnect' });
-  
-  // Check status after a short delay
-  setTimeout(() => {
-    chrome.runtime.sendMessage({ type: 'getStatus' }, (response) => {
-      updateStatus(response.isConnected);
-    });
-  }, 1000);
-});
-
-// Handle test refresh
-const testRefreshBtn = document.getElementById('testRefreshBtn');
-testRefreshBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: 'testRefresh' });
-  testRefreshBtn.textContent = 'Triggered!';
-  setTimeout(() => {
-    testRefreshBtn.textContent = 'Test Refresh';
-  }, 1000);
-});
