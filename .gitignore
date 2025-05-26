@@ -1,4 +1,5 @@
 /layered-code
+/layered_code
 dist/
 .DS_Store
 coverage.out

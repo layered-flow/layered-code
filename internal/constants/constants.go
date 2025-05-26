@@ -1,8 +1,15 @@
 package constants
 
+import "time"
+
 const (
 	// Project information
-	ProjectName = "layered-code"
+	ProjectName      = "layered-code"
+	GitHubRepoUrl    = "https://github.com/layered-flow/layered-code"
+	GitHubApiRepoUrl = "https://api.github.com/repos/layered-flow/layered-code"
+
+	// Update configuration
+	UpdateCheckInterval = 24 * time.Hour
 
 	// Apps directory configuration
 	DefaultAppsDirectory = "LayeredApps"

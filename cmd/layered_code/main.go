@@ -7,10 +7,16 @@ import (
 	"github.com/layered-flow/layered-code/internal/cli"
 	"github.com/layered-flow/layered-code/internal/constants"
 	"github.com/layered-flow/layered-code/internal/mcp"
+	"github.com/layered-flow/layered-code/internal/update"
 )
 
 // run contains the main application logic
 func run(args []string) error {
+	// Check for updates
+	if hasUpdate, latestVersion, err := update.CheckForUpdate(constants.ProjectVersion); err == nil && hasUpdate {
+		update.DisplayUpdateWarning(latestVersion)
+	}
+
 	// return if no arguments are provided
 	if len(args) < 2 {
 		cli.PrintUsage()
