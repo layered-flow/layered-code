@@ -173,8 +173,8 @@ func compareVersions(current, latest string) int {
 
 func DisplayUpdateWarning(latestVersion string) {
 	fmt.Printf("\n⚠️  Update available: %s\n", latestVersion)
-	if runtime.GOOS == "darwin" {
-		fmt.Println("Update via Homebrew: brew upgrade layered-code")
+	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
+		fmt.Println("Update via Homebrew: brew update && brew upgrade layered-code")
 		fmt.Printf("Or download from: %s/releases/latest\n", constants.GitHubRepoUrl)
 	} else {
 		fmt.Printf("Download the latest version from: %s/releases/latest\n", constants.GitHubRepoUrl)
