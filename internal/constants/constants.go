@@ -2,8 +2,7 @@ package constants
 
 const (
 	// Project information
-	ProjectName    = "layered-code"
-	ProjectVersion = "0.0.1"
+	ProjectName = "layered-code"
 
 	// Apps directory configuration
 	DefaultAppsDirectory = "LayeredApps"
@@ -19,4 +18,9 @@ const (
 
 	// Directory traversal constants
 	MaxDirectoryDepth = 10000
+)
+
+var (
+	// ProjectVersion will be set at build time via ldflags
+	ProjectVersion = "dev"
 )

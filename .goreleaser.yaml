@@ -20,6 +20,8 @@ builds:
       - CGO_ENABLED=0
     main: ./cmd/layered_code
     binary: layered-code
+    ldflags:
+      - -s -w -X github.com/layered-flow/layered-code/internal/constants.ProjectVersion={{.Version}}
     goos:
       - linux
       - windows
@@ -53,7 +55,7 @@ changelog:
 binary_signs:
   - id: gpg-sign
     artifacts: binary
-    signature: "${artifact}.sig"
+    signature: "${artifact}_{{ .Os }}_{{ .Arch }}.sig"
     cmd: gpg
     args:
       - --batch
@@ -143,3 +145,16 @@ release:
     ---
 
     Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+
+brews:
+  - name: layered-code
+    repository:
+      owner: layered-flow
+      name: homebrew-layered-code
+    homepage: https://github.com/layered-flow/layered-code
+    description: "Homebrew tap for layered-code"
+    license: MIT
+    install: |
+      bin.install "layered-code"
+    test: |
+      system "#{bin}/layered-code", "--help"

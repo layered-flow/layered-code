@@ -48,18 +48,30 @@ Your code, your tools, your choice.
 - **📊 Full Traceability**: Track feature evolution and maintain contextual awareness across your entire codebase
 - **🚀 Zero Vendor Lock-in**: Use any hosting provider, development environment, or toolchain
 
-## 📋 Requirements
+## 🧪 Installation (macOS via Homebrew)
 
-### System Requirements
-- **Operating System**: Linux, macOS or Windows
-- **Architecture**: x86_64 or ARM64
+You can install layered-code on macOS using Homebrew with the following commands:
 
-### AI Integration Requirements
-- **Claude Desktop**: Latest version for MCP integration
-- **Model Context Protocol**: Automatically handled by Claude Desktop
+```bash
+brew tap layered-flow/layered-code
+brew install layered-code
+```
 
-### Runtime Dependencies
-- **Go**: Version 1.24 or higher (only required for building from source)
+## 📦 Installation (Pre-built Binaries)
+
+You can download pre-built binaries for your platform directly from the [GitHub releases page](https://github.com/layered-flow/layered-code/releases):
+
+- **macOS (Intel)**: `layered-code-darwin-amd64`
+- **macOS (Apple Silicon)**: `layered-code-darwin-arm64`
+- **Linux (x86_64)**: `layered-code-linux-amd64`
+- **Linux (ARM64)**: `layered-code-linux-arm64`
+- **Windows (x86_64)**: `layered-code-windows-amd64.exe`
+- **Windows (ARM64)**: `layered-code-windows-arm64.exe`
+
+After downloading:
+1. Make the binary executable (macOS/Linux): `chmod +x layered-code-*`
+2. Move to a convenient location (e.g., `~/bin/layered-code` or `/usr/local/bin/layered-code`)
+3. Ensure the location is in your PATH for easy access
 
 ## ✨ Quick Start with Claude Desktop
 
