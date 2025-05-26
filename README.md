@@ -35,10 +35,9 @@ While a CLI interface is available for direct tool access, the conversational AI
 
 ## 🎯 Motivation
 
-**Layered Code** provides an open approach that gives you the freedom to choose your own tools, hosting providers, and development workflows:
-Your code, your tools, your choice.
+**Layered Code** provides an open approach that gives you the freedom to choose your own tools, hosting providers, and development workflows: **Your code, your tools, your choice.**
 
-- **🔓 Forever Free & Open Source**: layered-code will always remain completely free and open source
+- **🔓 Forever Free & Open Source**: Layered Code will always remain completely free and open source
 - **🛠️ Technology Agnostic**: Works with any language, framework, or development environment
 - **🤝 Human-AI Partnership**: Designed for seamless collaboration between developers and AI agents
 - **📊 Full Traceability**: Track feature evolution and maintain contextual awareness across your entire codebase
