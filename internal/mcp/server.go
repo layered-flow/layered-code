@@ -2,16 +2,34 @@ package mcp
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/layered-flow/layered-code/internal/constants"
+	"github.com/layered-flow/layered-code/internal/notifications"
 	"github.com/layered-flow/layered-code/internal/tools"
+	"github.com/layered-flow/layered-code/internal/websocket"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
 
+var wsHub *websocket.Hub
+
 // StartServer creates and starts the MCP server with all registered tools
 func StartServer(name, version string) error {
+	// Start WebSocket server for file change notifications
+	wsHub = websocket.NewHub()
+	go wsHub.Run()
+	
+	// Set the hub for notifications
+	notifications.SetHub(wsHub)
+	
+	// Start HTTP server for WebSocket connections
+	go func() {
+		http.HandleFunc("/ws", wsHub.ServeWS)
+		http.ListenAndServe(":8080", nil)
+	}()
+
 	// Create a new MCP server
 	s := server.NewMCPServer(
 		name,
@@ -35,6 +53,8 @@ func registerTools(s *server.MCPServer) {
 	registerListAppsTool(s)
 	registerListFilesTool(s)
 	registerReadFileTool(s)
+	registerWriteFileTool(s)
+	registerEditFileTool(s)
 }
 
 // registerListAppsTool registers the list_apps tool
@@ -69,4 +89,31 @@ func registerReadFileTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, tools.ReadFileMcp)
+}
+
+// registerWriteFileTool registers the write_file tool
+func registerWriteFileTool(s *server.MCPServer) {
+	tool := mcp.NewTool("write_file",
+		mcp.WithDescription("Write or create a file within an application directory"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("file_path", mcp.Required(), mcp.Description("Path to the file relative to the app directory")),
+		mcp.WithString("content", mcp.Required(), mcp.Description("Content to write to the file (max size "+constants.MaxFileSizeInWords+")")),
+		mcp.WithString("mode", mcp.Description("Write mode: 'create' (default, fails if file exists) or 'overwrite' (replaces existing file)")),
+	)
+
+	s.AddTool(tool, tools.WriteFileMcp)
+}
+
+// registerEditFileTool registers the edit_file tool
+func registerEditFileTool(s *server.MCPServer) {
+	tool := mcp.NewTool("edit_file",
+		mcp.WithDescription("Edit a file by performing find-and-replace operations"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("file_path", mcp.Required(), mcp.Description("Path to the file relative to the app directory")),
+		mcp.WithString("old_string", mcp.Required(), mcp.Description("Text to find and replace")),
+		mcp.WithString("new_string", mcp.Required(), mcp.Description("Text to replace with (can be empty for deletion)")),
+		mcp.WithNumber("occurrences", mcp.Description("Number of occurrences to replace (0 = all, default: 0)")),
+	)
+
+	s.AddTool(tool, tools.EditFileMcp)
 }

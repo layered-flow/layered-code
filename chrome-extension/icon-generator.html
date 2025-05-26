@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Icon Generator</title>
+</head>
+<body>
+  <h1>Chrome Extension Icon Generator</h1>
+  <p>This creates simple placeholder icons for the extension. Right-click each canvas and save as PNG.</p>
+  
+  <h3>icon16.png (16x16)</h3>
+  <canvas id="icon16" width="16" height="16"></canvas>
+  
+  <h3>icon48.png (48x48)</h3>
+  <canvas id="icon48" width="48" height="48"></canvas>
+  
+  <h3>icon128.png (128x128)</h3>
+  <canvas id="icon128" width="128" height="128"></canvas>
+  
+  <script>
+    function drawIcon(canvasId, size) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      
+      // Background
+      ctx.fillStyle = '#2196F3';
+      ctx.fillRect(0, 0, size, size);
+      
+      // Text
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size * 0.5}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('R', size / 2, size / 2);
+    }
+    
+    drawIcon('icon16', 16);
+    drawIcon('icon48', 48);
+    drawIcon('icon128', 128);
+  </script>
+</body>
+</html>

@@ -16,6 +16,8 @@ func PrintUsage() {
 	fmt.Println("  tool list_apps            List all available apps")
 	fmt.Println("  tool list_files           List files and directories within an app")
 	fmt.Println("  tool read_file            Read the contents of a file within an app")
+	fmt.Println("  tool write_file           Write or create a file within an app")
+	fmt.Println("  tool edit_file            Edit a file using find-and-replace")
 	fmt.Println("  help, -h, --help          Show this help message")
 	fmt.Println("  version, -v, --version    Show version information")
 }
@@ -23,7 +25,7 @@ func PrintUsage() {
 // RunTool executes the specified tool subcommand with the provided arguments
 func RunTool() error {
 	if len(os.Args) < 3 {
-		return fmt.Errorf("tool subcommand is required\nUsage: layered-code tool <subcommand> [args]\nAvailable tools: list_apps, list_files, read_file")
+		return fmt.Errorf("tool subcommand is required\nUsage: layered-code tool <subcommand> [args]\nAvailable tools: list_apps, list_files, read_file, write_file, edit_file")
 	}
 
 	subcommand := os.Args[2]
@@ -34,7 +36,11 @@ func RunTool() error {
 		return tools.ListFilesCli()
 	case "read_file":
 		return tools.ReadFileCli()
+	case "write_file":
+		return tools.WriteFileCli()
+	case "edit_file":
+		return tools.EditFileCli()
 	default:
-		return fmt.Errorf("unknown tool: %s\nAvailable tools: list_apps, list_files, read_file", subcommand)
+		return fmt.Errorf("unknown tool: %s\nAvailable tools: list_apps, list_files, read_file, write_file, edit_file", subcommand)
 	}
 }
