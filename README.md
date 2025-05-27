@@ -67,6 +67,7 @@ make test
 ### Prerequisites
 
 - **No additional dependencies required** - ripgrep is automatically bundled with pre-built binaries and installed as a dependency via Homebrew
+- **Git (optional)** - Required only if you want to use the git-related tools (git_status, git_diff, git_commit, etc.)
 
 ### Option 1: macOS/Linux via Homebrew (Recommended)
 
@@ -222,12 +223,28 @@ layered-code --help
 **Available Commands:**
 - `mcp_server` - Start the Model Context Protocol server for Claude Desktop integration
 - `tool` - Run various tools and utilities (use with subcommands like below)
+  
+  **File Management Tools:**
   - `tool list_apps` - List all available applications in the apps directory
   - `tool list_files` - List files and directories within an application with optional metadata (max depth: 10,000 levels)
   - `tool search_text` - Search for text patterns in files within an application directory using ripgrep
   - `tool read_file` - Read the contents of a file within an application directory
   - `tool write_file` - Write or create a file within an application directory
   - `tool edit_file` - Edit a file by performing find-and-replace operations
+  
+  **Git Tools:**
+  - `tool git_status` - Show the working tree status of a git repository
+  - `tool git_diff` - Show changes between commits, commit and working tree, etc
+  - `tool git_commit` - Create a new commit with staged changes
+  - `tool git_log` - Show commit logs
+  - `tool git_branch` - List, create, or delete branches
+  - `tool git_add` - Add file contents to the staging area
+  - `tool git_restore` - Restore working tree files
+  - `tool git_stash` - Stash changes in a dirty working directory
+  - `tool git_push` - Update remote refs along with associated objects
+  - `tool git_pull` - Fetch from and integrate with another repository or local branch
+  - `tool git_init` - Initialize a new git repository
+  
 - `version`, `-v`, `--version` - Display the current version of layered-code
 - `help`, `-h`, `--help` - Show usage information and available commands
 
