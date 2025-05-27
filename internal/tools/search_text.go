@@ -216,6 +216,12 @@ func getRipgrepPath() (string, error) {
 	}
 	execDir := filepath.Dir(execPath)
 
+	// For Windows ARM64, use the amd64 binary (emulation)
+	arch := runtime.GOARCH
+	if runtime.GOOS == "windows" && runtime.GOARCH == "arm64" {
+		arch = "amd64"
+	}
+
 	// Look for ripgrep in order of preference:
 	// 1. Bundled with executable (for release distributions)
 	// 2. System PATH
@@ -223,7 +229,7 @@ func getRipgrepPath() (string, error) {
 	searchPaths := []string{
 		filepath.Join(execDir, binaryName), // Same directory as executable
 		"",                                 // Empty string signals to check PATH
-		filepath.Join(execDir, "third-party", "ripgrep", fmt.Sprintf("%s-%s", runtime.GOARCH, runtime.GOOS), binaryName),
+		filepath.Join(execDir, "third-party", "ripgrep", fmt.Sprintf("%s-%s", arch, runtime.GOOS), binaryName),
 	}
 
 	for _, path := range searchPaths {

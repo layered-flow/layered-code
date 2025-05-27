@@ -44,7 +44,8 @@ archives:
         formats: [zip]
     # Include ripgrep binary and third-party licenses in the archive
     files:
-      - src: "third-party/ripgrep/{{ .Arch }}-{{ .Os }}/{{ if eq .Os \"windows\" }}rg.exe{{ else }}rg{{ end }}"
+      # For Windows ARM64, use amd64 binary (emulation); otherwise use native arch
+      - src: "third-party/ripgrep/{{ if and (eq .Os \"windows\") (eq .Arch \"arm64\") }}amd64{{ else }}{{ .Arch }}{{ end }}-{{ .Os }}/{{ if eq .Os \"windows\" }}rg.exe{{ else }}rg{{ end }}"
       - "THIRD-PARTY-LICENSES.md"
 
 changelog:

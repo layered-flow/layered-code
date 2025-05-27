@@ -95,4 +95,7 @@ download_ripgrep \
     "ripgrep-${RIPGREP_VERSION}-x86_64-pc-windows-msvc.zip" \
     "ripgrep-${RIPGREP_VERSION}-x86_64-pc-windows-msvc/rg.exe"
 
+# Note: Windows ARM64 uses the same x64 binary via emulation
+# The build system will use the amd64-windows binary for both architectures
+
 echo "All ripgrep binaries downloaded successfully!"

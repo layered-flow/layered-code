@@ -95,7 +95,7 @@ Download the appropriate archive for your platform from the [GitHub releases pag
 - **Linux (x86_64)**: `layered-code_Linux_x86_64.tar.gz`
 - **Linux (ARM64)**: `layered-code_Linux_arm64.tar.gz`
 - **Windows (x86_64)**: `layered-code_Windows_x86_64.zip`
-- **Windows (ARM64)**: `layered-code_Windows_arm64.zip`
+- **Windows (ARM64)**: `layered-code_Windows_arm64.zip` (uses x64 ripgrep binary via emulation)
 
 **Setup steps:**
 
