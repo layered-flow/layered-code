@@ -141,9 +141,9 @@ Add the following to your `claude_desktop_config.json` (under Settings → Devel
 
 | Platform/Install Method         | "command" value example                        |
 |---------------------------------|--------------------------------------------------|
-| macOS/Linux (Homebrew)          | "layered-code"                                 |
-| macOS/Linux (Manual/Binary)     | "/usr/local/bin/layered-code"                  |
-| Windows                         | "C:\\Users\\person\\bin\\layered-code.exe"     |
+| macOS/Linux (Homebrew)          | `layered-code`                                 |
+| macOS/Linux (Manual/Binary)     | `/usr/local/bin/layered-code`                  |
+| Windows                         | `C:\\Users\\person\\bin\\layered-code.exe`     |
 
 > **Note for Windows:** Use the full path with double backslashes (`\\`) in the `"command"` value.
 
