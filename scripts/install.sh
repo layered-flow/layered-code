@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install script for layered-code
-# This script downloads and installs layered-code along with ripgrep
+# This script downloads and installs layered-code with bundled ripgrep
 
 set -e
 
@@ -39,20 +39,6 @@ esac
 
 echo "Installing layered-code for $OS_NAME $ARCH..."
 
-# Check if ripgrep is installed
-if ! command -v rg &> /dev/null; then
-    echo "ripgrep is required but not installed."
-    echo ""
-    echo "Please install ripgrep first:"
-    echo "  macOS:        brew install ripgrep"
-    echo "  Ubuntu/Debian: sudo apt install ripgrep"
-    echo "  Fedora:       sudo dnf install ripgrep"
-    echo "  Arch:         sudo pacman -S ripgrep"
-    echo ""
-    echo "Or visit: https://github.com/BurntSushi/ripgrep#installation"
-    exit 1
-fi
-
 # Get latest release
 LATEST_RELEASE=$(curl -s https://api.github.com/repos/layered-flow/layered-code/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
@@ -78,16 +64,32 @@ fi
 
 tar -xzf layered-code.tar.gz
 
+# Determine ripgrep binary name
+RG_BINARY="rg"
+if [ "$OS" = "windows" ]; then
+    RG_BINARY="rg.exe"
+fi
+
 # Install to /usr/local/bin or current directory
-echo "Installing layered-code..."
+echo "Installing layered-code and bundled ripgrep..."
 
 if [ -w /usr/local/bin ] || sudo -n true 2>/dev/null; then
     # Can install to system location
-    echo "Installing to /usr/local/bin/layered-code..."
+    echo "Installing to /usr/local/bin/..."
     if [ -w /usr/local/bin ]; then
         mv layered-code /usr/local/bin/
+        # Install ripgrep in the same directory as layered-code for bundled functionality
+        if [ -f "$RG_BINARY" ]; then
+            mv "$RG_BINARY" /usr/local/bin/
+            chmod +x "/usr/local/bin/$RG_BINARY"
+        fi
     else
         sudo mv layered-code /usr/local/bin/
+        # Install ripgrep in the same directory as layered-code for bundled functionality
+        if [ -f "$RG_BINARY" ]; then
+            sudo mv "$RG_BINARY" /usr/local/bin/
+            sudo chmod +x "/usr/local/bin/$RG_BINARY"
+        fi
     fi
     # Clean up
     cd - > /dev/null
@@ -96,8 +98,12 @@ else
     # Install to current directory
     echo "Installing to current directory..."
     mv layered-code "$OLDPWD/" 2>/dev/null || mv layered-code ./
-    echo "Binary installed as: ./layered-code"
-    echo "To install system-wide later, run: sudo mv layered-code /usr/local/bin/"
+    if [ -f "$RG_BINARY" ]; then
+        mv "$RG_BINARY" "$OLDPWD/" 2>/dev/null || mv "$RG_BINARY" ./
+        chmod +x "./$RG_BINARY"
+    fi
+    echo "Binaries installed as: ./layered-code and ./$RG_BINARY"
+    echo "To install system-wide later, run: sudo mv layered-code $RG_BINARY /usr/local/bin/"
     # Clean up
     cd - > /dev/null
     rm -rf "$TMP_DIR"

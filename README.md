@@ -66,12 +66,7 @@ make test
 
 ### Prerequisites
 
-- **Required**: [ripgrep](https://github.com/BurntSushi/ripgrep) for text search functionality
-  - Install via your package manager:
-    - macOS: `brew install ripgrep`
-    - Ubuntu/Debian: `sudo apt install ripgrep`
-    - Windows: `choco install ripgrep` or `scoop install ripgrep`
-    - Or download from: https://github.com/BurntSushi/ripgrep/releases
+- **No additional dependencies required** - ripgrep is automatically bundled with pre-built binaries and installed as a dependency via Homebrew
 
 ### Option 1: macOS/Linux via Homebrew (Recommended)
 
@@ -89,33 +84,37 @@ Note: Homebrew will automatically install ripgrep as a dependency.
 curl -fsSL https://raw.githubusercontent.com/layered-flow/layered-code/main/scripts/install.sh | bash
 ```
 
-Note: This script will check for ripgrep and guide you to install it if needed.
+Note: This script downloads a self-contained binary with ripgrep bundled.
 
 ### Option 3: Pre-built Binaries
 
-Download the appropriate binary for your platform from the [GitHub releases page](https://github.com/layered-flow/layered-code/releases):
+Download the appropriate archive for your platform from the [GitHub releases page](https://github.com/layered-flow/layered-code/releases). Each archive contains both the `layered-code` binary and a bundled `rg` (ripgrep) binary:
 
-- **macOS (Intel)**: `layered-code-darwin-amd64`
-- **macOS (Apple Silicon)**: `layered-code-darwin-arm64`
-- **Linux (x86_64)**: `layered-code-linux-amd64`
-- **Linux (ARM64)**: `layered-code-linux-arm64`
-- **Windows (x86_64)**: `layered-code-windows-amd64.exe`
-- **Windows (ARM64)**: `layered-code-windows-arm64.exe`
+- **macOS (Intel)**: `layered-code_Darwin_x86_64.tar.gz`
+- **macOS (Apple Silicon)**: `layered-code_Darwin_arm64.tar.gz`
+- **Linux (x86_64)**: `layered-code_Linux_x86_64.tar.gz`
+- **Linux (ARM64)**: `layered-code_Linux_arm64.tar.gz`
+- **Windows (x86_64)**: `layered-code_Windows_x86_64.zip`
+- **Windows (ARM64)**: `layered-code_Windows_arm64.zip`
 
 **Setup steps:**
 
 **macOS/Linux:**
-1. Make the binary executable: `chmod +x layered-code-*`
-2. Move to a convenient location (e.g., `~/bin/layered-code` or `/usr/local/bin/layered-code`)
-3. Ensure the location is in your PATH for easy access
+1. Extract the archive: `tar -xzf layered-code_*.tar.gz`
+2. Make both binaries executable: `chmod +x layered-code rg`
+3. Move both binaries to the same directory:
+   - For user installation: `mkdir -p ~/bin && mv layered-code rg ~/bin/`
+   - For system-wide installation: `sudo mv layered-code rg /usr/local/bin/`
+4. Ensure the location is in your PATH for easy access
 
 **Windows:**
-1. Download the `.exe` file (no chmod needed - Windows executables are ready to run)
-2. Move to a convenient location (e.g., `C:\Users\YourName\bin\layered-code.exe`)
+1. Extract the zip file (contains `layered-code.exe` and `rg.exe`)
+2. Move both executables to the same convenient location (e.g., `C:\Users\YourUsername\bin\`)
 3. Add the directory to your PATH environment variable:
    - Open "Environment Variables" in System Properties
-   - Add the directory containing `layered-code.exe` to your PATH
-   - Or run directly using the full path: `C:\path\to\layered-code.exe`
+   - Add the directory containing both executables to your PATH
+
+> **Important:** Keep both `layered-code` and `rg` (ripgrep) binaries in the same directory for proper functionality.
 
 ## ✨ Quick Start with Claude Desktop
 
@@ -143,7 +142,7 @@ Add the following to your `claude_desktop_config.json` (under Settings → Devel
 |---------------------------------|--------------------------------------------------|
 | macOS/Linux (Homebrew)          | `layered-code`                                 |
 | macOS/Linux (Manual/Binary)     | `/usr/local/bin/layered-code`                  |
-| Windows                         | `C:\\Users\\person\\bin\\layered-code.exe`     |
+| Windows                         | `C:\\Users\\YourUsername\\bin\layered-code.exe`    |
 
 > **Note for Windows:** Use the full path with double backslashes (`\\`) in the `"command"` value.
 
