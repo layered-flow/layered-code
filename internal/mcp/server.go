@@ -20,10 +20,10 @@ func StartServer(name, version string) error {
 	// Start WebSocket server for file change notifications
 	wsHub = websocket.NewHub()
 	go wsHub.Run()
-	
+
 	// Set the hub for notifications
 	notifications.SetHub(wsHub)
-	
+
 	// Start HTTP server for WebSocket connections
 	go func() {
 		http.HandleFunc("/ws", wsHub.ServeWS)
@@ -52,10 +52,10 @@ func StartServer(name, version string) error {
 func registerTools(s *server.MCPServer) {
 	registerListAppsTool(s)
 	registerListFilesTool(s)
+	registerSearchTextTool(s)
 	registerReadFileTool(s)
 	registerWriteFileTool(s)
 	registerEditFileTool(s)
-	registerSearchTextTool(s)
 }
 
 // registerListAppsTool registers the list_apps tool
@@ -79,6 +79,22 @@ func registerListFilesTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, tools.ListFilesMcp)
+}
+
+// registerSearchTextTool registers the search_text tool
+func registerSearchTextTool(s *server.MCPServer) {
+	tool := mcp.NewTool("search_text",
+		mcp.WithDescription("Search for text patterns in files within an application directory using ripgrep"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("pattern", mcp.Required(), mcp.Description("Search pattern (supports regular expressions)")),
+		mcp.WithBoolean("case_sensitive", mcp.Description("Perform case-sensitive search (default: false)")),
+		mcp.WithBoolean("whole_word", mcp.Description("Match whole words only")),
+		mcp.WithString("file_pattern", mcp.Description("Only search files matching this glob pattern (e.g. '*.go', '*.js')")),
+		mcp.WithNumber("max_results", mcp.Description("Maximum number of results to return (default: 100)")),
+		mcp.WithBoolean("include_hidden", mcp.Description("Include hidden files and directories in search")),
+	)
+
+	s.AddTool(tool, tools.SearchTextMcp)
 }
 
 // registerReadFileTool registers the read_file tool
@@ -117,20 +133,4 @@ func registerEditFileTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, tools.EditFileMcp)
-}
-
-// registerSearchTextTool registers the search_text tool
-func registerSearchTextTool(s *server.MCPServer) {
-	tool := mcp.NewTool("search_text",
-		mcp.WithDescription("Search for text patterns in files within an application directory using ripgrep"),
-		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
-		mcp.WithString("pattern", mcp.Required(), mcp.Description("Search pattern (supports regular expressions)")),
-		mcp.WithBoolean("case_sensitive", mcp.Description("Perform case-sensitive search (default: false)")),
-		mcp.WithBoolean("whole_word", mcp.Description("Match whole words only")),
-		mcp.WithString("file_pattern", mcp.Description("Only search files matching this glob pattern (e.g. '*.go', '*.js')")),
-		mcp.WithNumber("max_results", mcp.Description("Maximum number of results to return (default: 100)")),
-		mcp.WithBoolean("include_hidden", mcp.Description("Include hidden files and directories in search")),
-	)
-
-	s.AddTool(tool, tools.SearchTextMcp)
 }
