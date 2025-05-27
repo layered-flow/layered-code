@@ -48,7 +48,20 @@ function connectWebSocket() {
 
   websocket.onmessage = (event) => {
     try {
-      const data = JSON.parse(event.data);
+      // Fix common JSON issues with Windows paths
+      let jsonData = event.data;
+
+      // Handle unescaped backslashes in file paths
+      // This is a common issue when the server doesn't properly escape Windows paths
+      if (jsonData.includes('"filename":"') && jsonData.includes('\\')) {
+        // Find the filename value and escape backslashes
+        jsonData = jsonData.replace(/"filename":"([^"]*?)"/g, (match, filename) => {
+          const escapedFilename = filename.replace(/\\/g, '\\\\');
+          return `"filename":"${escapedFilename}"`;
+        });
+      }
+
+      const data = JSON.parse(jsonData);
       if (data.type === 'file-changed' && autoRefreshEnabled) {
         console.log('File changed:', data.filename, 'Action:', data.action);
         refreshMatchingTabs(data.filename);
