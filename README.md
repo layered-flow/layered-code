@@ -2,11 +2,11 @@
 [![Go Version](https://img.shields.io/badge/Go-1.24+-brightgreen.svg)](https://golang.org/dl/)
 [![Build Status](https://github.com/layered-flow/layered-code/actions/workflows/tests.yml/badge.svg)](https://github.com/layered-flow/layered-code/actions)
 
-![Banner](/docs/images/banner.png)
-
 > ⚠️ **Work in Progress** ⚠️
 >
 > This project is currently under active development. Features, APIs, and documentation may change frequently. While we welcome feedback and contributions (see [Contributing](#contributing)), please note that this software is not yet ready for production use. This banner will be removed once we reach version 1.0.
+
+![Banner](/docs/images/banner.png)
 
 ## 🔍 What is Layered Code?
 
