@@ -73,10 +73,19 @@ func GitLog(appName string, limit int, oneline bool) (GitLogResult, error) {
 	// Run git log
 	logCmd := exec.Command("git", args...)
 	logCmd.Dir = appPath
-	output, err := logCmd.Output()
+	output, err := logCmd.CombinedOutput()
 	if err != nil {
 		// Check if it's just an empty repository
-		if strings.Contains(err.Error(), "does not have any commits") {
+		outputStr := string(output)
+		if strings.Contains(outputStr, "does not have any commits") || strings.Contains(outputStr, "No commits yet") || strings.Contains(err.Error(), "does not have any commits") {
+			return GitLogResult{
+				IsRepo:  true,
+				Commits: []GitLogEntry{},
+				Message: "No commits yet",
+			}, nil
+		}
+		// Also check for exit status 128 which can indicate empty repo
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 128 && len(output) == 0 {
 			return GitLogResult{
 				IsRepo:  true,
 				Commits: []GitLogEntry{},
