@@ -68,6 +68,10 @@ func TestRunToolErrorMessages(t *testing.T) {
 		if err == nil || !strings.Contains(err.Error(), "unknown tool: invalid") {
 			t.Errorf("Expected 'unknown tool: invalid' error, got %v", err)
 		}
+		// Verify search_text is in the available tools list
+		if err == nil || !strings.Contains(err.Error(), "search_text") {
+			t.Errorf("Expected error to mention 'search_text' tool, got %v", err)
+		}
 	})
 }
 

@@ -3,3 +3,9 @@
 dist/
 .DS_Store
 coverage.out
+
+# Ripgrep binaries (downloaded at build time)
+third-party/ripgrep/*/*
+!third-party/ripgrep/README.md
+!third-party/ripgrep/download.sh
+!third-party/ripgrep/LICENSE-MIT.txt

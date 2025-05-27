@@ -43,7 +43,35 @@ While a CLI interface is available for direct tool access, the conversational AI
 - **📊 Full Traceability**: Track feature evolution and maintain contextual awareness across your entire codebase
 - **🚀 Zero Vendor Lock-in**: Use any hosting provider, development environment, or toolchain
 
+## 🏗️ Building from Source
+
+To build Layered Code from source:
+
+```bash
+# Clone the repository
+git clone https://github.com/layered-flow/layered-code.git
+cd layered-code
+
+# Build with make (downloads ripgrep binaries automatically)
+make build
+
+# Or build for all platforms
+make build-all
+
+# Run tests
+make test
+```
+
 ## 📦 Installation
+
+### Prerequisites
+
+- **Required**: [ripgrep](https://github.com/BurntSushi/ripgrep) for text search functionality
+  - Install via your package manager:
+    - macOS: `brew install ripgrep`
+    - Ubuntu/Debian: `sudo apt install ripgrep`
+    - Windows: `choco install ripgrep` or `scoop install ripgrep`
+    - Or download from: https://github.com/BurntSushi/ripgrep/releases
 
 ### Option 1: macOS/Linux via Homebrew (Recommended)
 
@@ -53,7 +81,17 @@ brew tap layered-flow/layered-code
 brew install layered-code
 ```
 
-### Option 2: Pre-built Binaries
+Note: Homebrew will automatically install ripgrep as a dependency.
+
+### Option 2: Install Script (macOS/Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/layered-flow/layered-code/main/scripts/install.sh | bash
+```
+
+Note: This script will check for ripgrep and guide you to install it if needed.
+
+### Option 3: Pre-built Binaries
 
 Download the appropriate binary for your platform from the [GitHub releases page](https://github.com/layered-flow/layered-code/releases):
 
@@ -97,46 +135,30 @@ While there are plans to support open source models through Ollama, Claude Deskt
    - Open Claude Desktop settings → Developer → Edit Config
    - Add to `claude_desktop_config.json`:
 
-**macOS/Linux (Homebrew installation):**
+### Configure MCP Server in Claude Desktop
+
+Add the following to your `claude_desktop_config.json` (under Settings → Developer → Edit Config), adjusting the `command` path as appropriate for your installation and platform:
+
+| Platform/Install Method         | "command" value example                        |
+|---------------------------------|--------------------------------------------------|
+| macOS/Linux (Homebrew)          | "layered-code"                                 |
+| macOS/Linux (Manual/Binary)     | "/usr/local/bin/layered-code"                  |
+| Windows                         | "C:\\Users\\person\\bin\\layered-code.exe"     |
+
+> **Note for Windows:** Use the full path with double backslashes (`\\`) in the `"command"` value.
+
+**Example configuration:**
 ```json
 {
   "globalShortcut": "",
   "mcpServers": {
     "layered-code": {
-      "command": "layered-code",
+      "command": "<see table above>",
       "args": ["mcp_server"]
     }
   }
 }
 ```
-
-**macOS/Linux (Binary installation):**
-```json
-{
-  "globalShortcut": "",
-  "mcpServers": {
-    "layered-code": {
-      "command": "/usr/local/bin/layered-code",
-      "args": ["mcp_server"]
-    }
-  }
-}
-```
-
-**Windows:**
-```json
-{
-  "globalShortcut": "",
-  "mcpServers": {
-    "layered-code": {
-      "command": "C:\\Users\\person\\bin\\layered-code.exe",
-      "args": ["mcp_server"]
-    }
-  }
-}
-```
-
-**Note for Windows users**: When configuring the command path, use the full path with double backslashes (e.g. `C:\\Users\\person\\bin\\layered-code.exe`). Single backslashes or forward slashes will not work correctly.
 
 5. **Restart Claude Desktop** completely (Windows may require you to "end task" on any Claude background tasks)
 6. **Verify**: Check for "layered-code" in Claude's tools menu
@@ -187,24 +209,6 @@ layered-code mcp_server
 # List apps
 layered-code tool list_apps
 
-# List files in an app
-layered-code tool list_files --app-name myapp
-
-# List files with all metadata
-layered-code tool list_files --app-name myapp --include-size --include-last-modified --include-child-count
-
-# List files matching a pattern
-layered-code tool list_files --app-name myapp --pattern '*.js'
-
-# List files in specific subdirectory using glob pattern
-layered-code tool list_files --app-name myapp --pattern 'src/*.go'
-
-# List all test files recursively
-layered-code tool list_files --app-name myapp --pattern '**/*.test.js'
-
-# Note: list_files automatically skips hidden files/folders and symlinks
-# Maximum depth is limited to 10,000 levels for safety
-
 # Get version information
 layered-code version
 layered-code -v
@@ -218,9 +222,13 @@ layered-code --help
 
 **Available Commands:**
 - `mcp_server` - Start the Model Context Protocol server for Claude Desktop integration
-- `tool` - Run various tools and utilities (use with subcommands like `list_apps`, `list_files`)
+- `tool` - Run various tools and utilities (use with subcommands like below)
   - `tool list_apps` - List all available applications in the apps directory
   - `tool list_files` - List files and directories within an application with optional metadata (max depth: 10,000 levels)
+  - `tool search_text` - Search for text patterns in files within an application directory using ripgrep
+  - `tool read_file` - Read the contents of a file within an application directory
+  - `tool write_file` - Write or create a file within an application directory
+  - `tool edit_file` - Edit a file by performing find-and-replace operations
 - `version`, `-v`, `--version` - Display the current version of layered-code
 - `help`, `-h`, `--help` - Show usage information and available commands
 
@@ -269,6 +277,10 @@ Thank you for your understanding and interest in the project! 🙏
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+### Third-Party Components
+
+This software includes third-party components. See [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) for their license terms.
 
 Copyright (c) 2025 Layered Flow<br />
 https://www.layeredflow.ai/
