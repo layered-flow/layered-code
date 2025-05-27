@@ -1,8 +1,8 @@
-# Layered Code
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](LICENSE.md)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-brightgreen.svg)](https://golang.org/dl/)
 [![Build Status](https://github.com/layered-flow/layered-code/actions/workflows/tests.yml/badge.svg)](https://github.com/layered-flow/layered-code/actions)
+
+![Banner](/docs/images/banner.png)
 
 > ⚠️ **Work in Progress** ⚠️
 >
