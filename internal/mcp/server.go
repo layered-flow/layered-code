@@ -50,12 +50,26 @@ func StartServer(name, version string) error {
 
 // registerTools registers all available tools with the MCP server
 func registerTools(s *server.MCPServer) {
+	// File management tools
 	registerListAppsTool(s)
 	registerListFilesTool(s)
 	registerSearchTextTool(s)
 	registerReadFileTool(s)
 	registerWriteFileTool(s)
 	registerEditFileTool(s)
+	
+	// Git tools
+	registerGitStatusTool(s)
+	registerGitDiffTool(s)
+	registerGitCommitTool(s)
+	registerGitLogTool(s)
+	registerGitBranchTool(s)
+	registerGitAddTool(s)
+	registerGitRestoreTool(s)
+	registerGitStashTool(s)
+	registerGitPushTool(s)
+	registerGitPullTool(s)
+	registerGitInitTool(s)
 }
 
 // registerListAppsTool registers the list_apps tool
@@ -133,4 +147,138 @@ func registerEditFileTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, tools.EditFileMcp)
+}
+
+// registerGitStatusTool registers the git_status tool
+func registerGitStatusTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_status",
+		mcp.WithDescription("Show the working tree status of a git repository (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+	)
+
+	s.AddTool(tool, tools.GitStatusMcp)
+}
+
+// registerGitDiffTool registers the git_diff tool
+func registerGitDiffTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_diff",
+		mcp.WithDescription("Show changes between commits, commit and working tree, etc (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithBoolean("staged", mcp.Description("Show staged changes instead of unstaged")),
+		mcp.WithString("file_path", mcp.Description("Specific file to diff (relative to app directory)")),
+	)
+
+	s.AddTool(tool, tools.GitDiffMcp)
+}
+
+// registerGitCommitTool registers the git_commit tool
+func registerGitCommitTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_commit",
+		mcp.WithDescription("Create a new commit with staged changes (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("message", mcp.Description("Commit message (required unless using --amend)")),
+		mcp.WithBoolean("amend", mcp.Description("Amend the previous commit")),
+	)
+
+	s.AddTool(tool, tools.GitCommitMcp)
+}
+
+// registerGitLogTool registers the git_log tool
+func registerGitLogTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_log",
+		mcp.WithDescription("Show commit logs (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithNumber("limit", mcp.Description("Maximum number of commits to show (default: 10)")),
+		mcp.WithBoolean("oneline", mcp.Description("Show commits in one-line format")),
+	)
+
+	s.AddTool(tool, tools.GitLogMcp)
+}
+
+// registerGitBranchTool registers the git_branch tool
+func registerGitBranchTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_branch",
+		mcp.WithDescription("List, create, or delete branches (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("create_branch", mcp.Description("Name of branch to create")),
+		mcp.WithString("switch_branch", mcp.Description("Name of branch to switch to")),
+		mcp.WithString("delete_branch", mcp.Description("Name of branch to delete")),
+		mcp.WithBoolean("list_all", mcp.Description("List all branches including remotes")),
+	)
+
+	s.AddTool(tool, tools.GitBranchMcp)
+}
+
+// registerGitAddTool registers the git_add tool
+func registerGitAddTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_add",
+		mcp.WithDescription("Add file contents to the staging area (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithObject("files", mcp.Description("List of files to add (relative to app directory) - pass as JSON array")),
+		mcp.WithBoolean("all", mcp.Description("Add all changes (equivalent to -A)")),
+	)
+
+	s.AddTool(tool, tools.GitAddMcp)
+}
+
+// registerGitRestoreTool registers the git_restore tool
+func registerGitRestoreTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_restore",
+		mcp.WithDescription("Restore working tree files (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithObject("files", mcp.Required(), mcp.Description("List of files to restore (relative to app directory) - pass as JSON array")),
+		mcp.WithBoolean("staged", mcp.Description("Restore files in the staging area")),
+	)
+
+	s.AddTool(tool, tools.GitRestoreMcp)
+}
+
+// registerGitStashTool registers the git_stash tool
+func registerGitStashTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_stash",
+		mcp.WithDescription("Stash the changes in a dirty working directory (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("action", mcp.Description("Action to perform: push, pop, apply, drop, list (default: list)")),
+		mcp.WithString("message", mcp.Description("Stash message (for push action)")),
+	)
+
+	s.AddTool(tool, tools.GitStashMcp)
+}
+
+// registerGitPushTool registers the git_push tool
+func registerGitPushTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_push",
+		mcp.WithDescription("Update remote refs along with associated objects (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("remote", mcp.Description("Remote name (default: origin)")),
+		mcp.WithString("branch", mcp.Description("Branch name to push")),
+		mcp.WithBoolean("set_upstream", mcp.Description("Set upstream tracking branch")),
+		mcp.WithBoolean("force", mcp.Description("Force push (use with caution)")),
+	)
+
+	s.AddTool(tool, tools.GitPushMcp)
+}
+
+// registerGitPullTool registers the git_pull tool
+func registerGitPullTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_pull",
+		mcp.WithDescription("Fetch from and integrate with another repository or local branch (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("remote", mcp.Description("Remote name (default: origin)")),
+		mcp.WithString("branch", mcp.Description("Branch name to pull")),
+		mcp.WithBoolean("rebase", mcp.Description("Rebase instead of merge")),
+	)
+
+	s.AddTool(tool, tools.GitPullMcp)
+}
+
+// registerGitInitTool registers the git_init tool
+func registerGitInitTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_init",
+		mcp.WithDescription("Initialize a new git repository"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to initialize (will be created if it doesn't exist)")),
+		mcp.WithBoolean("bare", mcp.Description("Create a bare repository")),
+	)
+
+	s.AddTool(tool, tools.GitInitMcp)
 }
