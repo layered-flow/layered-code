@@ -17,8 +17,10 @@ func TestRegisterFunctions(t *testing.T) {
 	}{
 		{"registerListAppsTool", registerListAppsTool},
 		{"registerListFilesTool", registerListFilesTool},
+		{"registerSearchTextTool", registerSearchTextTool},
 		{"registerReadFileTool", registerReadFileTool},
-		{"registerTools", registerTools},
+		{"registerWriteFileTool", registerWriteFileTool},
+		{"registerEditFileTool", registerEditFileTool},
 	}
 
 	for _, tt := range tests {

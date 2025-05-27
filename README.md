@@ -1,5 +1,3 @@
-# Layered Code
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](LICENSE.md)
 [![Go Version](https://img.shields.io/badge/Go-1.24+-brightgreen.svg)](https://golang.org/dl/)
 [![Build Status](https://github.com/layered-flow/layered-code/actions/workflows/tests.yml/badge.svg)](https://github.com/layered-flow/layered-code/actions)
@@ -7,6 +5,8 @@
 > ⚠️ **Work in Progress** ⚠️
 >
 > This project is currently under active development. Features, APIs, and documentation may change frequently. While we welcome feedback and contributions (see [Contributing](#contributing)), please note that this software is not yet ready for production use. This banner will be removed once we reach version 1.0.
+
+![Banner](/docs/images/banner.png)
 
 ## 🔍 What is Layered Code?
 
@@ -43,7 +43,30 @@ While a CLI interface is available for direct tool access, the conversational AI
 - **📊 Full Traceability**: Track feature evolution and maintain contextual awareness across your entire codebase
 - **🚀 Zero Vendor Lock-in**: Use any hosting provider, development environment, or toolchain
 
+## 🏗️ Building from Source
+
+To build Layered Code from source:
+
+```bash
+# Clone the repository
+git clone https://github.com/layered-flow/layered-code.git
+cd layered-code
+
+# Build with make (downloads ripgrep binaries automatically)
+make build
+
+# Or build for all platforms
+make build-all
+
+# Run tests
+make test
+```
+
 ## 📦 Installation
+
+### Prerequisites
+
+- **No additional dependencies required** - ripgrep is automatically bundled with pre-built binaries and installed as a dependency via Homebrew
 
 ### Option 1: macOS/Linux via Homebrew (Recommended)
 
@@ -53,31 +76,45 @@ brew tap layered-flow/layered-code
 brew install layered-code
 ```
 
-### Option 2: Pre-built Binaries
+Note: Homebrew will automatically install ripgrep as a dependency.
 
-Download the appropriate binary for your platform from the [GitHub releases page](https://github.com/layered-flow/layered-code/releases):
+### Option 2: Install Script (macOS/Linux)
 
-- **macOS (Intel)**: `layered-code-darwin-amd64`
-- **macOS (Apple Silicon)**: `layered-code-darwin-arm64`
-- **Linux (x86_64)**: `layered-code-linux-amd64`
-- **Linux (ARM64)**: `layered-code-linux-arm64`
-- **Windows (x86_64)**: `layered-code-windows-amd64.exe`
-- **Windows (ARM64)**: `layered-code-windows-arm64.exe`
+```bash
+curl -fsSL https://raw.githubusercontent.com/layered-flow/layered-code/main/scripts/install.sh | bash
+```
+
+Note: This script downloads a self-contained binary with ripgrep bundled.
+
+### Option 3: Pre-built Binaries
+
+Download the appropriate archive for your platform from the [GitHub releases page](https://github.com/layered-flow/layered-code/releases). Each archive contains both the `layered-code` binary and a bundled `rg` (ripgrep) binary:
+
+- **macOS (Intel)**: `layered-code_Darwin_x86_64.tar.gz`
+- **macOS (Apple Silicon)**: `layered-code_Darwin_arm64.tar.gz`
+- **Linux (x86_64)**: `layered-code_Linux_x86_64.tar.gz`
+- **Linux (ARM64)**: `layered-code_Linux_arm64.tar.gz`
+- **Windows (x86_64)**: `layered-code_Windows_x86_64.zip`
+- **Windows (ARM64)**: `layered-code_Windows_arm64.zip`
 
 **Setup steps:**
 
 **macOS/Linux:**
-1. Make the binary executable: `chmod +x layered-code-*`
-2. Move to a convenient location (e.g., `~/bin/layered-code` or `/usr/local/bin/layered-code`)
-3. Ensure the location is in your PATH for easy access
+1. Extract the archive: `tar -xzf layered-code_*.tar.gz`
+2. Make both binaries executable: `chmod +x layered-code rg`
+3. Move both binaries to the same directory:
+   - For user installation: `mkdir -p ~/bin && mv layered-code rg ~/bin/`
+   - For system-wide installation: `sudo mv layered-code rg /usr/local/bin/`
+4. Ensure the location is in your PATH for easy access
 
 **Windows:**
-1. Download the `.exe` file (no chmod needed - Windows executables are ready to run)
-2. Move to a convenient location (e.g., `C:\Users\YourName\bin\layered-code.exe`)
+1. Extract the zip file (contains `layered-code.exe` and `rg.exe`)
+2. Move both executables to the same convenient location (e.g., `C:\Users\YourUsername\bin\`)
 3. Add the directory to your PATH environment variable:
    - Open "Environment Variables" in System Properties
-   - Add the directory containing `layered-code.exe` to your PATH
-   - Or run directly using the full path: `C:\path\to\layered-code.exe`
+   - Add the directory containing both executables to your PATH
+
+> **Important:** Keep both `layered-code` and `rg` (ripgrep) binaries in the same directory for proper functionality.
 
 ## ✨ Quick Start with Claude Desktop
 
@@ -97,46 +134,30 @@ While there are plans to support open source models through Ollama, Claude Deskt
    - Open Claude Desktop settings → Developer → Edit Config
    - Add to `claude_desktop_config.json`:
 
-**macOS/Linux (Homebrew installation):**
+### Configure MCP Server in Claude Desktop
+
+Add the following to your `claude_desktop_config.json` (under Settings → Developer → Edit Config), adjusting the `command` path as appropriate for your installation and platform:
+
+| Platform/Install Method         | "command" value example                        |
+|---------------------------------|--------------------------------------------------|
+| macOS/Linux (Homebrew)          | `layered-code`                                 |
+| macOS/Linux (Manual/Binary)     | `/usr/local/bin/layered-code`                  |
+| Windows                         | `C:\\Users\\YourUsername\\bin\layered-code.exe`    |
+
+> **Note for Windows:** Use the full path with double backslashes (`\\`) in the `"command"` value.
+
+**Example configuration:**
 ```json
 {
   "globalShortcut": "",
   "mcpServers": {
     "layered-code": {
-      "command": "layered-code",
+      "command": "<see table above>",
       "args": ["mcp_server"]
     }
   }
 }
 ```
-
-**macOS/Linux (Binary installation):**
-```json
-{
-  "globalShortcut": "",
-  "mcpServers": {
-    "layered-code": {
-      "command": "/usr/local/bin/layered-code",
-      "args": ["mcp_server"]
-    }
-  }
-}
-```
-
-**Windows:**
-```json
-{
-  "globalShortcut": "",
-  "mcpServers": {
-    "layered-code": {
-      "command": "C:\\Users\\person\\bin\\layered-code.exe",
-      "args": ["mcp_server"]
-    }
-  }
-}
-```
-
-**Note for Windows users**: When configuring the command path, use the full path with double backslashes (e.g. `C:\\Users\\person\\bin\\layered-code.exe`). Single backslashes or forward slashes will not work correctly.
 
 5. **Restart Claude Desktop** completely (Windows may require you to "end task" on any Claude background tasks)
 6. **Verify**: Check for "layered-code" in Claude's tools menu
@@ -187,24 +208,6 @@ layered-code mcp_server
 # List apps
 layered-code tool list_apps
 
-# List files in an app
-layered-code tool list_files --app-name myapp
-
-# List files with all metadata
-layered-code tool list_files --app-name myapp --include-size --include-last-modified --include-child-count
-
-# List files matching a pattern
-layered-code tool list_files --app-name myapp --pattern '*.js'
-
-# List files in specific subdirectory using glob pattern
-layered-code tool list_files --app-name myapp --pattern 'src/*.go'
-
-# List all test files recursively
-layered-code tool list_files --app-name myapp --pattern '**/*.test.js'
-
-# Note: list_files automatically skips hidden files/folders and symlinks
-# Maximum depth is limited to 10,000 levels for safety
-
 # Get version information
 layered-code version
 layered-code -v
@@ -218,9 +221,13 @@ layered-code --help
 
 **Available Commands:**
 - `mcp_server` - Start the Model Context Protocol server for Claude Desktop integration
-- `tool` - Run various tools and utilities (use with subcommands like `list_apps`, `list_files`)
+- `tool` - Run various tools and utilities (use with subcommands like below)
   - `tool list_apps` - List all available applications in the apps directory
   - `tool list_files` - List files and directories within an application with optional metadata (max depth: 10,000 levels)
+  - `tool search_text` - Search for text patterns in files within an application directory using ripgrep
+  - `tool read_file` - Read the contents of a file within an application directory
+  - `tool write_file` - Write or create a file within an application directory
+  - `tool edit_file` - Edit a file by performing find-and-replace operations
 - `version`, `-v`, `--version` - Display the current version of layered-code
 - `help`, `-h`, `--help` - Show usage information and available commands
 
@@ -269,6 +276,10 @@ Thank you for your understanding and interest in the project! 🙏
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+
+### Third-Party Components
+
+This software includes third-party components. See [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md) for their license terms.
 
 Copyright (c) 2025 Layered Flow<br />
 https://www.layeredflow.ai/

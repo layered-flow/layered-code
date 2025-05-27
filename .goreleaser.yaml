@@ -10,10 +10,8 @@ version: 2
 
 before:
   hooks:
-    # You may remove this if you don't use go modules.
-    - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
+    # Download ripgrep binaries for bundling
+    - ./third-party/ripgrep/download.sh
 
 builds:
   - env:
@@ -44,6 +42,10 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
+    # Include ripgrep binary and third-party licenses in the archive
+    files:
+      - src: "third-party/ripgrep/{{ .Arch }}-{{ .Os }}/{{ if eq .Os \"windows\" }}rg.exe{{ else }}rg{{ end }}"
+      - "THIRD-PARTY-LICENSES.md"
 
 changelog:
   sort: asc
@@ -154,6 +156,8 @@ brews:
     homepage: https://github.com/layered-flow/layered-code
     description: "Homebrew tap for layered-code"
     license: MIT
+    dependencies:
+      - name: ripgrep
     install: |
       bin.install "layered-code"
     test: |
