@@ -7,7 +7,7 @@ This directory contains pre-compiled ripgrep binaries for different platforms.
 The binaries should be organized in subdirectories by architecture and OS:
 
 ```
-vendor/ripgrep/
+third-party/ripgrep/
 ├── arm64-darwin/
 │   └── rg
 ├── amd64-darwin/
@@ -39,7 +39,7 @@ When building layered-code:
 2. The binary should be bundled with the executable
 3. The search_text tool will look for the binary in the following order:
    - System PATH (if user has ripgrep installed)
-   - Relative to the layered-code executable in vendor/ripgrep/{arch}-{os}/
+   - Relative to the layered-code executable in third-party/ripgrep/{arch}-{os}/
    - Same directory as the layered-code executable
 
 ## Platform Mapping

@@ -219,11 +219,11 @@ func getRipgrepPath() (string, error) {
 	// Look for ripgrep in order of preference:
 	// 1. Bundled with executable (for release distributions)
 	// 2. System PATH
-	// 3. Development vendor directory
+	// 3. Development third-party directory
 	searchPaths := []string{
 		filepath.Join(execDir, binaryName), // Same directory as executable
-		"", // Empty string signals to check PATH
-		filepath.Join(execDir, "vendor", "ripgrep", fmt.Sprintf("%s-%s", runtime.GOARCH, runtime.GOOS), binaryName),
+		"",                                 // Empty string signals to check PATH
+		filepath.Join(execDir, "third-party", "ripgrep", fmt.Sprintf("%s-%s", runtime.GOARCH, runtime.GOOS), binaryName),
 	}
 
 	for _, path := range searchPaths {

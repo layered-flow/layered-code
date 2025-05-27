@@ -6,7 +6,17 @@
 set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-RIPGREP_VERSION="14.1.0"
+
+# Get the latest release version from GitHub API
+echo "Fetching latest ripgrep version from GitHub..."
+RIPGREP_VERSION=$(curl -s https://api.github.com/repos/BurntSushi/ripgrep/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+
+if [ -z "$RIPGREP_VERSION" ]; then
+    echo "Failed to fetch latest version, falling back to v14.1.0"
+    RIPGREP_VERSION="14.1.0"
+else
+    echo "Latest version found: $RIPGREP_VERSION"
+fi
 
 echo "Downloading ripgrep v${RIPGREP_VERSION} binaries..."
 
@@ -77,13 +87,6 @@ download_ripgrep \
     "https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-aarch64-unknown-linux-gnu.tar.gz" \
     "ripgrep-${RIPGREP_VERSION}-aarch64-unknown-linux-gnu.tar.gz" \
     "ripgrep-${RIPGREP_VERSION}-aarch64-unknown-linux-gnu/rg"
-
-# Windows ARM64
-download_ripgrep \
-    "arm64-windows" \
-    "https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-aarch64-pc-windows-msvc.zip" \
-    "ripgrep-${RIPGREP_VERSION}-aarch64-pc-windows-msvc.zip" \
-    "ripgrep-${RIPGREP_VERSION}-aarch64-pc-windows-msvc/rg.exe"
 
 # Windows x64
 download_ripgrep \
