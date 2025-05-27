@@ -26,7 +26,7 @@ func PrintUsage() {
 // RunTool executes the specified tool subcommand with the provided arguments
 func RunTool() error {
 	if len(os.Args) < 3 {
-		return fmt.Errorf("tool subcommand is required\nUsage: layered-code tool <subcommand> [args]\nAvailable tools: list_apps, list_files, read_file, write_file, edit_file, search_text")
+		return fmt.Errorf("tool subcommand is required\nUsage: layered-code tool <subcommand> [args]\nAvailable tools: list_apps, list_files, search_text, read_file, write_file, edit_file")
 	}
 
 	subcommand := os.Args[2]
