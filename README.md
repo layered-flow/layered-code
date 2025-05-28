@@ -80,6 +80,16 @@ Note: Homebrew will automatically install ripgrep as a dependency.
 
 ### Option 2: Install Script (macOS/Linux)
 
+For system-wide installation (recommended):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/layered-flow/layered-code/main/scripts/install.sh | sudo bash
+```
+
+This installs the binaries to `/usr/local/bin` for easy access from anywhere.
+
+If you prefer to install in the current directory instead, omit sudo:
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/layered-flow/layered-code/main/scripts/install.sh | bash
 ```
@@ -161,6 +171,41 @@ Add the following to your `claude_desktop_config.json` (under Settings → Devel
 
 5. **Restart Claude Desktop** completely (Windows may require you to "end task" on any Claude background tasks)
 6. **Verify**: Check for "layered-code" in Claude's tools menu
+
+### 🌐 Chrome Extension for Live Preview
+
+The Layered Code Chrome extension enables real-time previewing of changes made through MCP. When you edit files through Claude Desktop, the extension automatically refreshes your browser to show the changes instantly.
+
+**Installation Options:**
+
+#### Option 1: Chrome Web Store (Recommended)
+Install directly from the Chrome Web Store:
+[https://chromewebstore.google.com/detail/layered-code/loccgmbbilmanbbegkmaekakhhakeihh](https://chromewebstore.google.com/detail/layered-code/loccgmbbilmanbbegkmaekakhhakeihh)
+
+#### Option 2: Developer Mode
+1. **Open Chrome Extensions Page**:
+   - Navigate to `chrome://extensions/`
+   - Enable "Developer mode" in the top right corner
+
+2. **Load the Extension**:
+   - Click "Load unpacked"
+   - Navigate to the `chrome-extension` folder in your layered-code directory
+   - Select the folder and click "Select"
+
+3. **Verify Installation**:
+   - You should see "Layered Code Live Preview" in your extensions list
+   - The extension icon will appear in your Chrome toolbar
+
+**Usage:**
+- Open your HTML file directly in Chrome (e.g., `file:///Users/yourname/LayeredApps/myproject/index.html`)
+- The extension will automatically detect file changes made through MCP
+- Your browser will refresh instantly when changes are saved
+
+**Features:**
+- Automatic page refresh on file changes
+- Works with static HTML files
+- No configuration required - just install and use
+- Seamless integration with Claude Desktop MCP workflow
 
 ### 🔧 Optional: Custom Apps Directory
 

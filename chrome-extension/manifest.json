@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Layered Code",
-  "version": "1.0",
-  "description": "Browser extension for enhanced Layered Code development workflow and tooling support",
+  "version": "1.1",
+  "description": "Layered Code is a Chrome extension that connects directly to the Layered Code development environment.",
   "permissions": [
     "tabs",
     "activeTab",
