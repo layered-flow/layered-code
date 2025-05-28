@@ -178,13 +178,11 @@ nfpms:
     file_name_template: "{{ .ConventionalFileName }}"
     vendor: layered-flow
     homepage: https://github.com/layered-flow/layered-code
-    maintainer: layered-flow <maintainer@layered-flow.com>
-    description: "A layered code analysis tool"
+    maintainer: layered-flow <support@layeredflow.ai>
+    description: "Transform software development through AI-assisted coding with the Model Context Protocol (MCP)"
     license: MIT
     formats:
       - deb
-    dependencies:
-      - ripgrep
     bindir: /usr/bin
     contents:
       # Include the main binary
