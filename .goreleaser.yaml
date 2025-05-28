@@ -44,9 +44,17 @@ archives:
         formats: [zip]
     # Include ripgrep binary and third-party licenses in the archive
     files:
-      # For Windows ARM64, use amd64 binary (emulation); otherwise use native arch
+      # Include ripgrep binary with platform-specific path and name
       - src: "third-party/ripgrep/{{ if and (eq .Os \"windows\") (eq .Arch \"arm64\") }}amd64{{ else }}{{ .Arch }}{{ end }}-{{ .Os }}/{{ if eq .Os \"windows\" }}rg.exe{{ else }}rg{{ end }}"
-      - "THIRD-PARTY-LICENSES.md"
+        strip_parent: true
+        info:
+          mode: 0755
+      # License files
+      - src: "LICENSE.md"
+        dst: "LICENSE.md"
+      # Third-party licenses
+      - src: "THIRD-PARTY-LICENSES.md"
+        dst: "THIRD-PARTY-LICENSES.md"
 
 changelog:
   sort: asc
@@ -163,3 +171,37 @@ brews:
       bin.install "layered-code"
     test: |
       system "#{bin}/layered-code", "--help"
+
+nfpms:
+  - id: layered-code-deb
+    package_name: layered-code
+    file_name_template: "{{ .ConventionalFileName }}"
+    vendor: layered-flow
+    homepage: https://github.com/layered-flow/layered-code
+    maintainer: layered-flow <support@layeredflow.ai>
+    description: "Transform software development through AI-assisted coding with the Model Context Protocol (MCP)"
+    license: MIT
+    formats:
+      - deb
+    bindir: /usr/bin
+    contents:
+      # Include the main binary
+      - src: "{{ .Binary }}"
+        dst: "/usr/bin/{{ .Binary }}"
+        file_info:
+          mode: 0755
+      # Include ripgrep binary
+      - src: "third-party/ripgrep/{{ .Arch }}-linux/rg"
+        dst: "/usr/bin/rg"
+        file_info:
+          mode: 0755
+      # Include third-party licenses
+      - src: "THIRD-PARTY-LICENSES.md"
+        dst: "/usr/share/doc/layered-code/THIRD-PARTY-LICENSES.md"
+        file_info:
+          mode: 0644
+    # Only build for Linux architectures
+    meta: true
+    # Add some metadata
+    section: utils
+    priority: optional
