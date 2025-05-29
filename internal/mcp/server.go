@@ -7,6 +7,7 @@ import (
 	"github.com/layered-flow/layered-code/internal/constants"
 	"github.com/layered-flow/layered-code/internal/notifications"
 	"github.com/layered-flow/layered-code/internal/tools"
+	"github.com/layered-flow/layered-code/internal/tools/git"
 	"github.com/layered-flow/layered-code/internal/websocket"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -157,7 +158,7 @@ func registerGitStatusTool(s *server.MCPServer) {
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
 	)
 
-	s.AddTool(tool, tools.GitStatusMcp)
+	s.AddTool(tool, git.GitStatusMcp)
 }
 
 // registerGitDiffTool registers the git_diff tool
@@ -169,7 +170,7 @@ func registerGitDiffTool(s *server.MCPServer) {
 		mcp.WithString("file_path", mcp.Description("Specific file to diff (relative to app directory)")),
 	)
 
-	s.AddTool(tool, tools.GitDiffMcp)
+	s.AddTool(tool, git.GitDiffMcp)
 }
 
 // registerGitCommitTool registers the git_commit tool
@@ -181,7 +182,7 @@ func registerGitCommitTool(s *server.MCPServer) {
 		mcp.WithBoolean("amend", mcp.Description("Amend the previous commit")),
 	)
 
-	s.AddTool(tool, tools.GitCommitMcp)
+	s.AddTool(tool, git.GitCommitMcp)
 }
 
 // registerGitLogTool registers the git_log tool
@@ -193,7 +194,7 @@ func registerGitLogTool(s *server.MCPServer) {
 		mcp.WithBoolean("oneline", mcp.Description("Show commits in one-line format")),
 	)
 
-	s.AddTool(tool, tools.GitLogMcp)
+	s.AddTool(tool, git.GitLogMcp)
 }
 
 // registerGitBranchTool registers the git_branch tool
@@ -207,7 +208,7 @@ func registerGitBranchTool(s *server.MCPServer) {
 		mcp.WithBoolean("list_all", mcp.Description("List all branches including remotes")),
 	)
 
-	s.AddTool(tool, tools.GitBranchMcp)
+	s.AddTool(tool, git.GitBranchMcp)
 }
 
 // registerGitAddTool registers the git_add tool
@@ -219,7 +220,7 @@ func registerGitAddTool(s *server.MCPServer) {
 		mcp.WithBoolean("all", mcp.Description("Add all changes (equivalent to -A)")),
 	)
 
-	s.AddTool(tool, tools.GitAddMcp)
+	s.AddTool(tool, git.GitAddMcp)
 }
 
 // registerGitRestoreTool registers the git_restore tool
@@ -231,7 +232,7 @@ func registerGitRestoreTool(s *server.MCPServer) {
 		mcp.WithBoolean("staged", mcp.Description("Restore files in the staging area")),
 	)
 
-	s.AddTool(tool, tools.GitRestoreMcp)
+	s.AddTool(tool, git.GitRestoreMcp)
 }
 
 // registerGitStashTool registers the git_stash tool
@@ -243,7 +244,7 @@ func registerGitStashTool(s *server.MCPServer) {
 		mcp.WithString("message", mcp.Description("Stash message (for push action)")),
 	)
 
-	s.AddTool(tool, tools.GitStashMcp)
+	s.AddTool(tool, git.GitStashMcp)
 }
 
 // registerGitPushTool registers the git_push tool
@@ -257,7 +258,7 @@ func registerGitPushTool(s *server.MCPServer) {
 		mcp.WithBoolean("force", mcp.Description("Force push (use with caution)")),
 	)
 
-	s.AddTool(tool, tools.GitPushMcp)
+	s.AddTool(tool, git.GitPushMcp)
 }
 
 // registerGitPullTool registers the git_pull tool
@@ -270,7 +271,7 @@ func registerGitPullTool(s *server.MCPServer) {
 		mcp.WithBoolean("rebase", mcp.Description("Rebase instead of merge")),
 	)
 
-	s.AddTool(tool, tools.GitPullMcp)
+	s.AddTool(tool, git.GitPullMcp)
 }
 
 // registerGitInitTool registers the git_init tool
@@ -281,7 +282,7 @@ func registerGitInitTool(s *server.MCPServer) {
 		mcp.WithBoolean("bare", mcp.Description("Create a bare repository")),
 	)
 
-	s.AddTool(tool, tools.GitInitMcp)
+	s.AddTool(tool, git.GitInitMcp)
 }
 
 // registerGitRemoteTool registers the git_remote tool
@@ -298,5 +299,5 @@ func registerGitRemoteTool(s *server.MCPServer) {
 		mcp.WithString("set_url", mcp.Description("New URL for remote (required with set_url_name)")),
 	)
 
-	s.AddTool(tool, tools.GitRemoteMcp)
+	s.AddTool(tool, git.GitRemoteMcp)
 }
