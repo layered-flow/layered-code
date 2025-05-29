@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/layered-flow/layered-code/internal/tools"
+	"github.com/layered-flow/layered-code/internal/tools/git"
 )
 
 // PrintUsage displays the available commands and their usage information
@@ -64,29 +65,29 @@ func RunTool() error {
 	
 	// Git tools
 	case "git_status":
-		return tools.GitStatusCli()
+		return git.GitStatusCli()
 	case "git_diff":
-		return tools.GitDiffCli()
+		return git.GitDiffCli()
 	case "git_commit":
-		return tools.GitCommitCli()
+		return git.GitCommitCli()
 	case "git_log":
-		return tools.GitLogCli()
+		return git.GitLogCli()
 	case "git_branch":
-		return tools.GitBranchCli()
+		return git.GitBranchCli()
 	case "git_add":
-		return tools.GitAddCli()
+		return git.GitAddCli()
 	case "git_restore":
-		return tools.GitRestoreCli()
+		return git.GitRestoreCli()
 	case "git_stash":
-		return tools.GitStashCli()
+		return git.GitStashCli()
 	case "git_push":
-		return tools.GitPushCli()
+		return git.GitPushCli()
 	case "git_pull":
-		return tools.GitPullCli()
+		return git.GitPullCli()
 	case "git_init":
-		return tools.GitInitCli()
+		return git.GitInitCli()
 	case "git_remote":
-		return tools.GitRemoteCli()
+		return git.GitRemoteCli()
 		
 	default:
 		return fmt.Errorf("unknown tool: %s\nRun 'layered-code help' to see all available tools", subcommand)
