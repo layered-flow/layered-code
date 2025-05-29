@@ -29,7 +29,7 @@ func TestGitCommit(t *testing.T) {
 
 	// Test 1: Non-git repository
 	t.Run("NonGitRepo", func(t *testing.T) {
-		result, err := GitCommit(testApp, "Test message", false)
+		result, err := GitCommit(testApp, "Test message", false, nil)
 		if err != nil {
 			t.Fatalf("GitCommit failed: %v", err)
 		}
@@ -61,7 +61,7 @@ func TestGitCommit(t *testing.T) {
 
 	// Test 2: No staged changes
 	t.Run("NoStagedChanges", func(t *testing.T) {
-		result, err := GitCommit(testApp, "Test message", false)
+		result, err := GitCommit(testApp, "Test message", false, nil)
 		if err != nil {
 			t.Fatalf("GitCommit failed: %v", err)
 		}
@@ -81,7 +81,7 @@ func TestGitCommit(t *testing.T) {
 
 	// Test 3: Missing message
 	t.Run("MissingMessage", func(t *testing.T) {
-		_, err := GitCommit(testApp, "", false)
+		_, err := GitCommit(testApp, "", false, nil)
 		if err == nil {
 			t.Error("Expected error for missing commit message")
 		}
@@ -101,7 +101,7 @@ func TestGitCommit(t *testing.T) {
 
 	// Test 4: Successful commit
 	t.Run("SuccessfulCommit", func(t *testing.T) {
-		result, err := GitCommit(testApp, "Initial commit", false)
+		result, err := GitCommit(testApp, "Initial commit", false, nil)
 		if err != nil {
 			t.Fatalf("GitCommit failed: %v", err)
 		}
@@ -137,7 +137,7 @@ func TestGitCommit(t *testing.T) {
 		addCmd.Run()
 
 		// Amend the commit
-		result, err := GitCommit(testApp, "Amended commit", true)
+		result, err := GitCommit(testApp, "Amended commit", true, nil)
 		if err != nil {
 			t.Fatalf("GitCommit failed: %v", err)
 		}
@@ -164,13 +164,53 @@ func TestGitCommit(t *testing.T) {
 		addCmd.Run()
 
 		// Amend without changing message
-		result, err := GitCommit(testApp, "", true)
+		result, err := GitCommit(testApp, "", true, nil)
 		if err != nil {
 			t.Fatalf("GitCommit failed: %v", err)
 		}
 
 		if !result.Success {
 			t.Error("Expected Success to be true for amend with no message")
+		}
+	})
+
+	// Test 7: Commit with LayeredChangeMemory
+	t.Run("CommitWithLayeredChangeMemory", func(t *testing.T) {
+		// Create another file
+		testFile2 := filepath.Join(testAppPath, "test2.txt")
+		if err := os.WriteFile(testFile2, []byte("test content 2\n"), 0644); err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+
+		addCmd := exec.Command("git", "add", "test2.txt")
+		addCmd.Dir = testAppPath
+		addCmd.Run()
+
+		// Create LayeredChangeMemory parameters
+		lcmParams := &LayeredChangeMemoryParams{
+			Summary: "Added test2.txt file to test LayeredChangeMemory functionality",
+			Considerations: []string{
+				"This is a test commit only",
+				"No production code was modified",
+				"LayeredChangeMemory integration is being tested",
+			},
+			FollowUp: "Verify LayeredChangeMemory file was created correctly",
+		}
+
+		// Commit with LayeredChangeMemory parameters
+		result, err := GitCommit(testApp, "Add test2.txt with LCM", false, lcmParams)
+		if err != nil {
+			t.Fatalf("GitCommit failed: %v", err)
+		}
+
+		if !result.Success {
+			t.Errorf("Expected Success to be true, error: %s", result.Error)
+		}
+
+		// Check if LayeredChangeMemory file was created
+		lcmFile := filepath.Join(testAppPath, ".layered_change_memory.yaml")
+		if _, err := os.Stat(lcmFile); os.IsNotExist(err) {
+			t.Error("Expected .layered_change_memory.yaml file to be created")
 		}
 	})
 }

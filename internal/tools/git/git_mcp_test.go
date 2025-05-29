@@ -45,6 +45,29 @@ func TestGitCommitMcp(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error for missing app_name")
 	}
+
+	// Missing layered_change_memory
+	req.Params.Arguments = map[string]interface{}{
+		"app_name": "test-app",
+		"message":  "test",
+	}
+	_, err = GitCommitMcp(ctx, req)
+	if err == nil {
+		t.Error("Expected error for missing layered_change_memory")
+	}
+
+	// Missing summary in layered_change_memory
+	req.Params.Arguments = map[string]interface{}{
+		"app_name": "test-app",
+		"message":  "test",
+		"layered_change_memory": map[string]interface{}{
+			"considerations": []string{"test"},
+		},
+	}
+	_, err = GitCommitMcp(ctx, req)
+	if err == nil {
+		t.Error("Expected error for missing layered_change_memory.summary")
+	}
 }
 
 func TestGitLogMcp(t *testing.T) {

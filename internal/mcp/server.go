@@ -180,10 +180,11 @@ func registerGitDiffTool(s *server.MCPServer) {
 // registerGitCommitTool registers the git_commit tool
 func registerGitCommitTool(s *server.MCPServer) {
 	tool := mcp.NewTool("git_commit",
-		mcp.WithDescription("Create a new commit with staged changes (requires git to be installed)"),
+		mcp.WithDescription("Create a new commit with staged changes and LayeredChangeMemory metadata (requires git to be installed). LayeredChangeMemory tracks commit context and decisions for future reference."),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
 		mcp.WithString("message", mcp.Description("Commit message (required unless using --amend)")),
 		mcp.WithBoolean("amend", mcp.Description("Amend the previous commit")),
+		mcp.WithObject("layered_change_memory", mcp.Required(), mcp.Description("LayeredChangeMemory metadata to log with the commit. Must include: summary (string - one-sentence description), considerations (array of strings - max 3 items, IMPORTANT: Include what the user explicitly rejected or didn't want, to avoid repeating mistakes), follow_up (string - optional next steps)")),
 	)
 
 	s.AddTool(tool, git.GitCommitMcp)
