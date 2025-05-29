@@ -17,25 +17,12 @@ chrome.storage.local.get(['enabledDomains', 'autoRefreshEnabled'], (result) => {
 
 // Sanitize Windows paths in JSON data
 function sanitizeWindowsPaths(jsonData) {
-  // Handle Windows file paths (both C:\ and C:/ formats)
-  if (jsonData.includes('"filename":"')) {
-    // Check for unescaped backslashes in Windows paths (C:\)
-    if (jsonData.includes('\\') && !jsonData.includes('\\\\')) {
-      const windowsPathPattern = /"filename":"([A-Za-z]:\\[^"]*?)"/;
-      if (windowsPathPattern.test(jsonData)) {
-        // Find the filename value and escape backslashes
-        jsonData = jsonData.replace(/"filename":"([^"]*?)"/g, (match, filename) => {
-          const escapedFilename = filename.replace(/\\/g, '\\\\');
-          return `"filename":"${escapedFilename}"`;
-        });
-      }
-    }
-    
-    // Log forward slash Windows paths (C:/) for debugging
-    const forwardSlashPattern = /"filename":"([A-Za-z]:\/[^"]*?)"/;
-    if (forwardSlashPattern.test(jsonData)) {
-      console.log('Windows path with forward slashes detected:', jsonData.match(forwardSlashPattern)[1]);
-    }
+  // Handle unescaped backslashes in file paths
+  if (jsonData.includes('"filename":"') && jsonData.includes('\\')) {
+    jsonData = jsonData.replace(/"filename":"([^"]*?)"/g, (match, filename) => {
+      const escapedFilename = filename.replace(/\\/g, '\\\\');
+      return `"filename":"${escapedFilename}"`;
+    });
   }
   
   return jsonData;
