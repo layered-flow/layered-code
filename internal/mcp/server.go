@@ -70,6 +70,7 @@ func registerTools(s *server.MCPServer) {
 	registerGitPushTool(s)
 	registerGitPullTool(s)
 	registerGitInitTool(s)
+	registerGitRemoteTool(s)
 }
 
 // registerListAppsTool registers the list_apps tool
@@ -281,4 +282,21 @@ func registerGitInitTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, tools.GitInitMcp)
+}
+
+// registerGitRemoteTool registers the git_remote tool
+func registerGitRemoteTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_remote",
+		mcp.WithDescription("Manage git remotes (list, add, remove, rename, set-url) (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("add_name", mcp.Description("Name of remote to add")),
+		mcp.WithString("add_url", mcp.Description("URL of remote to add (required with add_name)")),
+		mcp.WithString("remove_name", mcp.Description("Name of remote to remove")),
+		mcp.WithString("old_name", mcp.Description("Current name of remote to rename")),
+		mcp.WithString("new_name", mcp.Description("New name for remote (required with old_name)")),
+		mcp.WithString("set_url_name", mcp.Description("Name of remote to update URL for")),
+		mcp.WithString("set_url", mcp.Description("New URL for remote (required with set_url_name)")),
+	)
+
+	s.AddTool(tool, tools.GitRemoteMcp)
 }
