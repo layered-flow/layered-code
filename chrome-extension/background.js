@@ -51,14 +51,18 @@ function connectWebSocket() {
       // Fix common JSON issues with Windows paths
       let jsonData = event.data;
 
-      // Handle unescaped backslashes in file paths
-      // This is a common issue when the server doesn't properly escape Windows paths
-      if (jsonData.includes('"filename":"') && jsonData.includes('\\')) {
-        // Find the filename value and escape backslashes
-        jsonData = jsonData.replace(/"filename":"([^"]*?)"/g, (match, filename) => {
-          const escapedFilename = filename.replace(/\\/g, '\\\\');
-          return `"filename":"${escapedFilename}"`;
-        });
+      // Handle unescaped backslashes in Windows file paths
+      // Only apply fix if we detect Windows-style paths (contains backslash but not already escaped)
+      if (jsonData.includes('"filename":"') && jsonData.includes('\\') && !jsonData.includes('\\\\')) {
+        // Check if this looks like a Windows path (e.g., C:\, D:\, etc.)
+        const windowsPathPattern = /"filename":"([A-Za-z]:\\[^"]*?)"/;
+        if (windowsPathPattern.test(jsonData)) {
+          // Find the filename value and escape backslashes
+          jsonData = jsonData.replace(/"filename":"([^"]*?)"/g, (match, filename) => {
+            const escapedFilename = filename.replace(/\\/g, '\\\\');
+            return `"filename":"${escapedFilename}"`;
+          });
+        }
       }
 
       const data = JSON.parse(jsonData);
@@ -139,12 +143,26 @@ async function refreshMatchingTabs(filename) {
 
           // Handle file:// URLs
           if (url.protocol === 'file:') {
-            // Check if any enabled domain is 'file://' or contains the file path
-            shouldRefresh = enabledDomains.some(domain =>
-              domain.toLowerCase() === 'file://' ||
-              domain.toLowerCase() === 'file' ||
-              tab.url.includes(domain)
-            );
+            // Check if any enabled domain matches the file path
+            shouldRefresh = enabledDomains.some(domain => {
+              const domainLower = domain.toLowerCase();
+              
+              // Check for exact matches
+              if (domainLower === 'file://' || domainLower === 'file') {
+                return true;
+              }
+              
+              // Handle wildcard patterns (e.g., 'LayeredApps/*')
+              if (domain.includes('*')) {
+                // Convert wildcard pattern to regex
+                const pattern = domain.replace(/\*/g, '.*');
+                const regex = new RegExp(pattern, 'i');
+                return regex.test(tab.url);
+              }
+              
+              // Check if URL contains the domain string
+              return tab.url.toLowerCase().includes(domainLower);
+            });
             console.log(`File URL ${tab.url} - shouldRefresh: ${shouldRefresh}`);
           } else {
             // Handle http/https URLs
