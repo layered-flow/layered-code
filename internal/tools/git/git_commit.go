@@ -22,8 +22,15 @@ type GitCommitResult struct {
 	Error      string `json:"error,omitempty"`
 }
 
+// LayeredChangeMemoryParams contains the parameters for creating a LayeredChangeMemory entry
+type LayeredChangeMemoryParams struct {
+	Summary        string   `json:"summary"`
+	Considerations []string `json:"considerations"`
+	FollowUp       string   `json:"follow_up"`
+}
+
 // GitCommit creates a git commit in the specified app directory
-func GitCommit(appName string, message string, amend bool) (GitCommitResult, error) {
+func GitCommit(appName string, message string, amend bool, lcmParams *LayeredChangeMemoryParams) (GitCommitResult, error) {
 	if err := EnsureGitAvailable(); err != nil {
 		return GitCommitResult{}, err
 	}
@@ -110,6 +117,26 @@ func GitCommit(appName string, message string, amend bool) (GitCommitResult, err
 
 	commitHash := strings.TrimSpace(string(hashOutput))[:7] // Short hash
 
+	// Create LayeredChangeMemory entry if parameters provided
+	if lcmParams != nil {
+		entry, err := GenerateLayeredChangeMemoryEntry(
+			appPath,
+			commitHash,
+			message,
+			lcmParams.Summary,
+			lcmParams.Considerations,
+			lcmParams.FollowUp,
+		)
+		
+		if err == nil {
+			// Append to the LayeredChangeMemory log
+			if err := AppendLayeredChangeMemoryEntry(appPath, entry); err != nil {
+				// Log the error but don't fail the commit
+				fmt.Fprintf(os.Stderr, "Warning: Failed to write LayeredChangeMemory entry: %v\n", err)
+			}
+		}
+	}
+
 	return GitCommitResult{
 		IsRepo:     true,
 		Success:    true,
@@ -145,7 +172,8 @@ func GitCommitCli() error {
 		}
 	}
 
-	result, err := GitCommit(appName, message, amend)
+	// For CLI, we don't support LayeredChangeMemory parameters
+	result, err := GitCommit(appName, message, amend, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create commit: %w", err)
 	}
@@ -170,9 +198,10 @@ func GitCommitCli() error {
 // MCP
 func GitCommitMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName string `json:"app_name"`
-		Message string `json:"message"`
-		Amend   bool   `json:"amend"`
+		AppName               string                    `json:"app_name"`
+		Message               string                    `json:"message"`
+		Amend                 bool                      `json:"amend"`
+		LayeredChangeMemory   *LayeredChangeMemoryParams `json:"layered_change_memory,omitempty"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
@@ -183,7 +212,17 @@ func GitCommitMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 		return nil, fmt.Errorf("app_name is required")
 	}
 
-	result, err := GitCommit(args.AppName, args.Message, args.Amend)
+	// Validate LayeredChangeMemory is provided
+	if args.LayeredChangeMemory == nil {
+		return nil, fmt.Errorf("layered_change_memory is required")
+	}
+
+	// Validate LayeredChangeMemory fields
+	if args.LayeredChangeMemory.Summary == "" {
+		return nil, fmt.Errorf("layered_change_memory.summary is required")
+	}
+
+	result, err := GitCommit(args.AppName, args.Message, args.Amend, args.LayeredChangeMemory)
 	if err != nil {
 		return nil, err
 	}
