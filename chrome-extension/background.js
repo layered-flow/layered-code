@@ -157,11 +157,27 @@ async function refreshMatchingTabs(filename) {
                 // Convert wildcard pattern to regex
                 const pattern = domain.replace(/\*/g, '.*');
                 const regex = new RegExp(pattern, 'i');
-                return regex.test(tab.url);
+                
+                // Normalize the URL for Windows paths (file:///C:/ or file://C:/)
+                let normalizedUrl = tab.url;
+                if (normalizedUrl.match(/^file:\/\/\/[A-Za-z]:\//)) {
+                  // Already in correct format
+                } else if (normalizedUrl.match(/^file:\/\/[A-Za-z]:\//)) {
+                  // Convert file://C:/ to file:///C:/
+                  normalizedUrl = normalizedUrl.replace(/^file:\/\//, 'file:///');
+                }
+                
+                return regex.test(normalizedUrl);
               }
               
               // Check if URL contains the domain string
-              return tab.url.toLowerCase().includes(domainLower);
+              // Normalize Windows paths for comparison
+              let normalizedUrl = tab.url.toLowerCase();
+              if (normalizedUrl.match(/^file:\/\/[A-Za-z]:\//)) {
+                normalizedUrl = normalizedUrl.replace(/^file:\/\//, 'file:///');
+              }
+              
+              return normalizedUrl.includes(domainLower);
             });
             console.log(`File URL ${tab.url} - shouldRefresh: ${shouldRefresh}`);
           } else {
