@@ -31,7 +31,7 @@ func TestCheckout(t *testing.T) {
 		runGitCommand(t, repo, "checkout", defaultBranch)
 		
 		// Use our checkout function
-		output, err := Checkout(repo, "feature-branch", false, nil)
+		output, err := Checkout(repo, "feature-branch", false, nil, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "Successfully checked out branch/commit 'feature-branch'")
 		assert.Contains(t, output, "Current branch: feature-branch")
@@ -48,7 +48,7 @@ func TestCheckout(t *testing.T) {
 		repo := setupTestRepo(t)
 		
 		// Create new branch
-		output, err := Checkout(repo, "new-feature", true, nil)
+		output, err := Checkout(repo, "new-feature", true, nil, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "Successfully checked out new branch 'new-feature'")
 		assert.Contains(t, output, "Current branch: new-feature")
@@ -72,7 +72,7 @@ func TestCheckout(t *testing.T) {
 		runGitCommand(t, repo, "commit", "-m", "Second commit")
 		
 		// Checkout first commit
-		output, err := Checkout(repo, firstCommit, false, nil)
+		output, err := Checkout(repo, firstCommit, false, nil, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, fmt.Sprintf("Successfully checked out branch/commit '%s'", firstCommit))
 		assert.Contains(t, output, "HEAD is now at")
@@ -95,7 +95,7 @@ func TestCheckout(t *testing.T) {
 		writeTestFile(t, repo, "file1.txt", "modified")
 		
 		// Checkout file from HEAD
-		output, err := Checkout(repo, "", false, []string{"file1.txt"})
+		output, err := Checkout(repo, "", false, []string{"file1.txt"}, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "Successfully checked out files from HEAD")
 		
@@ -121,7 +121,7 @@ func TestCheckout(t *testing.T) {
 		runGitCommand(t, repo, "commit", "-m", "Second commit")
 		
 		// Checkout file1 from first commit
-		output, err := Checkout(repo, firstCommit, false, []string{"file1.txt"})
+		output, err := Checkout(repo, firstCommit, false, []string{"file1.txt"}, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, fmt.Sprintf("Successfully checked out files from %s", firstCommit))
 		
@@ -148,7 +148,7 @@ func TestCheckout(t *testing.T) {
 		writeTestFile(t, repo, "file3.txt", "modified3")
 		
 		// Checkout only file1 and file2
-		output, err := Checkout(repo, "", false, []string{"file1.txt", "file2.txt"})
+		output, err := Checkout(repo, "", false, []string{"file1.txt", "file2.txt"}, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "Successfully checked out files from HEAD")
 		
@@ -160,23 +160,23 @@ func TestCheckout(t *testing.T) {
 
 	t.Run("error cases", func(t *testing.T) {
 		// Missing app name
-		_, err := Checkout("", "main", false, nil)
+		_, err := Checkout("", "main", false, nil, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "app_name is required")
 		
 		// No target or files
-		_, err = Checkout("test-app", "", false, nil)
+		_, err = Checkout("test-app", "", false, nil, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "either target branch/commit or files must be specified")
 		
 		// Non-existent branch
 		repo := setupTestRepo(t)
-		_, err = Checkout(repo, "non-existent-branch", false, nil)
+		_, err = Checkout(repo, "non-existent-branch", false, nil, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "git checkout failed")
 		
 		// Non-existent file
-		_, err = Checkout(repo, "", false, []string{"non-existent.txt"})
+		_, err = Checkout(repo, "", false, []string{"non-existent.txt"}, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "git checkout failed")
 	})

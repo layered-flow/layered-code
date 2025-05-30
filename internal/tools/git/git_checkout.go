@@ -14,7 +14,7 @@ import (
 )
 
 // Checkout switches branches or restores working tree files
-func Checkout(appName, target string, isNewBranch bool, files []string) (string, error) {
+func Checkout(appName, target string, isNewBranch bool, files []string, lcmParams *LayeredChangeMemoryParams) (string, error) {
 	if appName == "" {
 		return "", fmt.Errorf("app_name is required")
 	}
@@ -98,6 +98,40 @@ func Checkout(appName, target string, isNewBranch bool, files []string) (string,
 		if statusOutput, err := statusCmd.CombinedOutput(); err == nil && len(statusOutput) > 0 {
 			result += fmt.Sprintf("\n\nFile status:\n%s", string(statusOutput))
 		}
+		
+		// Create LayeredChangeMemory entry if parameters provided and we're restoring files
+		if lcmParams != nil {
+			// Get the current HEAD commit hash for the LCM entry
+			hashCmd := exec.Command("git", "rev-parse", "HEAD")
+			hashCmd.Dir = repoPath
+			hashOutput, err := hashCmd.Output()
+			if err == nil {
+				currentCommitHash := strings.TrimSpace(string(hashOutput))[:7] // Short hash
+				var message string
+				if target != "" && target != "HEAD" {
+					message = fmt.Sprintf("Restored %d file(s) from %s", len(files), target)
+				} else {
+					message = fmt.Sprintf("Restored %d file(s) from HEAD", len(files))
+				}
+				
+				entry, err := GenerateLayeredChangeMemoryEntry(
+					repoPath,
+					currentCommitHash,
+					message,
+					lcmParams.Summary,
+					lcmParams.Considerations,
+					lcmParams.FollowUp,
+				)
+				
+				if err == nil {
+					// Append to the LayeredChangeMemory log
+					if err := AppendLayeredChangeMemoryEntry(repoPath, entry); err != nil {
+						// Log the error but don't fail the checkout
+						fmt.Fprintf(os.Stderr, "Warning: Failed to write LayeredChangeMemory entry: %v\n", err)
+					}
+				}
+			}
+		}
 	}
 
 	return result, nil
@@ -142,7 +176,8 @@ func GitCheckoutCli() error {
 			files = args[filesIndex+1:]
 		}
 		
-		result, err := Checkout(appName, target, false, files)
+		// For CLI, we don't support LayeredChangeMemory parameters
+		result, err := Checkout(appName, target, false, files, nil)
 		if err != nil {
 			return fmt.Errorf("failed to checkout files: %w", err)
 		}
@@ -156,7 +191,8 @@ func GitCheckoutCli() error {
 			isNewBranch = true
 		}
 		
-		result, err := Checkout(appName, target, isNewBranch, nil)
+		// For CLI, we don't support LayeredChangeMemory parameters
+		result, err := Checkout(appName, target, isNewBranch, nil, nil)
 		if err != nil {
 			return fmt.Errorf("failed to checkout: %w", err)
 		}
@@ -169,10 +205,11 @@ func GitCheckoutCli() error {
 // MCP
 func GitCheckoutMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName     string   `json:"app_name"`
-		Target      string   `json:"target,omitempty"`
-		IsNewBranch bool     `json:"is_new_branch,omitempty"`
-		Files       []string `json:"files,omitempty"`
+		AppName               string                    `json:"app_name"`
+		Target                string                    `json:"target,omitempty"`
+		IsNewBranch           bool                      `json:"is_new_branch,omitempty"`
+		Files                 []string                  `json:"files,omitempty"`
+		LayeredChangeMemory   *LayeredChangeMemoryParams `json:"layered_change_memory,omitempty"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
@@ -184,7 +221,17 @@ func GitCheckoutMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.Call
 		return nil, fmt.Errorf("either target branch/commit or files must be specified")
 	}
 
-	result, err := Checkout(args.AppName, args.Target, args.IsNewBranch, args.Files)
+	// Validate LayeredChangeMemory is provided when restoring files
+	if len(args.Files) > 0 && args.LayeredChangeMemory == nil {
+		return nil, fmt.Errorf("layered_change_memory is required when restoring files")
+	}
+
+	// Validate LayeredChangeMemory fields when provided
+	if args.LayeredChangeMemory != nil && args.LayeredChangeMemory.Summary == "" {
+		return nil, fmt.Errorf("layered_change_memory.summary is required")
+	}
+
+	result, err := Checkout(args.AppName, args.Target, args.IsNewBranch, args.Files, args.LayeredChangeMemory)
 	if err != nil {
 		return nil, err
 	}

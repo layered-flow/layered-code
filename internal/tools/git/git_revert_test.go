@@ -23,7 +23,7 @@ func TestRevert(t *testing.T) {
 		commitToRevert := getCommitHash(t, repo)
 		
 		// Revert the commit
-		output, err := Revert(repo, commitToRevert, false)
+		output, err := Revert(repo, commitToRevert, false, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "Successfully created revert commit")
 		assert.Contains(t, output, "New commit:")
@@ -52,7 +52,7 @@ func TestRevert(t *testing.T) {
 		commitToRevert := getCommitHash(t, repo)
 		
 		// Revert without committing
-		output, err := Revert(repo, commitToRevert, true)
+		output, err := Revert(repo, commitToRevert, true, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "changes staged but not committed")
 		
@@ -82,7 +82,7 @@ func TestRevert(t *testing.T) {
 		commitToRevert := getCommitHash(t, repo)
 		
 		// Revert
-		output, err := Revert(repo, commitToRevert, false)
+		output, err := Revert(repo, commitToRevert, false, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "Successfully created revert commit")
 		
@@ -95,12 +95,12 @@ func TestRevert(t *testing.T) {
 
 	t.Run("error cases", func(t *testing.T) {
 		// Missing app name
-		_, err := Revert("", "abc123", false)
+		_, err := Revert("", "abc123", false, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "app_name is required")
 		
 		// Missing commit hash
-		_, err = Revert("test-app", "", false)
+		_, err = Revert("test-app", "", false, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "commit_hash is required")
 		
@@ -110,7 +110,7 @@ func TestRevert(t *testing.T) {
 		runGitCommand(t, repo, "add", "file1.txt")
 		runGitCommand(t, repo, "commit", "-m", "Initial")
 		
-		_, err = Revert(repo, "invalid-hash", false)
+		_, err = Revert(repo, "invalid-hash", false, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "git revert failed")
 	})

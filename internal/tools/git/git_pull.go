@@ -23,7 +23,7 @@ type GitPullResult struct {
 }
 
 // GitPull pulls changes from remote repository
-func GitPull(appName string, remote string, branch string, rebase bool) (GitPullResult, error) {
+func GitPull(appName string, remote string, branch string, rebase bool, lcmParams *LayeredChangeMemoryParams) (GitPullResult, error) {
 	if err := EnsureGitAvailable(); err != nil {
 		return GitPullResult{}, err
 	}
@@ -90,6 +90,41 @@ func GitPull(appName string, remote string, branch string, rebase bool) (GitPull
 	// Check if repository was updated
 	updated := !strings.Contains(outputStr, "Already up to date")
 
+	// Create LayeredChangeMemory entry if parameters provided and we pulled changes
+	if lcmParams != nil && updated {
+		// Get the current HEAD commit hash for the LCM entry
+		hashCmd := exec.Command("git", "rev-parse", "HEAD")
+		hashCmd.Dir = appPath
+		hashOutput, err := hashCmd.Output()
+		if err == nil {
+			currentCommitHash := strings.TrimSpace(string(hashOutput))[:7] // Short hash
+			message := fmt.Sprintf("Pulled changes from %s", remote)
+			if branch != "" {
+				message += fmt.Sprintf(" %s", branch)
+			}
+			if rebase {
+				message += " (rebase)"
+			}
+			
+			entry, err := GenerateLayeredChangeMemoryEntry(
+				appPath,
+				currentCommitHash,
+				message,
+				lcmParams.Summary,
+				lcmParams.Considerations,
+				lcmParams.FollowUp,
+			)
+			
+			if err == nil {
+				// Append to the LayeredChangeMemory log
+				if err := AppendLayeredChangeMemoryEntry(appPath, entry); err != nil {
+					// Log the error but don't fail the pull
+					fmt.Fprintf(os.Stderr, "Warning: Failed to write LayeredChangeMemory entry: %v\n", err)
+				}
+			}
+		}
+	}
+
 	return GitPullResult{
 		IsRepo:  true,
 		Success: true,
@@ -133,7 +168,8 @@ func GitPullCli() error {
 		branch = nonFlagArgs[1]
 	}
 
-	result, err := GitPull(appName, remote, branch, rebase)
+	// For CLI, we don't support LayeredChangeMemory parameters
+	result, err := GitPull(appName, remote, branch, rebase, nil)
 	if err != nil {
 		return fmt.Errorf("failed to pull: %w", err)
 	}
@@ -165,10 +201,11 @@ func GitPullCli() error {
 // MCP
 func GitPullMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName string `json:"app_name"`
-		Remote  string `json:"remote"`
-		Branch  string `json:"branch"`
-		Rebase  bool   `json:"rebase"`
+		AppName               string                    `json:"app_name"`
+		Remote                string                    `json:"remote"`
+		Branch                string                    `json:"branch"`
+		Rebase                bool                      `json:"rebase"`
+		LayeredChangeMemory   *LayeredChangeMemoryParams `json:"layered_change_memory,omitempty"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
@@ -179,7 +216,17 @@ func GitPullMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTool
 		return nil, fmt.Errorf("app_name is required")
 	}
 
-	result, err := GitPull(args.AppName, args.Remote, args.Branch, args.Rebase)
+	// Validate LayeredChangeMemory is provided
+	if args.LayeredChangeMemory == nil {
+		return nil, fmt.Errorf("layered_change_memory is required")
+	}
+
+	// Validate LayeredChangeMemory fields
+	if args.LayeredChangeMemory.Summary == "" {
+		return nil, fmt.Errorf("layered_change_memory.summary is required")
+	}
+
+	result, err := GitPull(args.AppName, args.Remote, args.Branch, args.Rebase, args.LayeredChangeMemory)
 	if err != nil {
 		return nil, err
 	}
