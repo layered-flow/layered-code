@@ -1,8 +1,7 @@
+.DS_Store
+dist/
 /layered-code
 /layered_code
-dist/
-.DS_Store
-coverage.out
 
 # Ripgrep binaries (downloaded at build time)
 third-party/ripgrep/*/*
