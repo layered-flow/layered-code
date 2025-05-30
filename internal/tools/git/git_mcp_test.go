@@ -86,3 +86,17 @@ func TestGitInitMcp(t *testing.T) {
 		t.Error("Expected error for missing app_name")
 	}
 }
+
+func TestGitShowMcp(t *testing.T) {
+	ctx := context.Background()
+	
+	// Missing app_name
+	req := mcp.CallToolRequest{}
+	req.Params.Arguments = map[string]interface{}{
+		"commit_ref": "HEAD",
+	}
+	_, err := GitShowMcp(ctx, req)
+	if err == nil {
+		t.Error("Expected error for missing app_name")
+	}
+}

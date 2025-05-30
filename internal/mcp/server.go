@@ -75,6 +75,7 @@ func registerTools(s *server.MCPServer) {
 	registerGitResetTool(s)
 	registerGitRevertTool(s)
 	registerGitCheckoutTool(s)
+	registerGitShowTool(s)
 }
 
 // registerListAppsTool registers the list_apps tool
@@ -340,4 +341,15 @@ func registerGitCheckoutTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, git.GitCheckoutMcp)
+}
+
+// registerGitShowTool registers the git_show tool
+func registerGitShowTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_show",
+		mcp.WithDescription("Show various types of objects (commits, trees, blobs) with their content (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("commit_ref", mcp.Description("Commit reference to show (hash, branch, tag, etc.). Defaults to HEAD if not specified")),
+	)
+
+	s.AddTool(tool, git.GitShowMcp)
 }
