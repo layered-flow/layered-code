@@ -36,6 +36,9 @@ func PrintUsage() {
 	fmt.Println("  tool git_pull             Fetch from and integrate with remote")
 	fmt.Println("  tool git_init             Initialize a new git repository")
 	fmt.Println("  tool git_remote           Manage git remotes (list, add, remove, rename)")
+	fmt.Println("  tool git_reset            Reset HEAD to specified state")
+	fmt.Println("  tool git_revert           Create revert commits")
+	fmt.Println("  tool git_checkout         Switch branches or restore files")
 	fmt.Println()
 	fmt.Println("  help, -h, --help          Show this help message")
 	fmt.Println("  version, -v, --version    Show version information")
@@ -88,6 +91,12 @@ func RunTool() error {
 		return git.GitInitCli()
 	case "git_remote":
 		return git.GitRemoteCli()
+	case "git_reset":
+		return git.GitResetCli()
+	case "git_revert":
+		return git.GitRevertCli()
+	case "git_checkout":
+		return git.GitCheckoutCli()
 		
 	default:
 		return fmt.Errorf("unknown tool: %s\nRun 'layered-code help' to see all available tools", subcommand)
