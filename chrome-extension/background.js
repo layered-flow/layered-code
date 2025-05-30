@@ -15,6 +15,19 @@ chrome.storage.local.get(['enabledDomains', 'autoRefreshEnabled'], (result) => {
   }
 });
 
+// Sanitize Windows paths in JSON data
+function sanitizeWindowsPaths(jsonData) {
+  // Handle unescaped backslashes in file paths
+  if (jsonData.includes('"filename":"') && jsonData.includes('\\')) {
+    jsonData = jsonData.replace(/"filename":"([^"]*?)"/g, (match, filename) => {
+      const escapedFilename = filename.replace(/\\/g, '\\\\');
+      return `"filename":"${escapedFilename}"`;
+    });
+  }
+
+  return jsonData;
+}
+
 // Connect to WebSocket server
 function connectWebSocket() {
   if (websocket && websocket.readyState === WebSocket.OPEN) {
@@ -48,20 +61,9 @@ function connectWebSocket() {
 
   websocket.onmessage = (event) => {
     try {
-      // Fix common JSON issues with Windows paths
-      let jsonData = event.data;
-
-      // Handle unescaped backslashes in file paths
-      // This is a common issue when the server doesn't properly escape Windows paths
-      if (jsonData.includes('"filename":"') && jsonData.includes('\\')) {
-        // Find the filename value and escape backslashes
-        jsonData = jsonData.replace(/"filename":"([^"]*?)"/g, (match, filename) => {
-          const escapedFilename = filename.replace(/\\/g, '\\\\');
-          return `"filename":"${escapedFilename}"`;
-        });
-      }
-
+      const jsonData = sanitizeWindowsPaths(event.data);
       const data = JSON.parse(jsonData);
+
       if (data.type === 'file-changed' && autoRefreshEnabled) {
         console.log('File changed:', data.filename, 'Action:', data.action);
         refreshMatchingTabs(data.filename);
@@ -111,6 +113,25 @@ function clearRecentlyRefreshed(tabId) {
   }, 2000); // Clear after 2 seconds
 }
 
+// Check if a URL matches any enabled domain
+function shouldRefreshUrl(url) {
+  const urlLower = url.toLowerCase();
+
+  return enabledDomains.some(domain => {
+    const domainLower = domain.toLowerCase();
+
+    // Handle wildcard patterns
+    if (domain.includes('*')) {
+      const pattern = domainLower.replace(/\*/g, '.*');
+      const regex = new RegExp(pattern, 'i');
+      return regex.test(urlLower);
+    }
+
+    // Simple string matching for all other cases
+    return urlLower.includes(domainLower);
+  });
+}
+
 // Refresh tabs that match the enabled domains
 async function refreshMatchingTabs(filename) {
   try {
@@ -133,34 +154,11 @@ async function refreshMatchingTabs(filename) {
           continue;
         }
 
-        try {
-          const url = new URL(tab.url);
-          let shouldRefresh = false;
-
-          // Handle file:// URLs
-          if (url.protocol === 'file:') {
-            // Check if any enabled domain is 'file://' or contains the file path
-            shouldRefresh = enabledDomains.some(domain =>
-              domain.toLowerCase() === 'file://' ||
-              domain.toLowerCase() === 'file' ||
-              tab.url.includes(domain)
-            );
-            console.log(`File URL ${tab.url} - shouldRefresh: ${shouldRefresh}`);
-          } else {
-            // Handle http/https URLs
-            const hostname = url.hostname;
-            shouldRefresh = enabledDomains.some(domain => hostname.includes(domain));
-            console.log(`Web URL ${tab.url} (hostname: ${hostname}) - shouldRefresh: ${shouldRefresh}`);
-          }
-
-          if (shouldRefresh) {
-            console.log(`Refreshing tab: ${tab.title} (${tab.url})`);
-            recentlyRefreshedTabs.add(tab.id);
-            clearRecentlyRefreshed(tab.id);
-            await chrome.tabs.reload(tab.id);
-          }
-        } catch (err) {
-          console.error(`Error processing URL ${tab.url}:`, err);
+        if (shouldRefreshUrl(tab.url)) {
+          console.log(`Refreshing tab: ${tab.title} (${tab.url})`);
+          recentlyRefreshedTabs.add(tab.id);
+          clearRecentlyRefreshed(tab.id);
+          await chrome.tabs.reload(tab.id);
         }
       }
     }, 100); // 100ms debounce
