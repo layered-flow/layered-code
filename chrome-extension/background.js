@@ -24,7 +24,7 @@ function sanitizeWindowsPaths(jsonData) {
       return `"filename":"${escapedFilename}"`;
     });
   }
-  
+
   return jsonData;
 }
 
@@ -63,7 +63,7 @@ function connectWebSocket() {
     try {
       const jsonData = sanitizeWindowsPaths(event.data);
       const data = JSON.parse(jsonData);
-      
+
       if (data.type === 'file-changed' && autoRefreshEnabled) {
         console.log('File changed:', data.filename, 'Action:', data.action);
         refreshMatchingTabs(data.filename);
@@ -113,6 +113,25 @@ function clearRecentlyRefreshed(tabId) {
   }, 2000); // Clear after 2 seconds
 }
 
+// Check if a URL matches any enabled domain
+function shouldRefreshUrl(url) {
+  const urlLower = url.toLowerCase();
+
+  return enabledDomains.some(domain => {
+    const domainLower = domain.toLowerCase();
+
+    // Handle wildcard patterns
+    if (domain.includes('*')) {
+      const pattern = domainLower.replace(/\*/g, '.*');
+      const regex = new RegExp(pattern, 'i');
+      return regex.test(urlLower);
+    }
+
+    // Simple string matching for all other cases
+    return urlLower.includes(domainLower);
+  });
+}
+
 // Refresh tabs that match the enabled domains
 async function refreshMatchingTabs(filename) {
   try {
@@ -135,64 +154,11 @@ async function refreshMatchingTabs(filename) {
           continue;
         }
 
-        try {
-          const url = new URL(tab.url);
-          let shouldRefresh = false;
-
-          // Handle file:// URLs
-          if (url.protocol === 'file:') {
-            // Check if any enabled domain matches the file path
-            shouldRefresh = enabledDomains.some(domain => {
-              const domainLower = domain.toLowerCase();
-              
-              // Check for exact matches
-              if (domainLower === 'file://' || domainLower === 'file') {
-                return true;
-              }
-              
-              // Handle wildcard patterns (e.g., 'LayeredApps/*')
-              if (domain.includes('*')) {
-                // Convert wildcard pattern to regex
-                const pattern = domain.replace(/\*/g, '.*');
-                const regex = new RegExp(pattern, 'i');
-                
-                // Normalize the URL for Windows paths (file:///C:/ or file://C:/)
-                let normalizedUrl = tab.url;
-                if (normalizedUrl.match(/^file:\/\/\/[A-Za-z]:\//)) {
-                  // Already in correct format
-                } else if (normalizedUrl.match(/^file:\/\/[A-Za-z]:\//)) {
-                  // Convert file://C:/ to file:///C:/
-                  normalizedUrl = normalizedUrl.replace(/^file:\/\//, 'file:///');
-                }
-                
-                return regex.test(normalizedUrl);
-              }
-              
-              // Check if URL contains the domain string
-              // Normalize Windows paths for comparison
-              let normalizedUrl = tab.url.toLowerCase();
-              if (normalizedUrl.match(/^file:\/\/[A-Za-z]:\//)) {
-                normalizedUrl = normalizedUrl.replace(/^file:\/\//, 'file:///');
-              }
-              
-              return normalizedUrl.includes(domainLower);
-            });
-            console.log(`File URL ${tab.url} - shouldRefresh: ${shouldRefresh}`);
-          } else {
-            // Handle http/https URLs
-            const hostname = url.hostname;
-            shouldRefresh = enabledDomains.some(domain => hostname.includes(domain));
-            console.log(`Web URL ${tab.url} (hostname: ${hostname}) - shouldRefresh: ${shouldRefresh}`);
-          }
-
-          if (shouldRefresh) {
-            console.log(`Refreshing tab: ${tab.title} (${tab.url})`);
-            recentlyRefreshedTabs.add(tab.id);
-            clearRecentlyRefreshed(tab.id);
-            await chrome.tabs.reload(tab.id);
-          }
-        } catch (err) {
-          console.error(`Error processing URL ${tab.url}:`, err);
+        if (shouldRefreshUrl(tab.url)) {
+          console.log(`Refreshing tab: ${tab.title} (${tab.url})`);
+          recentlyRefreshedTabs.add(tab.id);
+          clearRecentlyRefreshed(tab.id);
+          await chrome.tabs.reload(tab.id);
         }
       }
     }, 100); // 100ms debounce
