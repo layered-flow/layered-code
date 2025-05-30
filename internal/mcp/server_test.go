@@ -21,6 +21,22 @@ func TestRegisterFunctions(t *testing.T) {
 		{"registerReadFileTool", registerReadFileTool},
 		{"registerWriteFileTool", registerWriteFileTool},
 		{"registerEditFileTool", registerEditFileTool},
+		{"registerGitStatusTool", registerGitStatusTool},
+		{"registerGitDiffTool", registerGitDiffTool},
+		{"registerGitCommitTool", registerGitCommitTool},
+		{"registerGitLogTool", registerGitLogTool},
+		{"registerGitBranchTool", registerGitBranchTool},
+		{"registerGitAddTool", registerGitAddTool},
+		{"registerGitRestoreTool", registerGitRestoreTool},
+		{"registerGitStashTool", registerGitStashTool},
+		{"registerGitPushTool", registerGitPushTool},
+		{"registerGitPullTool", registerGitPullTool},
+		{"registerGitInitTool", registerGitInitTool},
+		{"registerGitRemoteTool", registerGitRemoteTool},
+		{"registerGitResetTool", registerGitResetTool},
+		{"registerGitRevertTool", registerGitRevertTool},
+		{"registerGitCheckoutTool", registerGitCheckoutTool},
+		{"registerGitShowTool", registerGitShowTool},
 	}
 
 	for _, tt := range tests {
