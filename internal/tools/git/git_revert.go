@@ -14,7 +14,7 @@ import (
 )
 
 // Revert creates a revert commit that undoes changes from a previous commit
-func Revert(appName, commitHash string, noCommit bool) (string, error) {
+func Revert(appName, commitHash string, noCommit bool, lcmParams *LayeredChangeMemoryParams) (string, error) {
 	if appName == "" {
 		return "", fmt.Errorf("app_name is required")
 	}
@@ -71,6 +71,35 @@ func Revert(appName, commitHash string, noCommit bool) (string, error) {
 		if diffOutput, err := diffCmd.CombinedOutput(); err == nil && len(diffOutput) > 0 {
 			result += fmt.Sprintf("\n\nChanges reverted:\n%s", string(diffOutput))
 		}
+		
+		// Create LayeredChangeMemory entry if parameters provided and commit was created
+		if lcmParams != nil && !noCommit {
+			// Get the new HEAD commit hash for the LCM entry
+			hashCmd := exec.Command("git", "rev-parse", "HEAD")
+			hashCmd.Dir = repoPath
+			hashOutput, err := hashCmd.Output()
+			if err == nil {
+				newCommitHash := strings.TrimSpace(string(hashOutput))[:7] // Short hash
+				message := fmt.Sprintf("Revert \"%s\"", commitHash)
+				
+				entry, err := GenerateLayeredChangeMemoryEntry(
+					repoPath,
+					newCommitHash,
+					message,
+					lcmParams.Summary,
+					lcmParams.Considerations,
+					lcmParams.FollowUp,
+				)
+				
+				if err == nil {
+					// Append to the LayeredChangeMemory log
+					if err := AppendLayeredChangeMemoryEntry(repoPath, entry); err != nil {
+						// Log the error but don't fail the revert
+						fmt.Fprintf(os.Stderr, "Warning: Failed to write LayeredChangeMemory entry: %v\n", err)
+					}
+				}
+			}
+		}
 	}
 
 	return result, nil
@@ -92,7 +121,8 @@ func GitRevertCli() error {
 		noCommit = true
 	}
 
-	result, err := Revert(appName, commitHash, noCommit)
+	// For CLI, we don't support LayeredChangeMemory parameters
+	result, err := Revert(appName, commitHash, noCommit, nil)
 	if err != nil {
 		return fmt.Errorf("failed to revert: %w", err)
 	}
@@ -104,16 +134,27 @@ func GitRevertCli() error {
 // MCP
 func GitRevertMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName    string `json:"app_name"`
-		CommitHash string `json:"commit_hash"`
-		NoCommit   bool   `json:"no_commit,omitempty"`
+		AppName               string                    `json:"app_name"`
+		CommitHash            string                    `json:"commit_hash"`
+		NoCommit              bool                      `json:"no_commit,omitempty"`
+		LayeredChangeMemory   *LayeredChangeMemoryParams `json:"layered_change_memory,omitempty"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
 		return nil, fmt.Errorf("invalid parameters: %w", err)
 	}
 
-	result, err := Revert(args.AppName, args.CommitHash, args.NoCommit)
+	// Validate LayeredChangeMemory is provided when creating a commit
+	if !args.NoCommit && args.LayeredChangeMemory == nil {
+		return nil, fmt.Errorf("layered_change_memory is required when creating a revert commit")
+	}
+
+	// Validate LayeredChangeMemory fields when provided
+	if args.LayeredChangeMemory != nil && args.LayeredChangeMemory.Summary == "" {
+		return nil, fmt.Errorf("layered_change_memory.summary is required")
+	}
+
+	result, err := Revert(args.AppName, args.CommitHash, args.NoCommit, args.LayeredChangeMemory)
 	if err != nil {
 		return nil, err
 	}

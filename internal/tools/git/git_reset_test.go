@@ -105,7 +105,7 @@ func TestReset(t *testing.T) {
 		runGitCommand(t, repo, "commit", "-m", "Second commit")
 		
 		// Test hard reset
-		output, err := Reset(repo, initialCommit, ResetModeHard)
+		output, err := Reset(repo, initialCommit, ResetModeHard, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "Successfully reset to commit")
 		assert.Contains(t, output, "hard mode")
@@ -130,7 +130,7 @@ func TestReset(t *testing.T) {
 		runGitCommand(t, repo, "commit", "-m", "Second commit")
 		
 		// Soft reset
-		output, err := Reset(repo, initialCommit, ResetModeSoft)
+		output, err := Reset(repo, initialCommit, ResetModeSoft, nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "soft mode")
 		
@@ -154,7 +154,7 @@ func TestReset(t *testing.T) {
 		runGitCommand(t, repo, "commit", "-m", "Second commit")
 		
 		// Mixed reset (default)
-		output, err := Reset(repo, initialCommit, "")
+		output, err := Reset(repo, initialCommit, "", nil)
 		require.NoError(t, err)
 		assert.Contains(t, output, "mixed mode")
 		
@@ -165,23 +165,23 @@ func TestReset(t *testing.T) {
 
 	t.Run("error cases", func(t *testing.T) {
 		// Missing app name
-		_, err := Reset("", "abc123", ResetModeHard)
+		_, err := Reset("", "abc123", ResetModeHard, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "app_name is required")
 		
 		// Missing commit hash
-		_, err = Reset("test-app", "", ResetModeHard)
+		_, err = Reset("test-app", "", ResetModeHard, nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "commit_hash is required")
 		
 		// Invalid mode
-		_, err = Reset("test-app", "abc123", "invalid")
+		_, err = Reset("test-app", "abc123", "invalid", nil)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid reset mode")
 		
 		// Invalid commit hash
 		repo := setupTestRepo(t)
-		_, err = Reset(repo, "invalid-hash", ResetModeHard)
+		_, err = Reset(repo, "invalid-hash", ResetModeHard, nil)
 		assert.Error(t, err)
 	})
 }

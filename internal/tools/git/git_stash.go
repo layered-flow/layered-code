@@ -28,7 +28,7 @@ type GitStashResult struct {
 }
 
 // GitStash manages git stash in the specified app directory
-func GitStash(appName string, action string, message string) (GitStashResult, error) {
+func GitStash(appName string, action string, message string, lcmParams *LayeredChangeMemoryParams) (GitStashResult, error) {
 	if err := EnsureGitAvailable(); err != nil {
 		return GitStashResult{}, err
 	}
@@ -80,6 +80,38 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		} else {
 			result.Success = true
 			result.Message = "Changes stashed successfully"
+			
+			// Create LayeredChangeMemory entry if parameters provided
+			if lcmParams != nil {
+				// Get the current HEAD commit hash for the LCM entry
+				hashCmd := exec.Command("git", "rev-parse", "HEAD")
+				hashCmd.Dir = appPath
+				hashOutput, err := hashCmd.Output()
+				if err == nil {
+					currentCommitHash := strings.TrimSpace(string(hashOutput))[:7] // Short hash
+					stashMessage := "Stashed changes"
+					if message != "" {
+						stashMessage = fmt.Sprintf("Stashed changes: %s", message)
+					}
+					
+					entry, err := GenerateLayeredChangeMemoryEntry(
+						appPath,
+						currentCommitHash,
+						stashMessage,
+						lcmParams.Summary,
+						lcmParams.Considerations,
+						lcmParams.FollowUp,
+					)
+					
+					if err == nil {
+						// Append to the LayeredChangeMemory log
+						if err := AppendLayeredChangeMemoryEntry(appPath, entry); err != nil {
+							// Log the error but don't fail the stash
+							fmt.Fprintf(os.Stderr, "Warning: Failed to write LayeredChangeMemory entry: %v\n", err)
+						}
+					}
+				}
+			}
 		}
 
 	case "pop":
@@ -93,6 +125,34 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		} else {
 			result.Success = true
 			result.Message = "Stash applied and removed"
+			
+			// Create LayeredChangeMemory entry if parameters provided
+			if lcmParams != nil {
+				// Get the current HEAD commit hash for the LCM entry
+				hashCmd := exec.Command("git", "rev-parse", "HEAD")
+				hashCmd.Dir = appPath
+				hashOutput, err := hashCmd.Output()
+				if err == nil {
+					currentCommitHash := strings.TrimSpace(string(hashOutput))[:7] // Short hash
+					
+					entry, err := GenerateLayeredChangeMemoryEntry(
+						appPath,
+						currentCommitHash,
+						"Popped stash",
+						lcmParams.Summary,
+						lcmParams.Considerations,
+						lcmParams.FollowUp,
+					)
+					
+					if err == nil {
+						// Append to the LayeredChangeMemory log
+						if err := AppendLayeredChangeMemoryEntry(appPath, entry); err != nil {
+							// Log the error but don't fail the pop
+							fmt.Fprintf(os.Stderr, "Warning: Failed to write LayeredChangeMemory entry: %v\n", err)
+						}
+					}
+				}
+			}
 		}
 
 	case "apply":
@@ -180,7 +240,8 @@ func GitStashCli() error {
 		}
 	}
 
-	result, err := GitStash(appName, action, message)
+	// For CLI, we don't support LayeredChangeMemory parameters
+	result, err := GitStash(appName, action, message, nil)
 	if err != nil {
 		return fmt.Errorf("failed to manage stash: %w", err)
 	}
@@ -216,9 +277,10 @@ func GitStashCli() error {
 // MCP
 func GitStashMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName string `json:"app_name"`
-		Action  string `json:"action"`
-		Message string `json:"message"`
+		AppName               string                    `json:"app_name"`
+		Action                string                    `json:"action"`
+		Message               string                    `json:"message"`
+		LayeredChangeMemory   *LayeredChangeMemoryParams `json:"layered_change_memory,omitempty"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
@@ -234,7 +296,17 @@ func GitStashMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToo
 		args.Action = "list"
 	}
 
-	result, err := GitStash(args.AppName, args.Action, args.Message)
+	// Validate LayeredChangeMemory is provided for push/pop actions
+	if (args.Action == "push" || args.Action == "save" || args.Action == "pop") && args.LayeredChangeMemory == nil {
+		return nil, fmt.Errorf("layered_change_memory is required for %s action", args.Action)
+	}
+
+	// Validate LayeredChangeMemory fields when provided
+	if args.LayeredChangeMemory != nil && args.LayeredChangeMemory.Summary == "" {
+		return nil, fmt.Errorf("layered_change_memory.summary is required")
+	}
+
+	result, err := GitStash(args.AppName, args.Action, args.Message, args.LayeredChangeMemory)
 	if err != nil {
 		return nil, err
 	}

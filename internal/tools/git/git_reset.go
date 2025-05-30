@@ -23,7 +23,7 @@ const (
 )
 
 // Reset performs a git reset operation
-func Reset(appName, commitHash string, mode ResetMode) (string, error) {
+func Reset(appName, commitHash string, mode ResetMode, lcmParams *LayeredChangeMemoryParams) (string, error) {
 	if appName == "" {
 		return "", fmt.Errorf("app_name is required")
 	}
@@ -75,6 +75,35 @@ func Reset(appName, commitHash string, mode ResetMode) (string, error) {
 		result += fmt.Sprintf("\n\nNow at: %s", strings.TrimSpace(string(logOutput)))
 	}
 
+	// Create LayeredChangeMemory entry if parameters provided
+	if lcmParams != nil {
+		// Get the new HEAD commit hash for the LCM entry
+		hashCmd := exec.Command("git", "rev-parse", "HEAD")
+		hashCmd.Dir = repoPath
+		hashOutput, err := hashCmd.Output()
+		if err == nil {
+			newCommitHash := strings.TrimSpace(string(hashOutput))[:7] // Short hash
+			message := fmt.Sprintf("Reset to %s (%s mode)", commitHash, mode)
+			
+			entry, err := GenerateLayeredChangeMemoryEntry(
+				repoPath,
+				newCommitHash,
+				message,
+				lcmParams.Summary,
+				lcmParams.Considerations,
+				lcmParams.FollowUp,
+			)
+			
+			if err == nil {
+				// Append to the LayeredChangeMemory log
+				if err := AppendLayeredChangeMemoryEntry(repoPath, entry); err != nil {
+					// Log the error but don't fail the reset
+					fmt.Fprintf(os.Stderr, "Warning: Failed to write LayeredChangeMemory entry: %v\n", err)
+				}
+			}
+		}
+	}
+
 	return result, nil
 }
 
@@ -103,7 +132,8 @@ func GitResetCli() error {
 		}
 	}
 
-	result, err := Reset(appName, commitHash, mode)
+	// For CLI, we don't support LayeredChangeMemory parameters
+	result, err := Reset(appName, commitHash, mode, nil)
 	if err != nil {
 		return fmt.Errorf("failed to reset: %w", err)
 	}
@@ -115,9 +145,10 @@ func GitResetCli() error {
 // MCP
 func GitResetMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName    string `json:"app_name"`
-		CommitHash string `json:"commit_hash"`
-		Mode       string `json:"mode,omitempty"`
+		AppName               string                    `json:"app_name"`
+		CommitHash            string                    `json:"commit_hash"`
+		Mode                  string                    `json:"mode,omitempty"`
+		LayeredChangeMemory   *LayeredChangeMemoryParams `json:"layered_change_memory,omitempty"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
@@ -139,7 +170,17 @@ func GitResetMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToo
 		}
 	}
 
-	result, err := Reset(args.AppName, args.CommitHash, mode)
+	// Validate LayeredChangeMemory is provided
+	if args.LayeredChangeMemory == nil {
+		return nil, fmt.Errorf("layered_change_memory is required")
+	}
+
+	// Validate LayeredChangeMemory fields
+	if args.LayeredChangeMemory.Summary == "" {
+		return nil, fmt.Errorf("layered_change_memory.summary is required")
+	}
+
+	result, err := Reset(args.AppName, args.CommitHash, mode, args.LayeredChangeMemory)
 	if err != nil {
 		return nil, err
 	}

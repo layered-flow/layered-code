@@ -18,7 +18,7 @@ func TestGitStash(t *testing.T) {
 	os.MkdirAll(testAppPath, 0755)
 
 	// Non-git repo
-	result, err := GitStash(testApp, "push", "")
+	result, err := GitStash(testApp, "push", "", nil)
 	if err != nil {
 		t.Fatalf("GitStash failed: %v", err)
 	}
@@ -45,7 +45,7 @@ func TestGitStash(t *testing.T) {
 	cmd.Run()
 
 	// List empty stash
-	result, err = GitStash(testApp, "list", "")
+	result, err = GitStash(testApp, "list", "", nil)
 	if err != nil {
 		t.Fatalf("GitStash list failed: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestGitStash(t *testing.T) {
 	os.WriteFile(testFile, []byte("modified"), 0644)
 
 	// Push stash
-	result, err = GitStash(testApp, "push", "test stash")
+	result, err = GitStash(testApp, "push", "test stash", nil)
 	if err != nil {
 		t.Fatalf("GitStash push failed: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestGitStash(t *testing.T) {
 	}
 
 	// Pop stash
-	result, err = GitStash(testApp, "pop", "")
+	result, err = GitStash(testApp, "pop", "", nil)
 	if err != nil {
 		t.Fatalf("GitStash pop failed: %v", err)
 	}
