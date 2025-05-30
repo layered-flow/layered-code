@@ -40,6 +40,11 @@ func PrintUsage() {
 	fmt.Println("  tool git_revert           Create revert commits")
 	fmt.Println("  tool git_checkout         Switch branches or restore files")
 	fmt.Println()
+	fmt.Println("  Layered Change Memory Tools:")
+	fmt.Println("  tool lcm_list             List layered change memory entries")
+	fmt.Println("  tool lcm_read             Read a specific layered change memory entry")
+	fmt.Println("  tool lcm_search           Search layered change memory entries")
+	fmt.Println()
 	fmt.Println("  help, -h, --help          Show this help message")
 	fmt.Println("  version, -v, --version    Show version information")
 }
@@ -97,6 +102,12 @@ func RunTool() error {
 		return git.GitRevertCli()
 	case "git_checkout":
 		return git.GitCheckoutCli()
+	case "lcm_list":
+		return tools.LcmListCli()
+	case "lcm_read":
+		return tools.LcmReadCli()
+	case "lcm_search":
+		return tools.LcmSearchCli()
 		
 	default:
 		return fmt.Errorf("unknown tool: %s\nRun 'layered-code help' to see all available tools", subcommand)

@@ -58,7 +58,7 @@ func registerTools(s *server.MCPServer) {
 	registerReadFileTool(s)
 	registerWriteFileTool(s)
 	registerEditFileTool(s)
-	
+
 	// Git tools
 	registerGitStatusTool(s)
 	registerGitDiffTool(s)
@@ -76,6 +76,11 @@ func registerTools(s *server.MCPServer) {
 	registerGitRevertTool(s)
 	registerGitCheckoutTool(s)
 	registerGitShowTool(s)
+
+	// Register LCM tools
+	registerLcmListTool(s)
+	registerLcmReadTool(s)
+	registerLcmSearchTool(s)
 }
 
 // registerListAppsTool registers the list_apps tool
@@ -353,4 +358,39 @@ func registerGitShowTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, git.GitShowMcp)
+}
+
+// registerLcmListTool registers the lcm_list tool
+func registerLcmListTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lcm_list",
+		mcp.WithDescription("List layered change memory entries for an app"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+	)
+
+	s.AddTool(tool, tools.LcmListMcp)
+}
+
+// registerLcmReadTool registers the lcm_read tool
+func registerLcmReadTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lcm_read",
+		mcp.WithDescription("Read a specific layered change memory entry"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithNumber("index", mcp.Required(), mcp.Description("Index of the LCM entry to read (0-based)")),
+	)
+
+	s.AddTool(tool, tools.LcmReadMcp)
+}
+
+// registerLcmSearchTool registers the lcm_search tool
+func registerLcmSearchTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lcm_search",
+		mcp.WithDescription("Search through layered change memory entries"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("pattern", mcp.Required(), mcp.Description("Search pattern to look for in LCM entries")),
+		mcp.WithBoolean("case_sensitive", mcp.Description("Whether to perform case-sensitive search (default: false)")),
+		mcp.WithNumber("max_results", mcp.Description("Maximum number of results to return (default: 50)")),
+		mcp.WithString("field_filter", mcp.Description("Search only in specific fields: all, summary, considerations, follow_up, commit_message (default: all)")),
+	)
+
+	s.AddTool(tool, tools.LcmSearchMcp)
 }
