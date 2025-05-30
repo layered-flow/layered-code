@@ -72,6 +72,9 @@ func registerTools(s *server.MCPServer) {
 	registerGitPullTool(s)
 	registerGitInitTool(s)
 	registerGitRemoteTool(s)
+	registerGitResetTool(s)
+	registerGitRevertTool(s)
+	registerGitCheckoutTool(s)
 }
 
 // registerListAppsTool registers the list_apps tool
@@ -300,4 +303,41 @@ func registerGitRemoteTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, git.GitRemoteMcp)
+}
+
+// registerGitResetTool registers the git_reset tool
+func registerGitResetTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_reset",
+		mcp.WithDescription("Reset current HEAD to the specified state (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("commit_hash", mcp.Required(), mcp.Description("Commit hash to reset to")),
+		mcp.WithString("mode", mcp.Description("Reset mode: 'soft', 'mixed' (default), or 'hard'")),
+	)
+
+	s.AddTool(tool, git.GitResetMcp)
+}
+
+// registerGitRevertTool registers the git_revert tool
+func registerGitRevertTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_revert",
+		mcp.WithDescription("Create a new commit that undoes changes from a previous commit (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("commit_hash", mcp.Required(), mcp.Description("Commit hash to revert")),
+		mcp.WithBoolean("no_commit", mcp.Description("Don't create a commit, just stage the changes")),
+	)
+
+	s.AddTool(tool, git.GitRevertMcp)
+}
+
+// registerGitCheckoutTool registers the git_checkout tool
+func registerGitCheckoutTool(s *server.MCPServer) {
+	tool := mcp.NewTool("git_checkout",
+		mcp.WithDescription("Switch branches or restore working tree files (requires git to be installed)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("target", mcp.Description("Branch name or commit hash to checkout")),
+		mcp.WithBoolean("is_new_branch", mcp.Description("Create a new branch with the given name")),
+		mcp.WithObject("files", mcp.Description("List of files to checkout (relative to app directory) - pass as JSON array")),
+	)
+
+	s.AddTool(tool, git.GitCheckoutMcp)
 }

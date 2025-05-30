@@ -80,3 +80,65 @@ func TestGitInitCli(t *testing.T) {
 		t.Error("Expected error for missing app name")
 	}
 }
+
+func TestGitResetCli(t *testing.T) {
+	// Missing app name
+	os.Args = []string{"layered-code", "tool", "git_reset"}
+	err := GitResetCli()
+	if err == nil || !strings.Contains(err.Error(), "requires at least 2 arguments") {
+		t.Error("Expected error for missing arguments")
+	}
+
+	// Missing commit hash
+	os.Args = []string{"layered-code", "tool", "git_reset", "app"}
+	err = GitResetCli()
+	if err == nil || !strings.Contains(err.Error(), "requires at least 2 arguments") {
+		t.Error("Expected error for missing commit hash")
+	}
+
+	// Invalid mode
+	os.Args = []string{"layered-code", "tool", "git_reset", "app", "abc123", "invalid"}
+	err = GitResetCli()
+	if err == nil || !strings.Contains(err.Error(), "invalid reset mode") {
+		t.Error("Expected error for invalid mode")
+	}
+}
+
+func TestGitRevertCli(t *testing.T) {
+	// Missing app name
+	os.Args = []string{"layered-code", "tool", "git_revert"}
+	err := GitRevertCli()
+	if err == nil || !strings.Contains(err.Error(), "requires at least 2 arguments") {
+		t.Error("Expected error for missing arguments")
+	}
+
+	// Missing commit hash
+	os.Args = []string{"layered-code", "tool", "git_revert", "app"}
+	err = GitRevertCli()
+	if err == nil || !strings.Contains(err.Error(), "requires at least 2 arguments") {
+		t.Error("Expected error for missing commit hash")
+	}
+}
+
+func TestGitCheckoutCli(t *testing.T) {
+	// Missing app name
+	os.Args = []string{"layered-code", "tool", "git_checkout"}
+	err := GitCheckoutCli()
+	if err == nil || !strings.Contains(err.Error(), "requires at least 2 arguments") {
+		t.Error("Expected error for missing arguments")
+	}
+
+	// Missing target
+	os.Args = []string{"layered-code", "tool", "git_checkout", "app"}
+	err = GitCheckoutCli()
+	if err == nil || !strings.Contains(err.Error(), "requires at least 2 arguments") {
+		t.Error("Expected error for missing target")
+	}
+
+	// Missing files after --files flag
+	os.Args = []string{"layered-code", "tool", "git_checkout", "app", "--files"}
+	err = GitCheckoutCli()
+	if err == nil || !strings.Contains(err.Error(), "--files requires at least one file") {
+		t.Error("Expected error for missing files after --files")
+	}
+}
