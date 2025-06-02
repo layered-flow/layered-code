@@ -87,7 +87,7 @@ func TestReadFile(t *testing.T) {
 
 	t.Run("path traversal attempt", func(t *testing.T) {
 		_, err := ReadFile("testapp", "../../../etc/passwd")
-		if err == nil || !strings.Contains(err.Error(), "outside app directory") {
+		if err == nil || !strings.Contains(err.Error(), "outside build directory") && !strings.Contains(err.Error(), "outside app directory") {
 			t.Error("Expected error for path traversal attempt")
 		}
 	})

@@ -107,7 +107,7 @@ func CheckForUpdate(currentVersion string) (bool, string, error) {
 		Timeout: 5 * time.Second,
 	}
 
-	resp, err := client.Get(constants.GitHubApiRepoUrl + "/releases/latest")
+	resp, err := client.Get(constants.GitHubAPIRepoURL + "/releases/latest")
 	if err != nil {
 		return false, "", err
 	}
@@ -175,9 +175,9 @@ func DisplayUpdateWarning(latestVersion string) {
 	fmt.Printf("\n⚠️  Update available: %s\n", latestVersion)
 	if runtime.GOOS == "darwin" || runtime.GOOS == "linux" {
 		fmt.Println("Update via Homebrew: brew update && brew upgrade layered-code")
-		fmt.Printf("Or download from: %s/releases/latest\n", constants.GitHubRepoUrl)
+		fmt.Printf("Or download from: %s/releases/latest\n", constants.GitHubRepoURL)
 	} else {
-		fmt.Printf("Download the latest version from: %s/releases/latest\n", constants.GitHubRepoUrl)
+		fmt.Printf("Download the latest version from: %s/releases/latest\n", constants.GitHubRepoURL)
 	}
 	fmt.Println()
 }

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/layered-flow/layered-code/internal/config"
+	"github.com/layered-flow/layered-code/internal/constants"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -61,6 +62,13 @@ func SearchText(appName, pattern string, options SearchTextOptions) (SearchTextR
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
 		return SearchTextResult{}, fmt.Errorf("app '%s' not found in apps directory", appName)
 	}
+	
+	// Use build directory if it exists, otherwise fall back to app directory
+	searchDir := appDir
+	outputDir := filepath.Join(appDir, constants.OutputDirectoryName)
+	if _, err := os.Stat(outputDir); err == nil {
+		searchDir = outputDir
+	}
 
 	// Get ripgrep binary path
 	rgPath, err := getRipgrepPath()
@@ -94,7 +102,7 @@ func SearchText(appName, pattern string, options SearchTextOptions) (SearchTextR
 	}
 
 	// Add pattern and path
-	args = append(args, "--", pattern, appDir)
+	args = append(args, "--", pattern, searchDir)
 
 	// Execute ripgrep
 	cmd := exec.Command(rgPath, args...)

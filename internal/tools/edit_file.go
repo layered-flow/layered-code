@@ -54,14 +54,29 @@ func EditFile(params EditFileParams) (EditFileResult, error) {
 		return EditFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
-	// Construct and validate the full file path
-	fullPath := filepath.Join(appsDir, params.AppName, params.FilePath)
+	// Construct app and output directories
+	appDir := filepath.Join(appsDir, params.AppName)
+	outputDir := filepath.Join(appDir, constants.OutputDirectoryName)
+	
+	// Try to find file in build directory first
+	fullPath := filepath.Join(outputDir, params.FilePath)
 	cleanPath := filepath.Clean(fullPath)
 
-	// Ensure the file is within the app directory
-	appDir := filepath.Join(appsDir, params.AppName)
-	if !config.IsWithinDirectory(cleanPath, appDir) {
-		return EditFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
+	// Ensure the file is within the build directory
+	if !config.IsWithinDirectory(cleanPath, outputDir) {
+		return EditFileResult{}, fmt.Errorf("file path attempts to access file outside build directory")
+	}
+	
+	// Check if file exists in build directory
+	if _, err := os.Stat(cleanPath); err != nil {
+		// If file not found in build directory, try app root directory
+		fullPath = filepath.Join(appDir, params.FilePath)
+		cleanPath = filepath.Clean(fullPath)
+		
+		// Ensure the file is within the app directory
+		if !config.IsWithinDirectory(cleanPath, appDir) {
+			return EditFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
+		}
 	}
 
 	// Read the file

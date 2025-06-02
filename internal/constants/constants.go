@@ -5,8 +5,8 @@ import "time"
 const (
 	// Project information
 	ProjectName      = "layered-code"
-	GitHubRepoUrl    = "https://github.com/layered-flow/layered-code"
-	GitHubApiRepoUrl = "https://api.github.com/repos/layered-flow/layered-code"
+	GitHubRepoURL    = "https://github.com/layered-flow/layered-code"
+	GitHubAPIRepoURL = "https://api.github.com/repos/layered-flow/layered-code"
 
 	// Update configuration
 	UpdateCheckInterval = 24 * time.Hour
@@ -14,6 +14,7 @@ const (
 	// Apps directory configuration
 	DefaultAppsDirectory = "LayeredApps"
 	AppsDirectoryEnvVar  = "LAYERED_APPS_DIRECTORY"
+	OutputDirectoryName  = "build"
 
 	// File permission constants
 	AppsDirectoryPerms   = 0755

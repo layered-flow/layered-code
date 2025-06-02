@@ -193,7 +193,7 @@ func TestEditFile(t *testing.T) {
 			NewString: "toor",
 		}
 		_, err := EditFile(params)
-		if err == nil || !strings.Contains(err.Error(), "outside app directory") {
+		if err == nil || !strings.Contains(err.Error(), "outside build directory") && !strings.Contains(err.Error(), "outside app directory") {
 			t.Error("Expected error for path traversal attempt")
 		}
 	})

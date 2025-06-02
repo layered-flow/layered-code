@@ -44,9 +44,16 @@ func ListFiles(appName string, pattern *string, includeLastModified, includeSize
 		return ListFilesResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 	appPath := filepath.Join(appsDir, appName)
+	outputPath := filepath.Join(appPath, constants.OutputDirectoryName)
 
 	if _, err := os.Stat(appPath); os.IsNotExist(err) {
 		return ListFilesResult{}, fmt.Errorf("app '%s' not found in apps directory", appName)
+	}
+	
+	// Use build directory if it exists, otherwise fall back to app directory
+	listPath := appPath
+	if _, err := os.Stat(outputPath); err == nil {
+		listPath = outputPath
 	}
 
 	// Validate pattern if provided
@@ -58,14 +65,14 @@ func ListFiles(appName string, pattern *string, includeLastModified, includeSize
 
 	var entries []FileEntry
 
-	err = walkWithDepth(appPath, appPath, func(path string, info os.FileInfo, currentDepth int) error {
+	err = walkWithDepth(listPath, listPath, func(path string, info os.FileInfo, currentDepth int) error {
 		// Check max depth
 		if currentDepth > constants.MaxDirectoryDepth {
 			return filepath.SkipDir
 		}
 
 		// Skip hidden files/folders (starting with .)
-		if strings.HasPrefix(info.Name(), ".") && path != appPath {
+		if strings.HasPrefix(info.Name(), ".") && path != listPath {
 			if info.IsDir() {
 				return filepath.SkipDir
 			}
@@ -77,7 +84,7 @@ func ListFiles(appName string, pattern *string, includeLastModified, includeSize
 			return nil
 		}
 
-		relPath, err := filepath.Rel(appPath, path)
+		relPath, err := filepath.Rel(listPath, path)
 		if err != nil {
 			return err
 		}

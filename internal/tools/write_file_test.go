@@ -25,13 +25,17 @@ func TestWriteFile(t *testing.T) {
 	appsDir := filepath.Join(tempDir, "apps")
 	appDir := filepath.Join(appsDir, "testapp")
 	os.MkdirAll(appDir, 0755)
+	
+	// Create build directory
+	outputDir := filepath.Join(appDir, constants.OutputDirectoryName)
+	os.MkdirAll(outputDir, 0755)
 
 	// Create an existing file for overwrite tests
-	existingFile := filepath.Join(appDir, "existing.txt")
+	existingFile := filepath.Join(outputDir, "existing.txt")
 	os.WriteFile(existingFile, []byte("old content"), 0644)
 
 	// Create a directory for conflict tests
-	os.MkdirAll(filepath.Join(appDir, "testdir"), 0755)
+	os.MkdirAll(filepath.Join(outputDir, "testdir"), 0755)
 
 	t.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
 
@@ -60,7 +64,7 @@ func TestWriteFile(t *testing.T) {
 		}
 
 		// Verify file content
-		content, _ := os.ReadFile(filepath.Join(appDir, "new.txt"))
+		content, _ := os.ReadFile(filepath.Join(outputDir, "new.txt"))
 		if string(content) != "new content" {
 			t.Errorf("File content = %q; want %q", content, "new content")
 		}
@@ -104,7 +108,7 @@ func TestWriteFile(t *testing.T) {
 		}
 
 		// Verify file exists
-		content, _ := os.ReadFile(filepath.Join(appDir, "deep/nested/file.txt"))
+		content, _ := os.ReadFile(filepath.Join(outputDir, "deep/nested/file.txt"))
 		if string(content) != "nested content" {
 			t.Errorf("File content = %q; want %q", content, "nested content")
 		}
@@ -176,7 +180,7 @@ func TestWriteFile(t *testing.T) {
 			Mode:     "overwrite",
 		}
 		_, err := WriteFile(params)
-		if err == nil || !strings.Contains(err.Error(), "outside app directory") {
+		if err == nil || !strings.Contains(err.Error(), "outside build directory") {
 			t.Error("Expected error for path traversal attempt")
 		}
 	})
@@ -211,6 +215,10 @@ func TestWriteFileCli(t *testing.T) {
 	appsDir := filepath.Join(tempDir, "apps")
 	appDir := filepath.Join(appsDir, "testapp")
 	os.MkdirAll(appDir, 0755)
+	
+	// Create build directory
+	outputDir := filepath.Join(appDir, constants.OutputDirectoryName)
+	os.MkdirAll(outputDir, 0755)
 
 	// Create a file with content for --content-file tests
 	contentFile := filepath.Join(tempDir, "content.txt")
@@ -275,7 +283,7 @@ func TestWriteFileCli(t *testing.T) {
 		}
 
 		// Verify file was created
-		content, _ := os.ReadFile(filepath.Join(appDir, "cli-test.txt"))
+		content, _ := os.ReadFile(filepath.Join(outputDir, "cli-test.txt"))
 		if string(content) != "test content" {
 			t.Errorf("File content = %q; want %q", content, "test content")
 		}
@@ -290,7 +298,7 @@ func TestWriteFileCli(t *testing.T) {
 		}
 
 		// Verify file was created
-		content, _ := os.ReadFile(filepath.Join(appDir, "cli-file-test.txt"))
+		content, _ := os.ReadFile(filepath.Join(outputDir, "cli-file-test.txt"))
 		if string(content) != "file content" {
 			t.Errorf("File content = %q; want %q", content, "file content")
 		}
@@ -311,7 +319,7 @@ func TestWriteFileCli(t *testing.T) {
 		}
 
 		// Verify content was updated
-		content, _ := os.ReadFile(filepath.Join(appDir, "mode-test.txt"))
+		content, _ := os.ReadFile(filepath.Join(outputDir, "mode-test.txt"))
 		if string(content) != "updated" {
 			t.Errorf("File content = %q; want %q", content, "updated")
 		}

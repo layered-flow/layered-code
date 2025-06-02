@@ -45,20 +45,35 @@ func ReadFile(appName, filePath string) (ReadFileResult, error) {
 		return ReadFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
-	// Construct and validate the full file path
-	fullPath := filepath.Join(appsDir, appName, filePath)
+	// Construct app and output directories
+	appDir := filepath.Join(appsDir, appName)
+	outputDir := filepath.Join(appDir, constants.OutputDirectoryName)
+	
+	// Try to read from build directory first
+	fullPath := filepath.Join(outputDir, filePath)
 	cleanPath := filepath.Clean(fullPath)
 
-	// Ensure the file is within the app directory
-	appDir := filepath.Join(appsDir, appName)
-	if !config.IsWithinDirectory(cleanPath, appDir) {
-		return ReadFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
+	// Ensure the file is within the build directory
+	if !config.IsWithinDirectory(cleanPath, outputDir) {
+		return ReadFileResult{}, fmt.Errorf("file path attempts to access file outside build directory")
 	}
 
-	// Get file info
+	// Get file info from build directory
 	info, err := os.Lstat(cleanPath) // Use Lstat to detect symlinks
 	if err != nil {
-		return ReadFileResult{}, err
+		// If file not found in build directory, try app root directory for backward compatibility
+		fullPath = filepath.Join(appDir, filePath)
+		cleanPath = filepath.Clean(fullPath)
+		
+		// Ensure the file is within the app directory
+		if !config.IsWithinDirectory(cleanPath, appDir) {
+			return ReadFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
+		}
+		
+		info, err = os.Lstat(cleanPath)
+		if err != nil {
+			return ReadFileResult{}, err
+		}
 	}
 
 	// Check for symlinks

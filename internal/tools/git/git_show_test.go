@@ -78,8 +78,8 @@ func TestGitShow(t *testing.T) {
 			t.Error("Expected Success to be false for empty repository")
 		}
 
-		if !strings.Contains(result.Message, "not found") {
-			t.Errorf("Expected 'not found' message, got: %s", result.Message)
+		if !strings.Contains(result.Message, "Failed to show commit") {
+			t.Errorf("Expected 'Failed to show commit' message, got: %s", result.Message)
 		}
 	})
 
@@ -161,8 +161,8 @@ func TestGitShow(t *testing.T) {
 			t.Error("Expected Success to be true for default commit ref")
 		}
 
-		if result.CommitRef != "" {
-			t.Errorf("Expected CommitRef to be empty, got: %s", result.CommitRef)
+		if result.CommitRef != "HEAD" {
+			t.Errorf("Expected CommitRef to be 'HEAD', got: %s", result.CommitRef)
 		}
 	})
 

@@ -11,7 +11,6 @@ import (
 	"github.com/layered-flow/layered-code/internal/config"
 	"github.com/layered-flow/layered-code/internal/tools/git"
 	"github.com/mark3labs/mcp-go/mcp"
-	"gopkg.in/yaml.v3"
 )
 
 // Types
@@ -57,26 +56,24 @@ func LcmSearch(appName string, pattern string, caseSensitive bool, maxResults in
 		return LcmSearchResult{}, err
 	}
 
-	// Check if LCM file exists
-	lcmPath := filepath.Join(appPath, ".layered_change_memory.yaml")
-	if _, err := os.Stat(lcmPath); os.IsNotExist(err) {
+	// Migrate old LCM file if it exists
+	if err := git.MigrateOldLCMFile(appPath); err != nil {
+		// Log error but continue
+		fmt.Fprintf(os.Stderr, "Warning: failed to migrate old LCM file: %v\n", err)
+	}
+
+	// Load all LCM entries from the new .lcm directory structure
+	entries, err := git.LoadAllLCMEntries(appPath)
+	if err != nil {
+		return LcmSearchResult{}, fmt.Errorf("failed to load LCM entries: %w", err)
+	}
+
+	if len(entries) == 0 {
 		return LcmSearchResult{
 			Success: true,
 			Matches: []LcmSearchMatch{},
 			Message: "No layered change memory found",
 		}, nil
-	}
-
-	// Read the YAML file
-	data, err := os.ReadFile(lcmPath)
-	if err != nil {
-		return LcmSearchResult{}, fmt.Errorf("failed to read LCM file: %w", err)
-	}
-
-	// Parse YAML
-	var entries []git.LayeredChangeMemoryEntry
-	if err := yaml.Unmarshal(data, &entries); err != nil {
-		return LcmSearchResult{}, fmt.Errorf("failed to parse LCM file: %w", err)
 	}
 
 	// Prepare search pattern

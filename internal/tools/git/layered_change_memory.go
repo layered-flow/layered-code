@@ -54,24 +54,22 @@ func GenerateLayeredChangeMemoryEntry(appPath string, commitHash string, commitM
 	return entry, nil
 }
 
-// AppendLayeredChangeMemoryEntry appends a LayeredChangeMemory entry to the .layered_change_memory.yaml file
+// AppendLayeredChangeMemoryEntry stores a LayeredChangeMemory entry in a separate file
+// File naming format: lcm/{unix_timestamp_ms}_{commit_hash}.yaml
 func AppendLayeredChangeMemoryEntry(appPath string, entry *LayeredChangeMemoryEntry) error {
-	yamlPath := filepath.Join(appPath, ".layered_change_memory.yaml")
-
-	// Read existing entries
-	var entries []LayeredChangeMemoryEntry
-	if data, err := os.ReadFile(yamlPath); err == nil {
-		if err := yaml.Unmarshal(data, &entries); err != nil {
-			// If unmarshaling fails, start fresh
-			entries = []LayeredChangeMemoryEntry{}
-		}
+	// Create lcm directory if it doesn't exist
+	lcmDir := filepath.Join(appPath, "lcm")
+	if err := os.MkdirAll(lcmDir, 0755); err != nil {
+		return fmt.Errorf("failed to create lcm directory: %w", err)
 	}
 
-	// Append new entry
-	entries = append(entries, *entry)
+	// Generate filename with unix timestamp in milliseconds and commit hash
+	timestampMs := time.Now().UnixNano() / int64(time.Millisecond)
+	filename := fmt.Sprintf("%d_%s.yaml", timestampMs, entry.Commit)
+	yamlPath := filepath.Join(lcmDir, filename)
 
-	// Marshal to YAML
-	yamlData, err := yaml.Marshal(entries)
+	// Marshal entry to YAML (single entry, not array)
+	yamlData, err := yaml.Marshal(entry)
 	if err != nil {
 		return fmt.Errorf("failed to marshal YAML: %w", err)
 	}
@@ -151,4 +149,140 @@ func GetCommitDetails(appPath string, commitHash string) (map[string]interface{}
 	details["stats"] = strings.TrimSpace(string(statOutput))
 
 	return details, nil
+}
+
+// GetAllLCMFiles returns all LCM files in the lcm directory sorted by timestamp (oldest first)
+func GetAllLCMFiles(appPath string) ([]string, error) {
+	lcmDir := filepath.Join(appPath, "lcm")
+	
+	// Check if directory exists
+	if _, err := os.Stat(lcmDir); os.IsNotExist(err) {
+		return []string{}, nil
+	}
+	
+	// Read all files in the directory
+	entries, err := os.ReadDir(lcmDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read lcm directory: %w", err)
+	}
+	
+	var lcmFiles []string
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".yaml") {
+			lcmFiles = append(lcmFiles, filepath.Join(lcmDir, entry.Name()))
+		}
+	}
+	
+	// Sort by filename (which includes timestamp) in ascending order (oldest first)
+	for i := 0; i < len(lcmFiles)-1; i++ {
+		for j := i + 1; j < len(lcmFiles); j++ {
+			if filepath.Base(lcmFiles[i]) > filepath.Base(lcmFiles[j]) {
+				lcmFiles[i], lcmFiles[j] = lcmFiles[j], lcmFiles[i]
+			}
+		}
+	}
+	
+	return lcmFiles, nil
+}
+
+// LoadLCMEntry loads a single LayeredChangeMemoryEntry from a file
+func LoadLCMEntry(filePath string) (*LayeredChangeMemoryEntry, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file %s: %w", filePath, err)
+	}
+	
+	var entry LayeredChangeMemoryEntry
+	if err := yaml.Unmarshal(data, &entry); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal YAML from %s: %w", filePath, err)
+	}
+	
+	return &entry, nil
+}
+
+// LoadAllLCMEntries loads all LCM entries from the lcm directory
+func LoadAllLCMEntries(appPath string) ([]LayeredChangeMemoryEntry, error) {
+	files, err := GetAllLCMFiles(appPath)
+	if err != nil {
+		return nil, err
+	}
+	
+	var entries []LayeredChangeMemoryEntry
+	for _, file := range files {
+		entry, err := LoadLCMEntry(file)
+		if err != nil {
+			// Log error but continue with other files
+			fmt.Fprintf(os.Stderr, "Warning: failed to load %s: %v\n", file, err)
+			continue
+		}
+		entries = append(entries, *entry)
+	}
+	
+	return entries, nil
+}
+
+// MigrateOldLCMFile migrates the old .layered_change_memory.yaml file to the new lcm directory structure
+func MigrateOldLCMFile(appPath string) error {
+	oldPath := filepath.Join(appPath, ".layered_change_memory.yaml")
+	
+	// Check if old file exists
+	if _, err := os.Stat(oldPath); os.IsNotExist(err) {
+		// No old file to migrate
+		return nil
+	}
+	
+	// Read the old file
+	data, err := os.ReadFile(oldPath)
+	if err != nil {
+		return fmt.Errorf("failed to read old LCM file: %w", err)
+	}
+	
+	// Parse YAML
+	var entries []LayeredChangeMemoryEntry
+	if err := yaml.Unmarshal(data, &entries); err != nil {
+		return fmt.Errorf("failed to parse old LCM file: %w", err)
+	}
+	
+	// Create lcm directory
+	lcmDir := filepath.Join(appPath, "lcm")
+	if err := os.MkdirAll(lcmDir, 0755); err != nil {
+		return fmt.Errorf("failed to create lcm directory: %w", err)
+	}
+	
+	// Migrate each entry to a separate file
+	for i, entry := range entries {
+		// Parse timestamp to get unix milliseconds
+		parsedTime, err := time.Parse(time.RFC3339, entry.Timestamp)
+		if err != nil {
+			// If parsing fails, use index-based timestamp
+			parsedTime = time.Now().Add(time.Duration(-len(entries)+i) * time.Second)
+		}
+		timestampMs := parsedTime.UnixNano() / int64(time.Millisecond)
+		
+		// Generate filename
+		filename := fmt.Sprintf("%d_%s.yaml", timestampMs, entry.Commit)
+		filePath := filepath.Join(lcmDir, filename)
+		
+		// Marshal single entry to YAML
+		yamlData, err := yaml.Marshal(entry)
+		if err != nil {
+			return fmt.Errorf("failed to marshal entry %d: %w", i, err)
+		}
+		
+		// Write to file
+		if err := os.WriteFile(filePath, yamlData, 0644); err != nil {
+			return fmt.Errorf("failed to write entry %d to file: %w", i, err)
+		}
+	}
+	
+	// Rename old file to indicate it has been migrated
+	backupPath := oldPath + ".migrated"
+	if err := os.Rename(oldPath, backupPath); err != nil {
+		return fmt.Errorf("failed to rename old LCM file: %w", err)
+	}
+	
+	fmt.Fprintf(os.Stderr, "Successfully migrated %d entries from %s to lcm directory\n", len(entries), oldPath)
+	fmt.Fprintf(os.Stderr, "Old file backed up to: %s\n", backupPath)
+	
+	return nil
 }

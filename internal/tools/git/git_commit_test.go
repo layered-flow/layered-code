@@ -207,10 +207,28 @@ func TestGitCommit(t *testing.T) {
 			t.Errorf("Expected Success to be true, error: %s", result.Error)
 		}
 
-		// Check if LayeredChangeMemory file was created
-		lcmFile := filepath.Join(testAppPath, ".layered_change_memory.yaml")
-		if _, err := os.Stat(lcmFile); os.IsNotExist(err) {
-			t.Error("Expected .layered_change_memory.yaml file to be created")
+		// Check if LayeredChangeMemory directory and file were created
+		lcmDir := filepath.Join(testAppPath, "lcm")
+		if _, err := os.Stat(lcmDir); os.IsNotExist(err) {
+			t.Error("Expected lcm directory to be created")
+		}
+		
+		// Check if at least one LCM file exists
+		files, err := os.ReadDir(lcmDir)
+		if err != nil {
+			t.Fatalf("Failed to read lcm directory: %v", err)
+		}
+		
+		lcmFileFound := false
+		for _, file := range files {
+			if strings.HasSuffix(file.Name(), ".yaml") {
+				lcmFileFound = true
+				break
+			}
+		}
+		
+		if !lcmFileFound {
+			t.Error("Expected at least one .yaml file in lcm directory")
 		}
 	})
 }

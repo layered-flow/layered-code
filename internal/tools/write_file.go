@@ -59,19 +59,27 @@ func WriteFile(params WriteFileParams) (WriteFileResult, error) {
 		return WriteFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
+	// Construct app and output directories
+	appDir := filepath.Join(appsDir, params.AppName)
+	outputDir := filepath.Join(appDir, constants.OutputDirectoryName)
+	
 	// Construct and validate the full file path
-	fullPath := filepath.Join(appsDir, params.AppName, params.FilePath)
+	fullPath := filepath.Join(outputDir, params.FilePath)
 	cleanPath := filepath.Clean(fullPath)
 
-	// Ensure the file is within the app directory
-	appDir := filepath.Join(appsDir, params.AppName)
-	if !config.IsWithinDirectory(cleanPath, appDir) {
-		return WriteFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
+	// Ensure the file is within the build directory
+	if !config.IsWithinDirectory(cleanPath, outputDir) {
+		return WriteFileResult{}, fmt.Errorf("file path attempts to access file outside build directory")
 	}
 
 	// Check if app directory exists
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
 		return WriteFileResult{}, fmt.Errorf("app directory does not exist: %s", params.AppName)
+	}
+	
+	// Ensure build directory exists
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return WriteFileResult{}, fmt.Errorf("failed to create build directory: %w", err)
 	}
 
 	// Check if file exists
