@@ -53,6 +53,8 @@ func GitShow(appName, commitRef string) (GitShowResult, error) {
 		}, nil
 	}
 
+	// Keep the original commitRef for the result
+	originalCommitRef := commitRef
 	if commitRef == "" {
 		commitRef = "HEAD"
 	}
@@ -61,13 +63,25 @@ func GitShow(appName, commitRef string) (GitShowResult, error) {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = appPath
 
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
+		errOutput := string(output)
+		// Check if it's because there are no commits yet (empty repo)
+		if strings.Contains(errOutput, "does not have any commits") || 
+			(strings.Contains(errOutput, "unknown revision") && commitRef == "HEAD") {
+			return GitShowResult{
+				Success:   false,
+				IsRepo:    true,
+				Message:   fmt.Sprintf("Commit '%s' not found", commitRef),
+				CommitRef: originalCommitRef,
+			}, nil
+		}
+		// For all other errors, including bad object/revision
 		return GitShowResult{
 			Success:   false,
 			IsRepo:    true,
 			Message:   fmt.Sprintf("Failed to show commit '%s': %s", commitRef, err.Error()),
-			CommitRef: commitRef,
+			CommitRef: originalCommitRef,
 		}, nil
 	}
 
@@ -77,7 +91,7 @@ func GitShow(appName, commitRef string) (GitShowResult, error) {
 			Success:   false,
 			IsRepo:    true,
 			Message:   fmt.Sprintf("Commit '%s' not found", commitRef),
-			CommitRef: commitRef,
+			CommitRef: originalCommitRef,
 		}, nil
 	}
 
@@ -92,7 +106,7 @@ func GitShow(appName, commitRef string) (GitShowResult, error) {
 		Author:    author,
 		Date:      date,
 		Subject:   subject,
-		CommitRef: commitRef,
+		CommitRef: originalCommitRef,
 	}, nil
 }
 
