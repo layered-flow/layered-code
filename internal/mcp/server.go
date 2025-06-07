@@ -52,6 +52,7 @@ func StartServer(name, version string) error {
 // registerTools registers all available tools with the MCP server
 func registerTools(s *server.MCPServer) {
 	// File management tools
+	registerCreateAppTool(s)
 	registerListAppsTool(s)
 	registerListFilesTool(s)
 	registerSearchTextTool(s)
@@ -76,6 +77,16 @@ func registerTools(s *server.MCPServer) {
 	registerGitRevertTool(s)
 	registerGitCheckoutTool(s)
 	registerGitShowTool(s)
+}
+
+// registerCreateAppTool registers the create_app tool
+func registerCreateAppTool(s *server.MCPServer) {
+	tool := mcp.NewTool("create_app",
+		mcp.WithDescription("Create a new application directory"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to create (must be unique, cannot contain special characters or '..')")),
+	)
+
+	s.AddTool(tool, tools.CreateAppMcp)
 }
 
 // registerListAppsTool registers the list_apps tool

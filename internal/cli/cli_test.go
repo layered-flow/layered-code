@@ -23,6 +23,11 @@ func TestRunTool(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name:    "create_app subcommand",
+			args:    []string{"layered-code", "tool", "create_app", "testapp"},
+			wantErr: false, // Don't assert on error since it depends on external state
+		},
+		{
 			name:    "list_apps subcommand",
 			args:    []string{"layered-code", "tool", "list_apps"},
 			wantErr: false, // Don't assert on error since it depends on external state
@@ -37,9 +42,9 @@ func TestRunTool(t *testing.T) {
 			os.Args = tt.args
 			err := RunTool()
 
-			if tt.name == "list_apps subcommand" {
-				// For list_apps, we just verify it doesn't panic and runs the code path
-				// Don't assert on error since it depends on external dependencies
+			if tt.name == "create_app subcommand" || tt.name == "list_apps subcommand" {
+				// For create_app and list_apps, we just verify they don't panic and run the code path
+				// Don't assert on error since they depend on external dependencies
 				return
 			}
 
