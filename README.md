@@ -268,15 +268,16 @@ layered-code --help
 **Available Commands:**
 - `mcp_server` - Start the Model Context Protocol server for Claude Desktop integration
 - `tool` - Run various tools and utilities (use with subcommands like below)
-  
+
   **File Management Tools:**
-  - `tool list_apps` - List all available applications in the apps directory
+  - `tool create_app` - Create a new application directory
+  - `tool list_apps` - List all available applications in the ~/LayeredApps directory
   - `tool list_files` - List files and directories within an application with optional metadata (max depth: 10,000 levels)
   - `tool search_text` - Search for text patterns in files within an application directory using ripgrep
   - `tool read_file` - Read the contents of a file within an application directory
   - `tool write_file` - Write or create a file within an application directory
   - `tool edit_file` - Edit a file by performing find-and-replace operations
-  
+
   **Git Tools:**
   - `tool git_status` - Show the working tree status of a git repository
   - `tool git_diff` - Show changes between commits, commit and working tree, etc
@@ -289,7 +290,7 @@ layered-code --help
   - `tool git_push` - Update remote refs along with associated objects
   - `tool git_pull` - Fetch from and integrate with another repository or local branch
   - `tool git_init` - Initialize a new git repository
-  
+
 - `version`, `-v`, `--version` - Display the current version of layered-code
 - `help`, `-h`, `--help` - Show usage information and available commands
 
