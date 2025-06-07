@@ -8,12 +8,12 @@
 
 ![Banner](/docs/images/banner.png)
 
-[![YouTube Video](/docs/images/youtube.png)](https://www.youtube.com/watch?v=r8OIV-QjIIQ)
-*Watch a quick overview of Layered Code in action*
-
 ## 🔍 What is Layered Code?
 
 **Layered Code** transforms web development into a seamless conversation-to-deployment workflow. You chat with your preferred AI assistant through applications like Claude Desktop or Cursor, describing what you want to build in natural language. The AI creates and modifies your code in real-time, while the Chrome extension automatically refreshes your browser to show changes instantly. When you're satisfied with the results, just ask the AI to commit your changes to a git repository and deploy directly to production servers — all without memorizing complex commands or navigating intricate development tools.
+
+[![YouTube Video](/docs/images/youtube.png)](https://www.youtube.com/watch?v=r8OIV-QjIIQ)
+*Watch a quick overview of Layered Code in action*
 
 **Primary interaction method:**
 - **🗣️ Natural language conversations** with AI assistants like Claude Desktop
