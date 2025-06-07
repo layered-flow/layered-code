@@ -10,64 +10,53 @@
 
 ## 🔍 What is Layered Code?
 
-Traditional development with AI can feel chaotic - losing context, making large unfocused changes, or struggling to track what actually worked. **Layered Code** solves this by transforming how you build and evolve software through the Model Context Protocol (MCP). This protocol enables AI assistants to maintain deep contextual awareness of your codebase while making focused, traceable changes.
+**Layered Code** transforms web development into a seamless conversation-to-deployment workflow. You chat with your preferred AI assistant through applications like Claude Desktop or Cursor, describing what you want to build in natural language. The AI creates and modifies your code in real-time, while the Chrome extension automatically refreshes your browser to show changes instantly. When you're satisfied with the results, just ask the AI to commit your changes to a git repository and deploy directly to production servers — all without memorizing complex commands or navigating intricate development tools.
 
-## 💬 How You Interact with Layered Code
-
-**Layered Code** is designed to be used primarily through **conversational AI interfaces** that support the Model Context Protocol (MCP). Rather than memorizing complex commands or navigating intricate UIs, you simply describe what you want to build in natural language.
+[![YouTube Video](/docs/images/youtube.png)](https://www.youtube.com/watch?v=r8OIV-QjIIQ)
+*Watch a quick overview of Layered Code in action*
 
 **Primary interaction method:**
 - **🗣️ Natural language conversations** with AI assistants like Claude Desktop
-- **🔌 MCP integration** provides the AI with direct access to your codebase and layered history
+- **🔌 MCP integration** provides the AI with direct access to your project files on your local machine
 - **🎯 Intent-driven development** - describe your goals, and the AI handles the technical implementation
+- **🚀 Git integration for automatic deployments** - commit changes and deploy to production through conversational commands
 
 **Example conversation:**
-> "I want to redesign the homepage with a modern hero section, update the navigation menu, and add a testimonials carousel below the fold"
+> **User:** "I want to create a basic web page with a dark theme to describe my new AI project called 'SmartFlow'. It should have a clean hero section with the project name, a brief description, and some key features listed below."
 
 The AI, equipped with Layered Code's MCP tools, can:
-- Understand your current page structure and styling
-- Access the history of previous design layers and decisions
-- Create a new layer with the homepage redesign
-- Handle HTML structure changes, CSS updates, and asset organization
-- Preserve your existing content while enhancing the visual design
+- Create the HTML structure with semantic markup
+- Generate CSS for a modern dark theme with proper contrast
+- Organize project files and assets automatically
+- Set up responsive design for mobile and desktop
+
+> **User:** "This looks great! Can you add a contact section at the bottom and make the feature cards have a subtle hover effect?"
+
+The AI seamlessly:
+- Updates the HTML to include a contact section
+- Enhances the CSS with smooth hover animations
+- Your Chrome extension automatically refreshes to show the changes
+
+> **User:** "Perfect! Now commit these changes and deploy to production."
+
+The AI handles version control and deployment:
+- Commits changes with a descriptive message
+- Triggers your configured deployment pipeline
+- Confirms successful deployment to your production server
 
 While a CLI interface is available for direct tool access, the conversational AI experience through MCP is where **Layered Code** truly shines - enabling you to focus on what you want to build rather than how to build it.
 
 ## 🎯 Motivation
 
-**Layered Code** provides an open approach that gives you the freedom to choose your own tools, hosting providers, and development workflows: **Your code, your tools, your choice.**
+**Layered Code** provides an open approach to AI-assisted development: **your prompts, your providers, your choice.**
 
-- **🔓 Forever Free & Open Source**: Layered Code will always remain completely free and open source
+- **🔓 Forever Free & Open Source**: Layered Code will always remain free and open source
+- **💻 Cross-Platform Support**: Runs on macOS, Windows, and Linux
+- **🔍 No Hidden Magic**: No secret prompts hidden away from users doing mysterious things they don't understand
 - **🛠️ Technology Agnostic**: Works with any language, framework, or development environment
-- **🤝 Human-AI Partnership**: Designed for seamless collaboration between developers and AI agents
-- **📊 Full Traceability**: Track feature evolution and maintain contextual awareness across your entire codebase
 - **🚀 Zero Vendor Lock-in**: Use any hosting provider, development environment, or toolchain
 
-## 🏗️ Building from Source
-
-To build Layered Code from source:
-
-```bash
-# Clone the repository
-git clone https://github.com/layered-flow/layered-code.git
-cd layered-code
-
-# Build with make (downloads ripgrep binaries automatically)
-make build
-
-# Or build for all platforms
-make build-all
-
-# Run tests
-make test
-```
-
 ## 📦 Installation
-
-### Prerequisites
-
-- **No additional dependencies required** - ripgrep is automatically bundled with pre-built binaries and installed as a dependency via Homebrew
-- **Git (optional)** - Required only if you want to use the git-related tools (git_status, git_diff, git_commit, etc.)
 
 ### Option 1: macOS/Linux via Homebrew (Recommended)
 
@@ -76,8 +65,6 @@ brew update
 brew tap layered-flow/layered-code
 brew install layered-code
 ```
-
-Note: Homebrew will automatically install ripgrep as a dependency.
 
 ### Option 2: Install Script (macOS/Linux)
 
@@ -153,7 +140,7 @@ Add the following to your `claude_desktop_config.json` (under Settings → Devel
 |---------------------------------|--------------------------------------------------|
 | macOS/Linux (Homebrew)          | `layered-code`                                 |
 | macOS/Linux (Manual/Binary)     | `/usr/local/bin/layered-code`                  |
-| Windows                         | `C:\\Users\\YourUsername\\bin\layered-code.exe`    |
+| Windows                         | `C:\\Users\\YourUsername\\bin\\layered-code.exe`    |
 
 > **Note for Windows:** Use the full path with double backslashes (`\\`) in the `"command"` value.
 
@@ -181,7 +168,7 @@ The Layered Code Chrome extension enables real-time previewing of changes made t
 
 #### Option 1: Chrome Web Store (Recommended)
 Install directly from the Chrome Web Store:
-[https://chromewebstore.google.com/detail/layered-code/loccgmbbilmanbbegkmaekakhhakeihh](https://chromewebstore.google.com/detail/layered-code/loccgmbbilmanbbegkmaekakhhakeihh)
+[https://chrome.layeredcode.ai/](https://chrome.layeredcode.ai/)
 
 #### Option 2: Developer Mode
 1. **Open Chrome Extensions Page**:
@@ -199,14 +186,8 @@ Install directly from the Chrome Web Store:
 
 **Usage:**
 - Open your HTML file directly in Chrome (e.g., `file:///Users/yourname/LayeredApps/myproject/index.html`)
-- The extension will automatically detect file changes made through MCP
+- The extension will automatically detect file changes made through MCP via a websocket
 - Your browser will refresh instantly when changes are saved
-
-**Features:**
-- Automatic page refresh on file changes
-- Works with static HTML files
-- No configuration required - just install and use
-- Seamless integration with Claude Desktop MCP workflow
 
 ### 🔧 Optional: Custom Apps Directory
 
@@ -294,15 +275,23 @@ layered-code --help
 - `version`, `-v`, `--version` - Display the current version of layered-code
 - `help`, `-h`, `--help` - Show usage information and available commands
 
-## 🔨 Building from Source
+## 🏗️ Building from Source
 
-**Prerequisites:** Go 1.24+
+To build Layered Code from source:
 
 ```bash
-# Clone and build
+# Clone the repository
 git clone https://github.com/layered-flow/layered-code.git
 cd layered-code
-go build -o layered-code ./cmd/layered_code
+
+# Build with make (downloads ripgrep binaries automatically)
+make build
+
+# Or build for all platforms
+make build-all
+
+# Run tests
+make test
 
 # Verify installation
 layered-code
