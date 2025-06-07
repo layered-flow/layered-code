@@ -8,7 +8,7 @@
 
 ![Banner](/docs/images/banner.png)
 
-[![YouTube Video](youtube.png)](https://www.youtube.com/watch?v=r8OIV-QjIIQ)
+[![YouTube Video](/docs/images/youtube.png)](https://www.youtube.com/watch?v=r8OIV-QjIIQ)
 *Watch a quick overview of Layered Code in action*
 
 ## 🔍 What is Layered Code?
