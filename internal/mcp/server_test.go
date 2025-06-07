@@ -15,6 +15,7 @@ func TestRegisterFunctions(t *testing.T) {
 		name string
 		fn   func(*server.MCPServer)
 	}{
+		{"registerCreateAppTool", registerCreateAppTool},
 		{"registerListAppsTool", registerListAppsTool},
 		{"registerListFilesTool", registerListFilesTool},
 		{"registerSearchTextTool", registerSearchTextTool},
