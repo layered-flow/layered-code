@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/layered-flow/layered-code/internal/config"
 	"github.com/layered-flow/layered-code/internal/constants"
@@ -77,9 +78,102 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create app directory: %v", err)}, err
 	}
 
+	// Create the standard directory structure
+	directories := []string{
+		filepath.Join(appPath, "src"),
+		filepath.Join(appPath, "build"),
+		filepath.Join(appPath, ".layered-code"),
+	}
+
+	for _, dir := range directories {
+		if err := os.MkdirAll(dir, constants.AppsDirectoryPerms); err != nil {
+			return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create directory %s: %v", dir, err)}, err
+		}
+	}
+
+	// Create .gitignore file
+	gitignoreContent := `.layered-code/
+build/
+dist/
+node_modules/
+.DS_Store
+*.log
+.env
+.env.local
+`
+	gitignorePath := filepath.Join(appPath, ".gitignore")
+	if err := os.WriteFile(gitignorePath, []byte(gitignoreContent), 0644); err != nil {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create .gitignore: %v", err)}, err
+	}
+
+	// Create a basic .layered.json config file
+	layeredConfig := map[string]interface{}{
+		"version":    "1.0",
+		"app_name":   params.AppName,
+		"structure":  "src-build",
+		"created_at": time.Now().Format(time.RFC3339),
+	}
+
+	layeredConfigJSON, err := json.MarshalIndent(layeredConfig, "", "  ")
+	if err != nil {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to marshal layered config: %v", err)}, err
+	}
+
+	layeredConfigPath := filepath.Join(appPath, ".layered.json")
+	if err := os.WriteFile(layeredConfigPath, layeredConfigJSON, 0644); err != nil {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create .layered.json: %v", err)}, err
+	}
+
+	// Create a simple starter index.html in src
+	indexHTML := `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>` + params.AppName + `</title>
+</head>
+<body>
+    <h1>` + params.AppName + `</h1>
+    <p>Welcome to your new app created with Layered Code.</p>
+</body>
+</html>`
+
+	indexPath := filepath.Join(appPath, "src", "index.html")
+	if err := os.WriteFile(indexPath, []byte(indexHTML), 0644); err != nil {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create index.html: %v", err)}, err
+	}
+
+	// Create README.md
+	readmeContent := `# ` + params.AppName + `
+
+This app was created with Layered Code.
+
+## Structure
+
+- **src/** - Source code for your application
+- **build/** - Compiled/built files for deployment (gitignored)
+- **.layered-code/** - Layered Code metadata (gitignored)
+- **.layered.json** - Layered Code configuration
+
+## Getting Started
+
+1. Add your source code to the ` + "`src/`" + ` directory
+2. Build your app (output to ` + "`build/`" + ` directory)
+3. Deploy only the contents of ` + "`build/`" + ` to your web server
+
+## Notes
+
+The ` + "`.layered-code/`" + ` directory and ` + "`build/`" + ` directory are gitignored by default to keep your repository clean and prevent accidental deployment of development files.
+`
+
+	readmePath := filepath.Join(appPath, "README.md")
+	if err := os.WriteFile(readmePath, []byte(readmeContent), 0644); err != nil {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create README.md: %v", err)}, err
+	}
+
 	return CreateAppResult{
 		Success: true,
-		Message: fmt.Sprintf("Successfully created app '%s'", params.AppName),
+		Message: fmt.Sprintf("Successfully created app '%s' with src/build structure", params.AppName),
 		Path:    appPath,
 	}, nil
 }

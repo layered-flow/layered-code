@@ -4,10 +4,16 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/mark3labs/mcp-go/mcp"
 )
+
+// contains checks if a string contains a substring
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
+}
 
 // TestCreateAppParams tests the CreateAppParams struct creation
 func TestCreateAppParams(t *testing.T) {
@@ -95,6 +101,41 @@ func TestCreateApp(t *testing.T) {
 		// Verify directory was created
 		if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
 			t.Errorf("App directory was not created")
+		}
+
+		// Verify subdirectories were created
+		subdirs := []string{"src", "build", ".layered-code"}
+		for _, subdir := range subdirs {
+			subdirPath := filepath.Join(expectedPath, subdir)
+			if _, err := os.Stat(subdirPath); os.IsNotExist(err) {
+				t.Errorf("Subdirectory %s was not created", subdir)
+			}
+		}
+
+		// Verify files were created
+		files := []string{
+			".gitignore",
+			".layered.json",
+			"README.md",
+			filepath.Join("src", "index.html"),
+		}
+		for _, file := range files {
+			filePath := filepath.Join(expectedPath, file)
+			if _, err := os.Stat(filePath); os.IsNotExist(err) {
+				t.Errorf("File %s was not created", file)
+			}
+		}
+
+		// Verify .gitignore content
+		gitignoreContent, err := os.ReadFile(filepath.Join(expectedPath, ".gitignore"))
+		if err != nil {
+			t.Errorf("Failed to read .gitignore: %v", err)
+		}
+		expectedIgnores := []string{".layered-code/", "build/", "dist/", "node_modules/"}
+		for _, ignore := range expectedIgnores {
+			if !contains(string(gitignoreContent), ignore) {
+				t.Errorf(".gitignore missing expected entry: %s", ignore)
+			}
 		}
 	})
 
