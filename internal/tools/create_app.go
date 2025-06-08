@@ -143,6 +143,22 @@ node_modules/
 		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create index.html: %v", err)}, err
 	}
 
+	// Create package.json with build script
+	packageJSON := `{
+  "name": "` + params.AppName + `",
+  "version": "1.0.0",
+  "description": "Created with Layered Code (https://www.layeredcode.ai)",
+  "scripts": {
+    "build": "mkdir -p build && cp -r src/* build/",
+    "clean": "rm -rf build"
+  }
+}
+`
+	packageJSONPath := filepath.Join(appPath, "package.json")
+	if err := os.WriteFile(packageJSONPath, []byte(packageJSON), 0644); err != nil {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create package.json: %v", err)}, err
+	}
+
 	// Create README.md
 	readmeContent := `# ` + params.AppName + `
 
@@ -152,14 +168,25 @@ This app was created with Layered Code.
 
 - **src/** - Source code for your application
 - **build/** - Compiled/built files for deployment (gitignored)
+- **package.json** - Build scripts and project metadata
 - **.layered-code/** - Layered Code metadata (gitignored)
 - **.layered.json** - Layered Code configuration
 
 ## Getting Started
 
 1. Add your source code to the ` + "`src/`" + ` directory
-2. Build your app (output to ` + "`build/`" + ` directory)
-3. Deploy only the contents of ` + "`build/`" + ` to your web server
+2. Run ` + "`npm run build`" + ` to copy files to the ` + "`build/`" + ` directory
+3. Deploy to your hosting platform (see below)
+
+## Deployment
+
+### Netlify
+- Build command: ` + "`npm run build`" + `
+- Publish directory: ` + "`build`" + `
+
+### Other platforms
+- Build your app using ` + "`npm run build`" + `
+- Deploy the contents of the ` + "`build/`" + ` directory
 
 ## Notes
 

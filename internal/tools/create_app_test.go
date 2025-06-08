@@ -116,6 +116,7 @@ func TestCreateApp(t *testing.T) {
 		files := []string{
 			".gitignore",
 			".layered.json",
+			"package.json",
 			"README.md",
 			filepath.Join("src", "index.html"),
 		}
