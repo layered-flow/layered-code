@@ -60,6 +60,9 @@ func registerTools(s *server.MCPServer) {
 	registerWriteFileTool(s)
 	registerEditFileTool(s)
 	
+	// Package management tools
+	registerNpmInstallTool(s)
+	
 	// Git tools
 	registerGitStatusTool(s)
 	registerGitDiffTool(s)
@@ -84,6 +87,7 @@ func registerCreateAppTool(s *server.MCPServer) {
 	tool := mcp.NewTool("create_app",
 		mcp.WithDescription("Create a new application directory"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to create (must be unique, cannot contain special characters or '..')")),
+		mcp.WithString("project_type", mcp.Description("Type of project to create: 'html' (default) or 'vite'")),
 	)
 
 	s.AddTool(tool, tools.CreateAppMcp)
@@ -363,4 +367,16 @@ func registerGitShowTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, git.GitShowMcp)
+}
+
+// registerNpmInstallTool registers the npm_install tool
+func registerNpmInstallTool(s *server.MCPServer) {
+	tool := mcp.NewTool("npm_install",
+		mcp.WithDescription("Install npm dependencies for an application (defaults to pnpm, falls back to npm)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("package_manager", mcp.Description("Force specific package manager: 'pnpm', 'npm', or 'yarn' (optional)")),
+		mcp.WithBoolean("production", mcp.Description("Install only production dependencies (optional)")),
+	)
+
+	s.AddTool(tool, tools.NpmInstallMcp)
 }

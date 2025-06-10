@@ -1,0 +1,9 @@
+{
+  "name": "{{.AppNameSlug}}",
+  "version": "1.0.0",
+  "description": "Created with Layered Code (https://www.layeredcode.ai)",
+  "scripts": {
+    "build": "mkdir -p build && cp -r src/* build/",
+    "clean": "rm -rf build"
+  }
+}

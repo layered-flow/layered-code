@@ -24,6 +24,9 @@ func PrintUsage() {
 	fmt.Println("  tool write_file           Write or create a file within an app")
 	fmt.Println("  tool edit_file            Edit a file using find-and-replace")
 	fmt.Println()
+	fmt.Println("  Package Management Tools:")
+	fmt.Println("  tool npm_install          Install npm dependencies (defaults to pnpm)")
+	fmt.Println()
 	fmt.Println("  Git Tools:")
 	fmt.Println("  tool git_status           Show the working tree status")
 	fmt.Println("  tool git_diff             Show changes between commits")
@@ -68,6 +71,10 @@ func RunTool() error {
 		return tools.WriteFileCli()
 	case "edit_file":
 		return tools.EditFileCli()
+	
+	// Package management tools
+	case "npm_install":
+		return tools.NpmInstallCli()
 	
 	// Git tools
 	case "git_status":

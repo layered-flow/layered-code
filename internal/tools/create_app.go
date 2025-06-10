@@ -17,7 +17,8 @@ import (
 
 // Types
 type CreateAppParams struct {
-	AppName string `json:"app_name"`
+	AppName     string `json:"app_name"`
+	ProjectType string `json:"project_type"`
 }
 
 type CreateAppResult struct {
@@ -57,6 +58,29 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 		return CreateAppResult{Success: false, Message: err.Error()}, err
 	}
 
+	// Default to HTML if project type not specified
+	if params.ProjectType == "" {
+		params.ProjectType = "html"
+	}
+
+	// Validate project type
+	availableTypes, err := GetAvailableProjectTypes()
+	if err != nil {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to get available project types: %v", err)}, err
+	}
+
+	validType := false
+	for _, t := range availableTypes {
+		if t == params.ProjectType {
+			validType = true
+			break
+		}
+	}
+
+	if !validType {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("project type must be one of: %s", strings.Join(availableTypes, ", "))}, fmt.Errorf("invalid project type: %s", params.ProjectType)
+	}
+
 	// Ensure the apps directory exists and get its path
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
@@ -91,27 +115,12 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 		}
 	}
 
-	// Create .gitignore file
-	gitignoreContent := `.layered-code/
-build/
-dist/
-node_modules/
-.DS_Store
-*.log
-.env
-.env.local
-`
-	gitignorePath := filepath.Join(appPath, ".gitignore")
-	if err := os.WriteFile(gitignorePath, []byte(gitignoreContent), 0644); err != nil {
-		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create .gitignore: %v", err)}, err
-	}
-
 	// Create a basic .layered.json config file
 	layeredConfig := map[string]interface{}{
-		"version":    "1.0",
-		"app_name":   params.AppName,
-		"structure":  "src-build",
-		"created_at": time.Now().Format(time.RFC3339),
+		"version":      "1.0",
+		"app_name":     params.AppName,
+		"project_type": params.ProjectType,
+		"created_at":   time.Now().Format(time.RFC3339),
 	}
 
 	layeredConfigJSON, err := json.MarshalIndent(layeredConfig, "", "  ")
@@ -124,83 +133,36 @@ node_modules/
 		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create .layered.json: %v", err)}, err
 	}
 
-	// Create a simple starter index.html in src
-	indexHTML := `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>` + params.AppName + `</title>
-</head>
-<body>
-    <h1>` + params.AppName + `</h1>
-    <p>Welcome to your new app created with Layered Code.</p>
-</body>
-</html>`
-
-	indexPath := filepath.Join(appPath, "src", "index.html")
-	if err := os.WriteFile(indexPath, []byte(indexHTML), 0644); err != nil {
-		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create index.html: %v", err)}, err
+	// Load templates for the project type
+	templateData := TemplateData{
+		AppName:     params.AppName,
+		AppNameSlug: CreateAppNameSlug(params.AppName),
 	}
 
-	// Create package.json with build script
-	packageJSON := `{
-  "name": "` + params.AppName + `",
-  "version": "1.0.0",
-  "description": "Created with Layered Code (https://www.layeredcode.ai)",
-  "scripts": {
-    "build": "mkdir -p build && cp -r src/* build/",
-    "clean": "rm -rf build"
-  }
-}
-`
-	packageJSONPath := filepath.Join(appPath, "package.json")
-	if err := os.WriteFile(packageJSONPath, []byte(packageJSON), 0644); err != nil {
-		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create package.json: %v", err)}, err
+	templateFiles, err := LoadProjectTemplates(params.ProjectType, templateData)
+	if err != nil {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to load templates: %v", err)}, err
 	}
 
-	// Create README.md
-	readmeContent := `# ` + params.AppName + `
+	// Create files from templates
+	for _, tmplFile := range templateFiles {
+		filePath := filepath.Join(appPath, tmplFile.Path)
 
-This app was created with Layered Code.
+		// Ensure the directory exists
+		fileDir := filepath.Dir(filePath)
+		if err := os.MkdirAll(fileDir, constants.AppsDirectoryPerms); err != nil {
+			return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create directory for file %s: %v", tmplFile.Path, err)}, err
+		}
 
-## Structure
-
-- **src/** - Source code for your application
-- **build/** - Compiled/built files for deployment (gitignored)
-- **package.json** - Build scripts and project metadata
-- **.layered-code/** - Layered Code metadata (gitignored)
-- **.layered.json** - Layered Code configuration
-
-## Getting Started
-
-1. Add your source code to the ` + "`src/`" + ` directory
-2. Run ` + "`npm run build`" + ` to copy files to the ` + "`build/`" + ` directory
-3. Deploy to your hosting platform (see below)
-
-## Deployment
-
-### Netlify
-- Build command: ` + "`npm run build`" + `
-- Publish directory: ` + "`build`" + `
-
-### Other platforms
-- Build your app using ` + "`npm run build`" + `
-- Deploy the contents of the ` + "`build/`" + ` directory
-
-## Notes
-
-The ` + "`.layered-code/`" + ` directory and ` + "`build/`" + ` directory are gitignored by default to keep your repository clean and prevent accidental deployment of development files.
-`
-
-	readmePath := filepath.Join(appPath, "README.md")
-	if err := os.WriteFile(readmePath, []byte(readmeContent), 0644); err != nil {
-		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create README.md: %v", err)}, err
+		// Write the file
+		if err := os.WriteFile(filePath, tmplFile.Content, 0644); err != nil {
+			return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create file %s: %v", tmplFile.Path, err)}, err
+		}
 	}
 
 	return CreateAppResult{
 		Success: true,
-		Message: fmt.Sprintf("Successfully created app '%s' with src/build structure", params.AppName),
+		Message: fmt.Sprintf("Successfully created %s app '%s' with src/build structure", params.ProjectType, params.AppName),
 		Path:    appPath,
 	}, nil
 }
@@ -209,34 +171,54 @@ The ` + "`.layered-code/`" + ` directory and ` + "`build/`" + ` directory are gi
 func CreateAppCli() error {
 	args := os.Args[3:]
 
+	// Get available project types for help message
+	availableTypes, err := GetAvailableProjectTypes()
+	if err != nil {
+		return fmt.Errorf("failed to get available project types: %w", err)
+	}
+
 	// Check for the correct number of arguments
-	if len(args) != 1 {
-		return fmt.Errorf("create_app requires exactly one argument: the app name\nUsage: layered-code tool create_app <app_name>")
+	if len(args) < 1 || len(args) > 2 {
+		return fmt.Errorf("create_app requires 1-2 arguments\nUsage: layered-code tool create_app <app_name> [%s]\nDefaults to 'html' if not specified", strings.Join(availableTypes, "|"))
 	}
 
 	appName := args[0]
+	projectType := "html" // default
 
-	result, err := CreateApp(CreateAppParams{AppName: appName})
+	if len(args) == 2 {
+		projectType = args[1]
+	}
+
+	result, err := CreateApp(CreateAppParams{AppName: appName, ProjectType: projectType})
 	if err != nil {
 		return fmt.Errorf("failed to create app: %w", err)
 	}
 
 	fmt.Printf("%s\n", result.Message)
 	fmt.Printf("Location: %s\n", result.Path)
+
+	if projectType == "vite" {
+		fmt.Printf("\nNext steps:\n")
+		fmt.Printf("  cd %s\n", result.Path)
+		fmt.Printf("  npm install\n")
+		fmt.Printf("  npm run dev\n")
+	}
+
 	return nil
 }
 
 // MCP
 func CreateAppMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName string `json:"app_name"`
+		AppName     string `json:"app_name"`
+		ProjectType string `json:"project_type"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
 		return nil, err
 	}
 
-	params := CreateAppParams{AppName: args.AppName}
+	params := CreateAppParams{AppName: args.AppName, ProjectType: args.ProjectType}
 	result, err := CreateApp(params)
 	if err != nil {
 		return nil, err
