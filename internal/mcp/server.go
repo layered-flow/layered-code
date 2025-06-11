@@ -62,6 +62,7 @@ func registerTools(s *server.MCPServer) {
 	
 	// Package management tools
 	registerNpmInstallTool(s)
+	registerPM2Tool(s)
 	
 	// Git tools
 	registerGitStatusTool(s)
@@ -379,4 +380,16 @@ func registerNpmInstallTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, tools.NpmInstallMcp)
+}
+
+// registerPM2Tool registers the pm2 tool
+func registerPM2Tool(s *server.MCPServer) {
+	tool := mcp.NewTool("pm2",
+		mcp.WithDescription("Manage PM2 processes for an application (start, stop, restart, delete, status)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+		mcp.WithString("command", mcp.Required(), mcp.Description("PM2 command to execute: 'start', 'stop', 'restart', 'delete', or 'status'")),
+		mcp.WithString("config", mcp.Description("Config file for start command (optional, defaults to ecosystem.config.cjs or similar)")),
+	)
+
+	s.AddTool(tool, tools.PM2Mcp)
 }

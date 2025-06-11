@@ -26,6 +26,7 @@ func PrintUsage() {
 	fmt.Println()
 	fmt.Println("  Package Management Tools:")
 	fmt.Println("  tool npm_install          Install npm dependencies (defaults to pnpm)")
+	fmt.Println("  tool pm2                  Manage PM2 processes (start, stop, restart, delete, status)")
 	fmt.Println()
 	fmt.Println("  Git Tools:")
 	fmt.Println("  tool git_status           Show the working tree status")
@@ -75,6 +76,8 @@ func RunTool() error {
 	// Package management tools
 	case "npm_install":
 		return tools.NpmInstallCli()
+	case "pm2":
+		return tools.PM2Cli()
 	
 	// Git tools
 	case "git_status":

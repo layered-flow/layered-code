@@ -162,7 +162,7 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 
 	return CreateAppResult{
 		Success: true,
-		Message: fmt.Sprintf("Successfully created %s app '%s' with src/build structure", params.ProjectType, params.AppName),
+		Message: fmt.Sprintf("Successfully created %s app '%s'", params.ProjectType, params.AppName),
 		Path:    appPath,
 	}, nil
 }
