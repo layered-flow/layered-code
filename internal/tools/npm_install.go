@@ -112,23 +112,42 @@ func getInstallCommand(pm PackageManager, production bool) []string {
 func NpmInstall(params NpmInstallParams) (NpmInstallResult, error) {
 	startTime := time.Now()
 
-	// Get the app directory
-	appsDir, err := config.GetAppsDirectory()
-	if err != nil {
-		return NpmInstallResult{Success: false, Message: fmt.Sprintf("failed to get apps directory: %v", err)}, err
+	// Validate app name
+	if params.AppName == "" {
+		err := fmt.Errorf("app name cannot be empty")
+		return NpmInstallResult{Success: false, Message: err.Error()}, err
+	}
+	if strings.ContainsAny(params.AppName, "/\\:*?\"<>|") || strings.Contains(params.AppName, "..") {
+		err := fmt.Errorf("app name contains invalid characters")
+		return NpmInstallResult{Success: false, Message: err.Error()}, err
 	}
 
+	// Get apps directory
+	appsDir, err := config.GetAppsDirectory()
+	if err != nil {
+		return NpmInstallResult{Success: false, Message: err.Error()}, err
+	}
+
+	// Build app path
 	appPath := filepath.Join(appsDir, params.AppName)
 
 	// Check if app exists
 	if _, err := os.Stat(appPath); os.IsNotExist(err) {
-		return NpmInstallResult{Success: false, Message: fmt.Sprintf("app '%s' does not exist", params.AppName)}, fmt.Errorf("app not found")
+		err = fmt.Errorf("app '%s' does not exist", params.AppName)
+		return NpmInstallResult{Success: false, Message: err.Error()}, err
+	} else if err != nil {
+		err = fmt.Errorf("failed to check app existence: %w", err)
+		return NpmInstallResult{Success: false, Message: err.Error()}, err
 	}
 
 	// Check if package.json exists
 	packageJsonPath := filepath.Join(appPath, "package.json")
 	if _, err := os.Stat(packageJsonPath); os.IsNotExist(err) {
-		return NpmInstallResult{Success: false, Message: "No package.json found in app directory"}, fmt.Errorf("package.json not found")
+		err = fmt.Errorf("package.json not found in app '%s'", params.AppName)
+		return NpmInstallResult{Success: false, Message: err.Error()}, err
+	} else if err != nil {
+		err = fmt.Errorf("failed to check package.json: %w", err)
+		return NpmInstallResult{Success: false, Message: err.Error()}, err
 	}
 
 	// Detect package manager

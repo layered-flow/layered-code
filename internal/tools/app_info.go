@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/layered-flow/layered-code/internal/config"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -34,21 +35,31 @@ type AppInfoResult struct {
 // GetAppInfo retrieves detailed information about an app
 func GetAppInfo(params AppInfoParams) (AppInfoResult, error) {
 	// Validate app name
-	if err := validateAppName(params.AppName); err != nil {
+	if params.AppName == "" {
+		err := fmt.Errorf("app name cannot be empty")
+		return AppInfoResult{Success: false, Message: err.Error()}, err
+	}
+	if strings.ContainsAny(params.AppName, "/\\:*?\"<>|") || strings.Contains(params.AppName, "..") {
+		err := fmt.Errorf("app name contains invalid characters")
 		return AppInfoResult{Success: false, Message: err.Error()}, err
 	}
 
-	// Get the app directory
+	// Get apps directory
 	appsDir, err := config.GetAppsDirectory()
 	if err != nil {
-		return AppInfoResult{Success: false, Message: fmt.Sprintf("failed to get apps directory: %v", err)}, err
+		return AppInfoResult{Success: false, Message: err.Error()}, err
 	}
 
+	// Build app path
 	appPath := filepath.Join(appsDir, params.AppName)
 
 	// Check if app exists
 	if _, err := os.Stat(appPath); os.IsNotExist(err) {
-		return AppInfoResult{Success: false, Message: fmt.Sprintf("app '%s' does not exist", params.AppName)}, fmt.Errorf("app not found")
+		err = fmt.Errorf("app '%s' does not exist", params.AppName)
+		return AppInfoResult{Success: false, Message: err.Error()}, err
+	} else if err != nil {
+		err = fmt.Errorf("failed to check app existence: %w", err)
+		return AppInfoResult{Success: false, Message: err.Error()}, err
 	}
 
 	result := AppInfoResult{

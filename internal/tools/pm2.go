@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/layered-flow/layered-code/internal/config"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -83,6 +84,14 @@ func runPM2Command(appPath string, command PM2Command, args ...string) (string, 
 		if errorMsg == "" {
 			errorMsg = err.Error()
 		}
+
+		// Check if PM2 is not found
+		if strings.Contains(errorMsg, "pm2: command not found") ||
+			strings.Contains(errorMsg, "pm2: not found") ||
+			strings.Contains(errorMsg, "Cannot find module") {
+			return stdout.String(), fmt.Errorf("PM2 is not installed. Please run 'layered-code tool npm_install %s' first to install dependencies", filepath.Base(appPath))
+		}
+
 		return stdout.String(), fmt.Errorf("%s", errorMsg)
 	}
 
@@ -93,17 +102,32 @@ func runPM2Command(appPath string, command PM2Command, args ...string) (string, 
 // Note: This requires PM2 to be available via npx or pnpm dlx.
 // PM2 will be automatically installed if not present when using these commands.
 func PM2(params PM2Params) (PM2Result, error) {
-	// Get the app directory
-	appsDir, err := config.GetAppsDirectory()
-	if err != nil {
-		return PM2Result{Success: false, Message: fmt.Sprintf("failed to get apps directory: %v", err)}, err
+	// Validate app name
+	if params.AppName == "" {
+		err := fmt.Errorf("app name cannot be empty")
+		return PM2Result{Success: false, Message: err.Error()}, err
+	}
+	if strings.ContainsAny(params.AppName, "/\\:*?\"<>|") || strings.Contains(params.AppName, "..") {
+		err := fmt.Errorf("app name contains invalid characters")
+		return PM2Result{Success: false, Message: err.Error()}, err
 	}
 
+	// Get apps directory
+	appsDir, err := config.GetAppsDirectory()
+	if err != nil {
+		return PM2Result{Success: false, Message: err.Error()}, err
+	}
+
+	// Build app path
 	appPath := filepath.Join(appsDir, params.AppName)
 
 	// Check if app exists
 	if _, err := os.Stat(appPath); os.IsNotExist(err) {
-		return PM2Result{Success: false, Message: fmt.Sprintf("app '%s' does not exist", params.AppName)}, fmt.Errorf("app not found")
+		err = fmt.Errorf("app '%s' does not exist", params.AppName)
+		return PM2Result{Success: false, Message: err.Error()}, err
+	} else if err != nil {
+		err = fmt.Errorf("failed to check app existence: %w", err)
+		return PM2Result{Success: false, Message: err.Error()}, err
 	}
 
 	// Handle different commands
@@ -144,7 +168,7 @@ func PM2(params PM2Params) (PM2Result, error) {
 				return PM2Result{Success: false, Message: "No PM2 config file found (ecosystem.config.cjs or similar)"}, fmt.Errorf("no config file found")
 			}
 		}
-		
+
 		// Save runtime info with port after successful start
 		if cmdErr == nil {
 			port := GetAppPort(appPath)

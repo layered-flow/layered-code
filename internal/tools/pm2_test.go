@@ -14,11 +14,17 @@ func TestPM2(t *testing.T) {
 		t.Skip("Skipping PM2 tests in CI environment")
 	}
 
-	// Create a test app
-	tempDir := t.TempDir()
+	// Create a test app in home directory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("Failed to get home directory: %v", err)
+	}
+	tempDir := filepath.Join(homeDir, ".layered-test-"+t.Name())
+	defer os.RemoveAll(tempDir) // Clean up after test
+	
 	testAppsDir := filepath.Join(tempDir, "apps")
-	os.Setenv("LAYERED_CODE_APPS_DIR", testAppsDir)
-	defer os.Unsetenv("LAYERED_CODE_APPS_DIR")
+	os.Setenv("LAYERED_APPS_DIRECTORY", testAppsDir)
+	defer os.Unsetenv("LAYERED_APPS_DIRECTORY")
 
 	// Ensure apps directory exists
 	if _, err := config.EnsureAppsDirectory(); err != nil {
