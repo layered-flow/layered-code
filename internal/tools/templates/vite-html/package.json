@@ -1,0 +1,16 @@
+{
+  "name": "{{.AppNameSlug}}",
+  "version": "1.0.0",
+  "description": "Created with Layered Code (https://www.layeredcode.ai)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5",
+    "pm2": "^6.0.8"
+  }
+}
