@@ -142,18 +142,45 @@ func PM2(params PM2Params) (PM2Result, error) {
 				return PM2Result{Success: false, Message: "No PM2 config file found (ecosystem.config.cjs or similar)"}, fmt.Errorf("no config file found")
 			}
 		}
+		
+		// Save runtime info with port after successful start
+		if cmdErr == nil {
+			port := getAppPort(appPath)
+			runtimeInfo := RuntimeInfo{
+				Port:   port,
+				Status: "running",
+			}
+			saveRuntimeInfo(appPath, runtimeInfo)
+		}
 
 	case PM2Stop:
 		output, cmdErr = runPM2Command(appPath, PM2Stop, "all")
+		// Update runtime info after stop
+		if cmdErr == nil {
+			runtimeInfo := RuntimeInfo{
+				Port:   getAppPort(appPath),
+				Status: "stopped",
+			}
+			saveRuntimeInfo(appPath, runtimeInfo)
+		}
 
 	case PM2Restart:
 		output, cmdErr = runPM2Command(appPath, PM2Restart, "all")
 
 	case PM2Delete:
 		output, cmdErr = runPM2Command(appPath, PM2Delete, "all")
+		// Clear runtime info after delete
+		if cmdErr == nil {
+			runtimePath := filepath.Join(appPath, ".layered-code", "runtime.json")
+			os.Remove(runtimePath)
+		}
 
 	case PM2Status, PM2List:
 		output, cmdErr = runPM2Command(appPath, PM2List, "--no-color")
+		// Enhance output with port information
+		if cmdErr == nil {
+			output = enhancePM2Output(output, appsDir)
+		}
 
 	default:
 		return PM2Result{Success: false, Message: fmt.Sprintf("unknown command: %s", params.Command)}, fmt.Errorf("unknown command")

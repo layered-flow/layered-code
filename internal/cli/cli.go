@@ -18,6 +18,7 @@ func PrintUsage() {
 	fmt.Println("  File Management Tools:")
 	fmt.Println("  tool create_app           Create a new app directory")
 	fmt.Println("  tool list_apps            List all available apps")
+	fmt.Println("  tool app_info             Get detailed information about an app (including port)")
 	fmt.Println("  tool list_files           List files and directories within an app")
 	fmt.Println("  tool search_text          Search for text patterns in files using ripgrep")
 	fmt.Println("  tool read_file            Read the contents of a file within an app")
@@ -25,7 +26,8 @@ func PrintUsage() {
 	fmt.Println("  tool edit_file            Edit a file using find-and-replace")
 	fmt.Println()
 	fmt.Println("  Package Management Tools:")
-	fmt.Println("  tool npm_install          Install npm dependencies (defaults to pnpm)")
+	fmt.Println("  tool npm_install          Install npm dependencies (pnpm/npm)")
+	fmt.Println("  tool build_app            Build app for production (runs 'pnpm/npm run build')")
 	fmt.Println("  tool pm2                  Manage PM2 processes (start, stop, restart, delete, status)")
 	fmt.Println()
 	fmt.Println("  Git Tools:")
@@ -62,6 +64,8 @@ func RunTool() error {
 		return tools.CreateAppCli()
 	case "list_apps":
 		return tools.ListAppsCli()
+	case "app_info":
+		return tools.AppInfoCli()
 	case "list_files":
 		return tools.ListFilesCli()
 	case "search_text":
@@ -72,13 +76,15 @@ func RunTool() error {
 		return tools.WriteFileCli()
 	case "edit_file":
 		return tools.EditFileCli()
-	
+
 	// Package management tools
 	case "npm_install":
 		return tools.NpmInstallCli()
+	case "build_app":
+		return tools.BuildAppCli()
 	case "pm2":
 		return tools.PM2Cli()
-	
+
 	// Git tools
 	case "git_status":
 		return git.GitStatusCli()
@@ -110,7 +116,7 @@ func RunTool() error {
 		return git.GitRevertCli()
 	case "git_checkout":
 		return git.GitCheckoutCli()
-		
+
 	default:
 		return fmt.Errorf("unknown tool: %s\nRun 'layered-code help' to see all available tools", subcommand)
 	}

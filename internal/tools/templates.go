@@ -17,6 +17,7 @@ var templatesFS embed.FS
 type TemplateData struct {
 	AppName     string
 	AppNameSlug string
+	Port        int
 }
 
 // TemplateFile represents a file to be created from a template

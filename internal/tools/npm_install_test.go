@@ -52,12 +52,18 @@ func TestDetectPackageManager(t *testing.T) {
 			expectedPM: NPM,
 		},
 		{
-			name: "fallback to npm when pnpm not available",
+			name: "fallback to default when invalid pm specified",
 			setupFunc: func() {
-				// This test assumes pnpm might not be available
+				// When invalid PM is specified, it falls back to default priority
 			},
-			preferred:  "invalid-pm",
-			expectedPM: NPM,
+			preferred: "invalid-pm",
+			expectedPM: func() PackageManager {
+				// This matches the actual behavior: pnpm is preferred if available
+				if isPackageManagerAvailable("pnpm") {
+					return PNPM
+				}
+				return NPM
+			}(),
 		},
 	}
 

@@ -103,13 +103,10 @@ func TestCreateApp(t *testing.T) {
 			t.Errorf("App directory was not created")
 		}
 
-		// Verify subdirectories were created
-		subdirs := []string{"src", "build", ".layered-code"}
-		for _, subdir := range subdirs {
-			subdirPath := filepath.Join(expectedPath, subdir)
-			if _, err := os.Stat(subdirPath); os.IsNotExist(err) {
-				t.Errorf("Subdirectory %s was not created", subdir)
-			}
+		// Verify .layered-code directory was created
+		layeredPath := filepath.Join(expectedPath, ".layered-code")
+		if _, err := os.Stat(layeredPath); os.IsNotExist(err) {
+			t.Errorf(".layered-code directory was not created")
 		}
 
 		// Verify files were created
@@ -118,6 +115,8 @@ func TestCreateApp(t *testing.T) {
 			".layered.json",
 			"package.json",
 			"README.md",
+			"ecosystem.config.cjs",
+			"vite.config.js",
 			filepath.Join("src", "index.html"),
 		}
 		for _, file := range files {
@@ -132,7 +131,7 @@ func TestCreateApp(t *testing.T) {
 		if err != nil {
 			t.Errorf("Failed to read .gitignore: %v", err)
 		}
-		expectedIgnores := []string{".layered-code/", "build/", "dist/", "node_modules/"}
+		expectedIgnores := []string{".layered-code/", "dist/", "node_modules/"}
 		for _, ignore := range expectedIgnores {
 			if !contains(string(gitignoreContent), ignore) {
 				t.Errorf(".gitignore missing expected entry: %s", ignore)

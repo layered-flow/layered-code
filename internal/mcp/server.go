@@ -54,16 +54,18 @@ func registerTools(s *server.MCPServer) {
 	// File management tools
 	registerCreateAppTool(s)
 	registerListAppsTool(s)
+	registerAppInfoTool(s)
 	registerListFilesTool(s)
 	registerSearchTextTool(s)
 	registerReadFileTool(s)
 	registerWriteFileTool(s)
 	registerEditFileTool(s)
-	
+
 	// Package management tools
 	registerNpmInstallTool(s)
+	registerBuildAppTool(s)
 	registerPM2Tool(s)
-	
+
 	// Git tools
 	registerGitStatusTool(s)
 	registerGitDiffTool(s)
@@ -86,9 +88,9 @@ func registerTools(s *server.MCPServer) {
 // registerCreateAppTool registers the create_app tool
 func registerCreateAppTool(s *server.MCPServer) {
 	tool := mcp.NewTool("create_app",
-		mcp.WithDescription("Create a new application directory"),
+		mcp.WithDescription("Create a new Vite application. You can choose between React or plain HTML template based on the user's needs. For complex UI requirements use React, for simple static sites use HTML."),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to create (must be unique, cannot contain special characters or '..')")),
-		mcp.WithString("project_type", mcp.Description("Type of project to create: 'html' (default) or 'vite'")),
+		mcp.WithString("template", mcp.Description("Template to use: 'vite-react' for React applications or 'vite-html' for plain HTML/JS (default: 'vite-html')")),
 	)
 
 	s.AddTool(tool, tools.CreateAppMcp)
@@ -101,6 +103,16 @@ func registerListAppsTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, tools.ListAppsMcp)
+}
+
+// registerAppInfoTool registers the app_info tool
+func registerAppInfoTool(s *server.MCPServer) {
+	tool := mcp.NewTool("app_info",
+		mcp.WithDescription("Get detailed information about an application including its configured port, status, and URL"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to get information for")),
+	)
+
+	s.AddTool(tool, tools.AppInfoMcp)
 }
 
 // registerListFilesTool registers the list_files tool
@@ -373,13 +385,23 @@ func registerGitShowTool(s *server.MCPServer) {
 // registerNpmInstallTool registers the npm_install tool
 func registerNpmInstallTool(s *server.MCPServer) {
 	tool := mcp.NewTool("npm_install",
-		mcp.WithDescription("Install npm dependencies for an application (defaults to pnpm, falls back to npm)"),
+		mcp.WithDescription("Install npm dependencies for an application"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
 		mcp.WithString("package_manager", mcp.Description("Force specific package manager: 'pnpm', 'npm', or 'yarn' (optional)")),
 		mcp.WithBoolean("production", mcp.Description("Install only production dependencies (optional)")),
 	)
 
 	s.AddTool(tool, tools.NpmInstallMcp)
+}
+
+// registerBuildAppTool registers the build_app tool
+func registerBuildAppTool(s *server.MCPServer) {
+	tool := mcp.NewTool("build_app",
+		mcp.WithDescription("Build a Vite application for production (runs 'pnpm/npm run build')"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from list_apps)")),
+	)
+
+	s.AddTool(tool, tools.BuildAppMcp)
 }
 
 // registerPM2Tool registers the pm2 tool

@@ -17,8 +17,8 @@ import (
 
 // Types
 type CreateAppParams struct {
-	AppName     string `json:"app_name"`
-	ProjectType string `json:"project_type"`
+	AppName string `json:"app_name"`
+	Template string `json:"template"`
 }
 
 type CreateAppResult struct {
@@ -58,28 +58,6 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 		return CreateAppResult{Success: false, Message: err.Error()}, err
 	}
 
-	// Default to HTML if project type not specified
-	if params.ProjectType == "" {
-		params.ProjectType = "html"
-	}
-
-	// Validate project type
-	availableTypes, err := GetAvailableProjectTypes()
-	if err != nil {
-		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to get available project types: %v", err)}, err
-	}
-
-	validType := false
-	for _, t := range availableTypes {
-		if t == params.ProjectType {
-			validType = true
-			break
-		}
-	}
-
-	if !validType {
-		return CreateAppResult{Success: false, Message: fmt.Sprintf("project type must be one of: %s", strings.Join(availableTypes, ", "))}, fmt.Errorf("invalid project type: %s", params.ProjectType)
-	}
 
 	// Ensure the apps directory exists and get its path
 	appsDir, err := config.EnsureAppsDirectory()
@@ -102,24 +80,29 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create app directory: %v", err)}, err
 	}
 
-	// Create the standard directory structure
-	directories := []string{
-		filepath.Join(appPath, "src"),
-		filepath.Join(appPath, "build"),
-		filepath.Join(appPath, ".layered-code"),
+	// Create the .layered-code directory
+	layeredDir := filepath.Join(appPath, ".layered-code")
+	if err := os.MkdirAll(layeredDir, constants.AppsDirectoryPerms); err != nil {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create .layered-code directory: %v", err)}, err
 	}
 
-	for _, dir := range directories {
-		if err := os.MkdirAll(dir, constants.AppsDirectoryPerms); err != nil {
-			return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create directory %s: %v", dir, err)}, err
-		}
+	// Determine template to use
+	template := params.Template
+	if template == "" {
+		template = "vite-html" // Default to HTML template
+	}
+
+	// Validate template
+	if template != "vite-html" && template != "vite-react" {
+		return CreateAppResult{Success: false, Message: fmt.Sprintf("invalid template '%s'. Must be 'vite-html' or 'vite-react'", template)}, fmt.Errorf("invalid template")
 	}
 
 	// Create a basic .layered.json config file
 	layeredConfig := map[string]interface{}{
 		"version":      "1.0",
 		"app_name":     params.AppName,
-		"project_type": params.ProjectType,
+		"project_type": "vite",
+		"template":     template,
 		"created_at":   time.Now().Format(time.RFC3339),
 	}
 
@@ -137,9 +120,10 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 	templateData := TemplateData{
 		AppName:     params.AppName,
 		AppNameSlug: CreateAppNameSlug(params.AppName),
+		Port:        generateUniquePort(params.AppName),
 	}
 
-	templateFiles, err := LoadProjectTemplates(params.ProjectType, templateData)
+	templateFiles, err := LoadProjectTemplates(template, templateData)
 	if err != nil {
 		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to load templates: %v", err)}, err
 	}
@@ -160,9 +144,16 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 		}
 	}
 
+	// Save initial runtime info with port
+	runtimeInfo := RuntimeInfo{
+		Port:   templateData.Port,
+		Status: "created",
+	}
+	saveRuntimeInfo(appPath, runtimeInfo)
+
 	return CreateAppResult{
 		Success: true,
-		Message: fmt.Sprintf("Successfully created %s app '%s'", params.ProjectType, params.AppName),
+		Message: fmt.Sprintf("Successfully created app '%s' (configured for port %d)", params.AppName, templateData.Port),
 		Path:    appPath,
 	}, nil
 }
@@ -171,25 +162,18 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 func CreateAppCli() error {
 	args := os.Args[3:]
 
-	// Get available project types for help message
-	availableTypes, err := GetAvailableProjectTypes()
-	if err != nil {
-		return fmt.Errorf("failed to get available project types: %w", err)
-	}
-
 	// Check for the correct number of arguments
 	if len(args) < 1 || len(args) > 2 {
-		return fmt.Errorf("create_app requires 1-2 arguments\nUsage: layered-code tool create_app <app_name> [%s]\nDefaults to 'html' if not specified", strings.Join(availableTypes, "|"))
+		return fmt.Errorf("create_app requires 1 or 2 arguments\nUsage: layered-code tool create_app <app_name> [template]\nTemplates: vite-html (default), vite-react")
 	}
 
 	appName := args[0]
-	projectType := "html" // default
-
+	template := "vite-html"
 	if len(args) == 2 {
-		projectType = args[1]
+		template = args[1]
 	}
 
-	result, err := CreateApp(CreateAppParams{AppName: appName, ProjectType: projectType})
+	result, err := CreateApp(CreateAppParams{AppName: appName, Template: template})
 	if err != nil {
 		return fmt.Errorf("failed to create app: %w", err)
 	}
@@ -197,12 +181,10 @@ func CreateAppCli() error {
 	fmt.Printf("%s\n", result.Message)
 	fmt.Printf("Location: %s\n", result.Path)
 
-	if projectType == "vite" {
-		fmt.Printf("\nNext steps:\n")
-		fmt.Printf("  cd %s\n", result.Path)
-		fmt.Printf("  npm install\n")
-		fmt.Printf("  npm run dev\n")
-	}
+	fmt.Printf("\nNext steps:\n")
+	fmt.Printf("  cd %s\n", result.Path)
+	fmt.Printf("  npm install\n")
+	fmt.Printf("  npm run dev\n")
 
 	return nil
 }
@@ -210,15 +192,15 @@ func CreateAppCli() error {
 // MCP
 func CreateAppMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName     string `json:"app_name"`
-		ProjectType string `json:"project_type"`
+		AppName string `json:"app_name"`
+		Template string `json:"template"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
 		return nil, err
 	}
 
-	params := CreateAppParams{AppName: args.AppName, ProjectType: args.ProjectType}
+	params := CreateAppParams{AppName: args.AppName, Template: args.Template}
 	result, err := CreateApp(params)
 	if err != nil {
 		return nil, err
