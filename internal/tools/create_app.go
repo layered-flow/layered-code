@@ -94,7 +94,10 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 
 	// Validate template
 	if template != "vite-html" && template != "vite-react" {
-		return CreateAppResult{Success: false, Message: fmt.Sprintf("invalid template '%s'. Must be 'vite-html' or 'vite-react'", template)}, fmt.Errorf("invalid template")
+		return CreateAppResult{
+			Success: false, 
+			Message: fmt.Sprintf("Invalid template '%s'. Valid options are: 'vite-html' (plain HTML/JS) or 'vite-react' (React app)", template),
+		}, fmt.Errorf("invalid template")
 	}
 
 	// Create a basic .layered.json config file
@@ -116,11 +119,31 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 		return CreateAppResult{Success: false, Message: fmt.Sprintf("failed to create .layered.json: %v", err)}, err
 	}
 
+	// Generate port and check for conflicts
+	port := GenerateUniquePort(params.AppName)
+	conflictingApp, err := CheckPortConflicts(params.AppName, port)
+	if err == nil && conflictingApp != "" {
+		// Try a few alternative ports
+		for i := 1; i <= 10; i++ {
+			port = GenerateUniquePort(params.AppName + fmt.Sprintf("_%d", i))
+			conflictingApp, err = CheckPortConflicts(params.AppName, port)
+			if err != nil || conflictingApp == "" {
+				break
+			}
+		}
+		if conflictingApp != "" {
+			return CreateAppResult{
+				Success: false,
+				Message: fmt.Sprintf("Could not find an available port. Port %d is already used by app '%s'", port, conflictingApp),
+			}, fmt.Errorf("port conflict")
+		}
+	}
+
 	// Load templates for the project type
 	templateData := TemplateData{
 		AppName:     params.AppName,
 		AppNameSlug: CreateAppNameSlug(params.AppName),
-		Port:        generateUniquePort(params.AppName),
+		Port:        port,
 	}
 
 	templateFiles, err := LoadProjectTemplates(template, templateData)
@@ -149,7 +172,10 @@ func CreateApp(params CreateAppParams) (CreateAppResult, error) {
 		Port:   templateData.Port,
 		Status: "created",
 	}
-	saveRuntimeInfo(appPath, runtimeInfo)
+	if err := SaveRuntimeInfo(params.AppName, runtimeInfo); err != nil {
+		// Log warning but don't fail the creation
+		fmt.Fprintf(os.Stderr, "Warning: failed to save runtime info: %v\n", err)
+	}
 
 	return CreateAppResult{
 		Success: true,
@@ -164,7 +190,18 @@ func CreateAppCli() error {
 
 	// Check for the correct number of arguments
 	if len(args) < 1 || len(args) > 2 {
-		return fmt.Errorf("create_app requires 1 or 2 arguments\nUsage: layered-code tool create_app <app_name> [template]\nTemplates: vite-html (default), vite-react")
+		fmt.Println("Error: Invalid number of arguments")
+		fmt.Println()
+		fmt.Println("Usage: layered-code tool create_app <app_name> [template]")
+		fmt.Println()
+		fmt.Println("Templates:")
+		fmt.Println("  vite-html   - Plain HTML/JavaScript app (default)")
+		fmt.Println("  vite-react  - React application")
+		fmt.Println()
+		fmt.Println("Examples:")
+		fmt.Println("  layered-code tool create_app myapp")
+		fmt.Println("  layered-code tool create_app myapp vite-react")
+		return fmt.Errorf("invalid arguments")
 	}
 
 	appName := args[0]

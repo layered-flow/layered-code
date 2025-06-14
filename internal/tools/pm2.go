@@ -90,6 +90,8 @@ func runPM2Command(appPath string, command PM2Command, args ...string) (string, 
 }
 
 // PM2 executes PM2 commands
+// Note: This requires PM2 to be available via npx or pnpm dlx.
+// PM2 will be automatically installed if not present when using these commands.
 func PM2(params PM2Params) (PM2Result, error) {
 	// Get the app directory
 	appsDir, err := config.GetAppsDirectory()
@@ -145,30 +147,40 @@ func PM2(params PM2Params) (PM2Result, error) {
 		
 		// Save runtime info with port after successful start
 		if cmdErr == nil {
-			port := getAppPort(appPath)
+			port := GetAppPort(appPath)
 			runtimeInfo := RuntimeInfo{
 				Port:   port,
 				Status: "running",
 			}
-			saveRuntimeInfo(appPath, runtimeInfo)
+			if err := SaveRuntimeInfo(params.AppName, runtimeInfo); err != nil {
+				// Log error but don't fail the operation
+				fmt.Fprintf(os.Stderr, "Warning: failed to save runtime info: %v\n", err)
+			}
 		}
 
 	case PM2Stop:
-		output, cmdErr = runPM2Command(appPath, PM2Stop, "all")
+		// Use the app name for PM2 commands to be more specific
+		output, cmdErr = runPM2Command(appPath, PM2Stop, params.AppName)
 		// Update runtime info after stop
 		if cmdErr == nil {
+			port := GetAppPort(appPath)
 			runtimeInfo := RuntimeInfo{
-				Port:   getAppPort(appPath),
+				Port:   port,
 				Status: "stopped",
 			}
-			saveRuntimeInfo(appPath, runtimeInfo)
+			if err := SaveRuntimeInfo(params.AppName, runtimeInfo); err != nil {
+				// Log error but don't fail the operation
+				fmt.Fprintf(os.Stderr, "Warning: failed to save runtime info: %v\n", err)
+			}
 		}
 
 	case PM2Restart:
-		output, cmdErr = runPM2Command(appPath, PM2Restart, "all")
+		// Use the app name for PM2 commands to be more specific
+		output, cmdErr = runPM2Command(appPath, PM2Restart, params.AppName)
 
 	case PM2Delete:
-		output, cmdErr = runPM2Command(appPath, PM2Delete, "all")
+		// Use the app name for PM2 commands to be more specific
+		output, cmdErr = runPM2Command(appPath, PM2Delete, params.AppName)
 		// Clear runtime info after delete
 		if cmdErr == nil {
 			runtimePath := filepath.Join(appPath, ".layered-code", "runtime.json")
@@ -206,7 +218,22 @@ func PM2Cli() error {
 	args := os.Args[3:]
 
 	if len(args) < 2 {
-		return fmt.Errorf("pm2 requires at least 2 arguments\nUsage: layered-code tool pm2 <app_name> <command> [config_file]\nCommands: start, stop, restart, delete, status")
+		fmt.Println("Error: Invalid number of arguments")
+		fmt.Println()
+		fmt.Println("Usage: layered-code tool pm2 <app_name> <command> [config_file]")
+		fmt.Println()
+		fmt.Println("Commands:")
+		fmt.Println("  start    - Start the application")
+		fmt.Println("  stop     - Stop the application")
+		fmt.Println("  restart  - Restart the application")
+		fmt.Println("  delete   - Remove the application from PM2")
+		fmt.Println("  status   - Show application status")
+		fmt.Println()
+		fmt.Println("Examples:")
+		fmt.Println("  layered-code tool pm2 myapp start")
+		fmt.Println("  layered-code tool pm2 myapp stop")
+		fmt.Println("  layered-code tool pm2 myapp status")
+		return fmt.Errorf("invalid arguments")
 	}
 
 	appName := args[0]

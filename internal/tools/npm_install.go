@@ -63,7 +63,9 @@ func detectPackageManager(appPath string, preferred string) PackageManager {
 	}
 
 	if _, err := os.Stat(filepath.Join(appPath, "package-lock.json")); err == nil {
-		return NPM // npm is always available
+		if isPackageManagerAvailable("npm") {
+			return NPM
+		}
 	}
 
 	// Default priority: pnpm -> npm
@@ -71,7 +73,14 @@ func detectPackageManager(appPath string, preferred string) PackageManager {
 		return PNPM
 	}
 
-	return NPM // npm is the universal fallback
+	// Check if npm is available before returning it as fallback
+	if isPackageManagerAvailable("npm") {
+		return NPM
+	}
+
+	// If no package manager is available, return empty string
+	// This will be handled with a proper error message
+	return ""
 }
 
 // isPackageManagerAvailable checks if a package manager is available
@@ -124,6 +133,14 @@ func NpmInstall(params NpmInstallParams) (NpmInstallResult, error) {
 
 	// Detect package manager
 	pm := detectPackageManager(appPath, params.PackageManager)
+	
+	// Check if a package manager was found
+	if pm == "" {
+		return NpmInstallResult{
+			Success: false, 
+			Message: "No package manager found. Please install npm or pnpm. Visit https://nodejs.org to install Node.js and npm.",
+		}, fmt.Errorf("no package manager available")
+	}
 
 	// Get install command
 	cmdArgs := getInstallCommand(pm, params.Production)
@@ -194,7 +211,19 @@ func NpmInstallCli() error {
 	args := os.Args[3:]
 
 	if len(args) < 1 {
-		return fmt.Errorf("npm_install requires at least 1 argument\nUsage: layered-code tool npm_install <app_name> [--package-manager=pnpm|npm|yarn] [--production]")
+		fmt.Println("Error: Invalid number of arguments")
+		fmt.Println()
+		fmt.Println("Usage: layered-code tool npm_install <app_name> [options]")
+		fmt.Println()
+		fmt.Println("Options:")
+		fmt.Println("  --package-manager=<pm>  - Force specific package manager (pnpm|npm|yarn)")
+		fmt.Println("  --production           - Install only production dependencies")
+		fmt.Println()
+		fmt.Println("Examples:")
+		fmt.Println("  layered-code tool npm_install myapp")
+		fmt.Println("  layered-code tool npm_install myapp --package-manager=pnpm")
+		fmt.Println("  layered-code tool npm_install myapp --production")
+		return fmt.Errorf("invalid arguments")
 	}
 
 	appName := args[0]
@@ -214,7 +243,11 @@ func NpmInstallCli() error {
 
 	result, err := NpmInstall(params)
 	if err != nil {
-		return fmt.Errorf("failed to install dependencies: %w", err)
+		// Print the user-friendly message from the result if available
+		if result.Message != "" {
+			fmt.Printf("Error: %s\n", result.Message)
+		}
+		return err
 	}
 
 	fmt.Printf("%s (using %s, took %s)\n", result.Message, result.PackageManager, result.Duration)

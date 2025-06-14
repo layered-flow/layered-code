@@ -74,19 +74,15 @@ func GetAppInfo(params AppInfoParams) (AppInfoResult, error) {
 		}
 	}
 
-	// Get port information
-	port := getAppPort(appPath)
+	// Get port and runtime information
+	port := GetAppPort(appPath)
 	result.Port = port
 
-	// Read runtime info for status
-	runtimePath := filepath.Join(appPath, ".layered-code", "runtime.json")
-	if data, err := os.ReadFile(runtimePath); err == nil {
-		var info RuntimeInfo
-		if json.Unmarshal(data, &info) == nil {
-			result.Status = info.Status
-			if info.Port > 0 {
-				result.Port = info.Port
-			}
+	// Get runtime info for status
+	if runtimeInfo, err := GetRuntimeInfo(params.AppName); err == nil {
+		result.Status = runtimeInfo.Status
+		if runtimeInfo.Port > 0 {
+			result.Port = runtimeInfo.Port
 		}
 	}
 
@@ -119,7 +115,7 @@ func AppInfoCli() error {
 	}
 
 	if !result.Success {
-		return fmt.Errorf(result.Message)
+		return fmt.Errorf("%s", result.Message)
 	}
 
 	// Print app information
