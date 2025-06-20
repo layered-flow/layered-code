@@ -81,12 +81,7 @@ func GitPush(appName string, remote string, branch string, setUpstream bool, for
 	outputStr := strings.TrimSpace(string(output))
 	
 	if err != nil {
-		return GitPushResult{
-			IsRepo:  true,
-			Success: false,
-			Message: "Push failed",
-			Output:  outputStr,
-		}, nil
+		return GitPushResult{}, fmt.Errorf("git push failed: %w - %s", err, outputStr)
 	}
 
 	return GitPushResult{

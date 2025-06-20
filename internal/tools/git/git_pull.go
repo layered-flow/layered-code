@@ -78,13 +78,7 @@ func GitPull(appName string, remote string, branch string, rebase bool) (GitPull
 	outputStr := strings.TrimSpace(string(output))
 	
 	if err != nil {
-		return GitPullResult{
-			IsRepo:  true,
-			Success: false,
-			Message: "Pull failed",
-			Output:  outputStr,
-			Updated: false,
-		}, nil
+		return GitPullResult{}, fmt.Errorf("git pull failed: %w - %s", err, outputStr)
 	}
 
 	// Check if repository was updated

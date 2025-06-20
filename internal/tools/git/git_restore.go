@@ -99,18 +99,10 @@ func GitRestore(appName string, files []string, staged bool) (GitRestoreResult, 
 			fallbackCmd.Dir = appPath
 			output, err = fallbackCmd.CombinedOutput()
 			if err != nil {
-				return GitRestoreResult{
-					IsRepo:  true,
-					Success: false,
-					Message: fmt.Sprintf("Failed to restore files: %s", strings.TrimSpace(string(output))),
-				}, nil
+				return GitRestoreResult{}, fmt.Errorf("git restore (fallback) failed: %w - %s", err, strings.TrimSpace(string(output)))
 			}
 		} else {
-			return GitRestoreResult{
-				IsRepo:  true,
-				Success: false,
-				Message: fmt.Sprintf("Failed to restore files: %s", strings.TrimSpace(string(output))),
-			}, nil
+			return GitRestoreResult{}, fmt.Errorf("git restore failed: %w - %s", err, strings.TrimSpace(string(output)))
 		}
 	}
 

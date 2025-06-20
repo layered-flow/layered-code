@@ -88,12 +88,7 @@ func GitCommit(appName string, message string, amend bool) (GitCommitResult, err
 	commitCmd.Dir = appPath
 	output, err := commitCmd.CombinedOutput()
 	if err != nil {
-		return GitCommitResult{
-			IsRepo:  true,
-			Success: false,
-			Error:   strings.TrimSpace(string(output)),
-			Message: "Commit failed",
-		}, nil
+		return GitCommitResult{}, fmt.Errorf("git commit failed: %w - %s", err, strings.TrimSpace(string(output)))
 	}
 
 	// Get the commit hash
@@ -101,11 +96,7 @@ func GitCommit(appName string, message string, amend bool) (GitCommitResult, err
 	hashCmd.Dir = appPath
 	hashOutput, err := hashCmd.Output()
 	if err != nil {
-		return GitCommitResult{
-			IsRepo:  true,
-			Success: true,
-			Message: "Commit created but failed to get hash",
-		}, nil
+		return GitCommitResult{}, fmt.Errorf("failed to get commit hash: %w", err)
 	}
 
 	commitHash := strings.TrimSpace(string(hashOutput))[:7] // Short hash

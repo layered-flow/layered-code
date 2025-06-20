@@ -66,33 +66,27 @@ func GitShow(appName, commitRef string) (GitShowResult, error) {
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		errOutput := string(output)
-		// Check if it's because there are no commits yet (empty repo)
+		// Check if it's because there are no commits yet (empty repo) or commit not found
 		if strings.Contains(errOutput, "does not have any commits") || 
-			(strings.Contains(errOutput, "unknown revision") && commitRef == "HEAD") {
+			strings.Contains(errOutput, "unknown revision") ||
+			strings.Contains(errOutput, "bad object") ||
+			strings.Contains(errOutput, "Not a valid object name") ||
+			strings.Contains(errOutput, "ambiguous argument") {
+			// These are expected errors when commit doesn't exist - return structured result
 			return GitShowResult{
 				Success:   false,
 				IsRepo:    true,
-				Message:   fmt.Sprintf("Commit '%s' not found", commitRef),
+				Message:   fmt.Sprintf("Failed to show commit '%s': not found", commitRef),
 				CommitRef: originalCommitRef,
 			}, nil
 		}
-		// For all other errors, including bad object/revision
-		return GitShowResult{
-			Success:   false,
-			IsRepo:    true,
-			Message:   fmt.Sprintf("Failed to show commit '%s': %s", commitRef, err.Error()),
-			CommitRef: originalCommitRef,
-		}, nil
+		// For all other unexpected errors, return actual error
+		return GitShowResult{}, fmt.Errorf("git show failed: %w - %s", err, strings.TrimSpace(errOutput))
 	}
 
 	outputStr := strings.TrimSpace(string(output))
 	if outputStr == "" {
-		return GitShowResult{
-			Success:   false,
-			IsRepo:    true,
-			Message:   fmt.Sprintf("Commit '%s' not found", commitRef),
-			CommitRef: originalCommitRef,
-		}, nil
+		return GitShowResult{}, fmt.Errorf("git show returned empty output for commit '%s'", commitRef)
 	}
 
 	hash, author, date, subject := parseCommitInfo(outputStr)

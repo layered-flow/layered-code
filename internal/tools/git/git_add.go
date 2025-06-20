@@ -82,11 +82,7 @@ func GitAdd(appName string, files []string, all bool) (GitAddResult, error) {
 	addCmd.Dir = appPath
 	output, err := addCmd.CombinedOutput()
 	if err != nil {
-		return GitAddResult{
-			IsRepo:  true,
-			Success: false,
-			Message: fmt.Sprintf("Failed to add files: %s", strings.TrimSpace(string(output))),
-		}, nil
+		return GitAddResult{}, fmt.Errorf("git add failed: %w - %s", err, strings.TrimSpace(string(output)))
 	}
 
 	// Get list of staged files
