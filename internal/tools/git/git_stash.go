@@ -75,12 +75,10 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		cmd.Dir = appPath
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			result.Success = false
-			result.Message = fmt.Sprintf("Failed to stash: %s", strings.TrimSpace(string(output)))
-		} else {
-			result.Success = true
-			result.Message = "Changes stashed successfully"
+			return GitStashResult{}, fmt.Errorf("git stash push failed: %w - %s", err, strings.TrimSpace(string(output)))
 		}
+		result.Success = true
+		result.Message = "Changes stashed successfully"
 
 	case "pop":
 		// Pop the latest stash
@@ -88,12 +86,10 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		cmd.Dir = appPath
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			result.Success = false
-			result.Message = fmt.Sprintf("Failed to pop stash: %s", strings.TrimSpace(string(output)))
-		} else {
-			result.Success = true
-			result.Message = "Stash applied and removed"
+			return GitStashResult{}, fmt.Errorf("git stash pop failed: %w - %s", err, strings.TrimSpace(string(output)))
 		}
+		result.Success = true
+		result.Message = "Stash applied and removed"
 
 	case "apply":
 		// Apply the latest stash without removing it
@@ -101,12 +97,10 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		cmd.Dir = appPath
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			result.Success = false
-			result.Message = fmt.Sprintf("Failed to apply stash: %s", strings.TrimSpace(string(output)))
-		} else {
-			result.Success = true
-			result.Message = "Stash applied"
+			return GitStashResult{}, fmt.Errorf("git stash apply failed: %w - %s", err, strings.TrimSpace(string(output)))
 		}
+		result.Success = true
+		result.Message = "Stash applied"
 
 	case "drop":
 		// Drop the latest stash
@@ -114,12 +108,10 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		cmd.Dir = appPath
 		output, err := cmd.CombinedOutput()
 		if err != nil {
-			result.Success = false
-			result.Message = fmt.Sprintf("Failed to drop stash: %s", strings.TrimSpace(string(output)))
-		} else {
-			result.Success = true
-			result.Message = "Stash dropped"
+			return GitStashResult{}, fmt.Errorf("git stash drop failed: %w - %s", err, strings.TrimSpace(string(output)))
 		}
+		result.Success = true
+		result.Message = "Stash dropped"
 
 	case "list", "":
 		// List stashes (default action)

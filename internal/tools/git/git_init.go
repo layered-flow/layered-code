@@ -67,11 +67,7 @@ func GitInit(appName string, bare bool) (GitInitResult, error) {
 	initCmd.Dir = appPath
 	output, err := initCmd.CombinedOutput()
 	if err != nil {
-		return GitInitResult{
-			Success: false,
-			Message: fmt.Sprintf("Failed to initialize repository: %s", strings.TrimSpace(string(output))),
-			AppPath: appPath,
-		}, nil
+		return GitInitResult{}, fmt.Errorf("git init failed: %w - %s", err, strings.TrimSpace(string(output)))
 	}
 
 	// Configure default branch name to "main"

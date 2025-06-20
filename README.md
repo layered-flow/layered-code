@@ -259,6 +259,12 @@ layered-code --help
   - `tool write_file` - Write or create a file within an application directory
   - `tool edit_file` - Edit a file by performing find-and-replace operations
 
+  **Vite Tools:**
+  - `tool vite_create_app` - Create a new Vite app with various templates (React, Vue, Svelte, etc.)
+
+  **Package Manager Tools:**
+  - `tool pnpm_install` - Install dependencies using pnpm (preferred) or npm
+
   **Git Tools:**
   - `tool git_status` - Show the working tree status of a git repository
   - `tool git_diff` - Show changes between commits, commit and working tree, etc

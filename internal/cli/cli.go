@@ -6,6 +6,8 @@ import (
 
 	"github.com/layered-flow/layered-code/internal/tools"
 	"github.com/layered-flow/layered-code/internal/tools/git"
+	"github.com/layered-flow/layered-code/internal/tools/pnpm"
+	"github.com/layered-flow/layered-code/internal/tools/vite"
 )
 
 // PrintUsage displays the available commands and their usage information
@@ -23,6 +25,12 @@ func PrintUsage() {
 	fmt.Println("  tool read_file            Read the contents of a file within an app")
 	fmt.Println("  tool write_file           Write or create a file within an app")
 	fmt.Println("  tool edit_file            Edit a file using find-and-replace")
+	fmt.Println()
+	fmt.Println("  Vite Tools:")
+	fmt.Println("  tool vite_create_app      Create a new Vite app with template")
+	fmt.Println()
+	fmt.Println("  Package Manager Tools:")
+	fmt.Println("  tool pnpm_install         Install dependencies using pnpm (preferred) or npm")
 	fmt.Println()
 	fmt.Println("  Git Tools:")
 	fmt.Println("  tool git_status           Show the working tree status")
@@ -68,7 +76,15 @@ func RunTool() error {
 		return tools.WriteFileCli()
 	case "edit_file":
 		return tools.EditFileCli()
-	
+
+	// Vite tools
+	case "vite_create_app":
+		return vite.ViteCreateAppCli()
+
+	// Package Manager tools
+	case "pnpm_install":
+		return pnpm.PnpmInstallCli()
+
 	// Git tools
 	case "git_status":
 		return git.GitStatusCli()
@@ -100,7 +116,7 @@ func RunTool() error {
 		return git.GitRevertCli()
 	case "git_checkout":
 		return git.GitCheckoutCli()
-		
+
 	default:
 		return fmt.Errorf("unknown tool: %s\nRun 'layered-code help' to see all available tools", subcommand)
 	}

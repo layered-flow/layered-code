@@ -8,6 +8,8 @@ import (
 	"github.com/layered-flow/layered-code/internal/notifications"
 	"github.com/layered-flow/layered-code/internal/tools"
 	"github.com/layered-flow/layered-code/internal/tools/git"
+	"github.com/layered-flow/layered-code/internal/tools/pnpm"
+	"github.com/layered-flow/layered-code/internal/tools/vite"
 	"github.com/layered-flow/layered-code/internal/websocket"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -59,6 +61,12 @@ func registerTools(s *server.MCPServer) {
 	registerReadFileTool(s)
 	registerWriteFileTool(s)
 	registerEditFileTool(s)
+	
+	// Vite tools
+	registerViteCreateAppTool(s)
+	
+	// Package Manager tools
+	registerPnpmInstallTool(s)
 	
 	// Git tools
 	registerGitStatusTool(s)
@@ -363,4 +371,25 @@ func registerGitShowTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, git.GitShowMcp)
+}
+
+// registerViteCreateAppTool registers the vite_create_app tool
+func registerViteCreateAppTool(s *server.MCPServer) {
+	tool := mcp.NewTool("vite_create_app",
+		mcp.WithDescription("Create a new Vite app in the apps directory with specified template (dependencies not installed - use pnpm_install)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to create (must be unique, cannot contain special characters or '..')")),
+		mcp.WithString("template", mcp.Description("Vite template to use (default: react-ts). Options: vanilla, vanilla-ts, vue, vue-ts, react, react-ts, react-swc, react-swc-ts, preact, preact-ts, lit, lit-ts, svelte, svelte-ts, solid, solid-ts, qwik, qwik-ts")),
+	)
+
+	s.AddTool(tool, vite.ViteCreateAppMcp)
+}
+
+// registerPnpmInstallTool registers the pnpm_install tool
+func registerPnpmInstallTool(s *server.MCPServer) {
+	tool := mcp.NewTool("pnpm_install",
+		mcp.WithDescription("Install dependencies in an app directory using pnpm (preferred) or npm"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to install dependencies in (must exactly match an app name from list_apps)")),
+	)
+
+	s.AddTool(tool, pnpm.PnpmInstallMcp)
 }
