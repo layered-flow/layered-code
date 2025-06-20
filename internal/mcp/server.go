@@ -63,7 +63,7 @@ func registerTools(s *server.MCPServer) {
 	registerEditFileTool(s)
 	
 	// Vite tools
-	registerViteCreateReactAppTool(s)
+	registerViteCreateAppTool(s)
 	
 	// Package Manager tools
 	registerPnpmInstallTool(s)
@@ -373,14 +373,15 @@ func registerGitShowTool(s *server.MCPServer) {
 	s.AddTool(tool, git.GitShowMcp)
 }
 
-// registerViteCreateReactAppTool registers the vite_create_react_app tool
-func registerViteCreateReactAppTool(s *server.MCPServer) {
-	tool := mcp.NewTool("vite_create_react_app",
-		mcp.WithDescription("Create a new Vite React app in the apps directory (dependencies not installed - use pnpm_install)"),
-		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the React app to create (must be unique, cannot contain special characters or '..')")),
+// registerViteCreateAppTool registers the vite_create_app tool
+func registerViteCreateAppTool(s *server.MCPServer) {
+	tool := mcp.NewTool("vite_create_app",
+		mcp.WithDescription("Create a new Vite app in the apps directory with specified template (dependencies not installed - use pnpm_install)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to create (must be unique, cannot contain special characters or '..')")),
+		mcp.WithString("template", mcp.Description("Vite template to use (default: react-ts). Options: vanilla, vanilla-ts, vue, vue-ts, react, react-ts, react-swc, react-swc-ts, preact, preact-ts, lit, lit-ts, svelte, svelte-ts, solid, solid-ts, qwik, qwik-ts")),
 	)
 
-	s.AddTool(tool, vite.ViteCreateReactAppMcp)
+	s.AddTool(tool, vite.ViteCreateAppMcp)
 }
 
 // registerPnpmInstallTool registers the pnpm_install tool

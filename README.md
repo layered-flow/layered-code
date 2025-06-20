@@ -260,7 +260,7 @@ layered-code --help
   - `tool edit_file` - Edit a file by performing find-and-replace operations
 
   **Vite Tools:**
-  - `tool vite_create_react_app` - Create a new Vite React app
+  - `tool vite_create_app` - Create a new Vite app with various templates (React, Vue, Svelte, etc.)
 
   **Package Manager Tools:**
   - `tool pnpm_install` - Install dependencies using pnpm (preferred) or npm

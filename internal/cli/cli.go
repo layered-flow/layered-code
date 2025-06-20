@@ -27,7 +27,7 @@ func PrintUsage() {
 	fmt.Println("  tool edit_file            Edit a file using find-and-replace")
 	fmt.Println()
 	fmt.Println("  Vite Tools:")
-	fmt.Println("  tool vite_create_react_app Create a new Vite React app")
+	fmt.Println("  tool vite_create_app      Create a new Vite app with template")
 	fmt.Println()
 	fmt.Println("  Package Manager Tools:")
 	fmt.Println("  tool pnpm_install         Install dependencies using pnpm (preferred) or npm")
@@ -78,8 +78,8 @@ func RunTool() error {
 		return tools.EditFileCli()
 
 	// Vite tools
-	case "vite_create_react_app":
-		return vite.ViteCreateReactAppCli()
+	case "vite_create_app":
+		return vite.ViteCreateAppCli()
 
 	// Package Manager tools
 	case "pnpm_install":

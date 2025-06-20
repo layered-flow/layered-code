@@ -22,7 +22,7 @@ func TestRegisterFunctions(t *testing.T) {
 		{"registerReadFileTool", registerReadFileTool},
 		{"registerWriteFileTool", registerWriteFileTool},
 		{"registerEditFileTool", registerEditFileTool},
-		{"registerViteCreateReactAppTool", registerViteCreateReactAppTool},
+		{"registerViteCreateAppTool", registerViteCreateAppTool},
 		{"registerPnpmInstallTool", registerPnpmInstallTool},
 		{"registerGitStatusTool", registerGitStatusTool},
 		{"registerGitDiffTool", registerGitDiffTool},
