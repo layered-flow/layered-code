@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,11 +16,12 @@ import (
 
 // Types
 type GitDiffResult struct {
-	Diff      string `json:"diff"`
-	HasDiff   bool   `json:"has_diff"`
-	IsRepo    bool   `json:"is_repo"`
-	Message   string `json:"message,omitempty"`
-	FileCount int    `json:"file_count"`
+	Diff        string `json:"diff"`
+	HasDiff     bool   `json:"has_diff"`
+	IsRepo      bool   `json:"is_repo"`
+	Message     string `json:"message,omitempty"`
+	FileCount   int    `json:"file_count"`
+	ErrorOutput string `json:"error_output,omitempty"`
 }
 
 // GitDiff runs git diff command in the specified app directory
@@ -73,17 +75,20 @@ func GitDiff(appName string, staged bool, filePath string) (GitDiffResult, error
 	// Run git diff
 	diffCmd := exec.Command("git", args...)
 	diffCmd.Dir = appPath
-	output, err := diffCmd.Output()
+	var outBuf, errBuf bytes.Buffer
+	diffCmd.Stdout = &outBuf
+	diffCmd.Stderr = &errBuf
+	err = diffCmd.Run()
 	if err != nil {
 		// Check if it's just an empty diff
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
-			output = []byte{}
+			// Empty diff is not an error
 		} else {
 			return GitDiffResult{}, fmt.Errorf("failed to run git diff: %w", err)
 		}
 	}
 
-	diff := string(output)
+	diff := outBuf.String()
 	hasDiff := len(strings.TrimSpace(diff)) > 0
 
 	// Count the number of files in the diff
@@ -98,10 +103,11 @@ func GitDiff(appName string, staged bool, filePath string) (GitDiffResult, error
 	}
 
 	return GitDiffResult{
-		Diff:      diff,
-		HasDiff:   hasDiff,
-		IsRepo:    true,
-		FileCount: fileCount,
+		Diff:        diff,
+		HasDiff:     hasDiff,
+		IsRepo:      true,
+		FileCount:   fileCount,
+		ErrorOutput: errBuf.String(),
 	}, nil
 }
 

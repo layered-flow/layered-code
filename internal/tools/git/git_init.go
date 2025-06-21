@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,7 @@ type GitInitResult struct {
 	AlreadyExists bool   `json:"already_exists"`
 	Message       string `json:"message"`
 	AppPath       string `json:"app_path"`
+	ErrorOutput   string `json:"error_output,omitempty"`
 }
 
 // GitInit initializes a git repository in the specified app directory
@@ -65,9 +67,12 @@ func GitInit(appName string, bare bool) (GitInitResult, error) {
 	// Run git init
 	initCmd := exec.Command("git", args...)
 	initCmd.Dir = appPath
-	output, err := initCmd.CombinedOutput()
+	var outBuf, errBuf bytes.Buffer
+	initCmd.Stdout = &outBuf
+	initCmd.Stderr = &errBuf
+	err = initCmd.Run()
 	if err != nil {
-		return GitInitResult{}, fmt.Errorf("git init failed: %w - %s", err, strings.TrimSpace(string(output)))
+		return GitInitResult{}, fmt.Errorf("git init failed: %w - %s", err, strings.TrimSpace(errBuf.String()))
 	}
 
 	// Configure default branch name to "main"
@@ -76,9 +81,10 @@ func GitInit(appName string, bare bool) (GitInitResult, error) {
 	configCmd.Run() // Ignore errors for older git versions
 
 	return GitInitResult{
-		Success: true,
-		Message: fmt.Sprintf("Initialized git repository in '%s'", appName),
-		AppPath: appPath,
+		Success:     true,
+		Message:     fmt.Sprintf("Initialized git repository in '%s'", appName),
+		AppPath:     appPath,
+		ErrorOutput: errBuf.String(),
 	}, nil
 }
 

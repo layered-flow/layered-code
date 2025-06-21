@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,11 +16,12 @@ import (
 
 // Types
 type GitCommitResult struct {
-	Success    bool   `json:"success"`
-	CommitHash string `json:"commit_hash"`
-	Message    string `json:"message"`
-	IsRepo     bool   `json:"is_repo"`
-	Error      string `json:"error,omitempty"`
+	Success     bool   `json:"success"`
+	CommitHash  string `json:"commit_hash"`
+	Message     string `json:"message"`
+	IsRepo      bool   `json:"is_repo"`
+	Error       string `json:"error,omitempty"`
+	ErrorOutput string `json:"error_output,omitempty"`
 }
 
 // GitCommit creates a git commit in the specified app directory
@@ -86,20 +88,38 @@ func GitCommit(appName string, message string, amend bool) (GitCommitResult, err
 	// Run git commit
 	commitCmd := exec.Command("git", args...)
 	commitCmd.Dir = appPath
-	output, err := commitCmd.CombinedOutput()
+	var outBuf, errBuf bytes.Buffer
+	commitCmd.Stdout = &outBuf
+	commitCmd.Stderr = &errBuf
+	err = commitCmd.Run()
 	if err != nil {
-		return GitCommitResult{}, fmt.Errorf("git commit failed: %w - %s", err, strings.TrimSpace(string(output)))
+		return GitCommitResult{
+			IsRepo:      true,
+			Success:     false,
+			Message:     "Git commit failed",
+			Error:       err.Error(),
+			ErrorOutput: errBuf.String(),
+		}, fmt.Errorf("git commit failed: %w - %s", err, strings.TrimSpace(errBuf.String()))
 	}
 
 	// Get the commit hash
 	hashCmd := exec.Command("git", "rev-parse", "HEAD")
 	hashCmd.Dir = appPath
-	hashOutput, err := hashCmd.Output()
+	var hashOutBuf, hashErrBuf bytes.Buffer
+	hashCmd.Stdout = &hashOutBuf
+	hashCmd.Stderr = &hashErrBuf
+	err = hashCmd.Run()
 	if err != nil {
-		return GitCommitResult{}, fmt.Errorf("failed to get commit hash: %w", err)
+		return GitCommitResult{
+			IsRepo:      true,
+			Success:     false,
+			Message:     "Failed to get commit hash",
+			Error:       err.Error(),
+			ErrorOutput: hashErrBuf.String(),
+		}, fmt.Errorf("failed to get commit hash: %w", err)
 	}
 
-	commitHash := strings.TrimSpace(string(hashOutput))[:7] // Short hash
+	commitHash := strings.TrimSpace(hashOutBuf.String())[:7] // Short hash
 
 	return GitCommitResult{
 		IsRepo:     true,

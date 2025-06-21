@@ -18,10 +18,11 @@ import (
 
 // SearchTextResult represents the result of searching for text in files
 type SearchTextResult struct {
-	AppName string        `json:"app_name"`
-	Pattern string        `json:"pattern"`
-	Matches []SearchMatch `json:"matches"`
-	Total   int           `json:"total_matches"`
+	AppName     string        `json:"app_name"`
+	Pattern     string        `json:"pattern"`
+	Matches     []SearchMatch `json:"matches"`
+	Total       int           `json:"total_matches"`
+	ErrorOutput string        `json:"error_output,omitempty"`
 }
 
 // SearchMatch represents a single search match
@@ -107,10 +108,11 @@ func SearchText(appName, pattern string, options SearchTextOptions) (SearchTextR
 		// Exit code 1 means no matches found, which is not an error
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
 			return SearchTextResult{
-				AppName: appName,
-				Pattern: pattern,
-				Matches: []SearchMatch{},
-				Total:   0,
+				AppName:     appName,
+				Pattern:     pattern,
+				Matches:     []SearchMatch{},
+				Total:       0,
+				ErrorOutput: stderr.String(),
 			}, nil
 		}
 		return SearchTextResult{}, fmt.Errorf("ripgrep failed: %w (stderr: %s)", err, stderr.String())
@@ -128,10 +130,11 @@ func SearchText(appName, pattern string, options SearchTextOptions) (SearchTextR
 	}
 
 	return SearchTextResult{
-		AppName: appName,
-		Pattern: pattern,
-		Matches: matches,
-		Total:   len(matches),
+		AppName:     appName,
+		Pattern:     pattern,
+		Matches:     matches,
+		Total:       len(matches),
+		ErrorOutput: stderr.String(),
 	}, nil
 }
 

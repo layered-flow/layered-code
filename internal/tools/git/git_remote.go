@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,6 +22,7 @@ type GitRemoteResult struct {
 	AddSuccess    bool              `json:"add_success,omitempty"`
 	RemoveSuccess bool              `json:"remove_success,omitempty"`
 	RenameSuccess bool              `json:"rename_success,omitempty"`
+	ErrorOutput   string            `json:"error_output,omitempty"`
 }
 
 // GitRemote manages git remotes in the specified app directory
@@ -61,10 +63,14 @@ func GitRemote(appName string, addName string, addURL string, removeName string,
 	if addName != "" && addURL != "" {
 		cmd := exec.Command("git", "remote", "add", addName, addURL)
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			result.Message = fmt.Sprintf("Failed to add remote: %s", strings.TrimSpace(string(output)))
+			result.Message = fmt.Sprintf("Failed to add remote: %s", strings.TrimSpace(errBuf.String()))
 			result.AddSuccess = false
+			result.ErrorOutput = errBuf.String()
 		} else {
 			result.AddSuccess = true
 		}
@@ -74,10 +80,14 @@ func GitRemote(appName string, addName string, addURL string, removeName string,
 	if removeName != "" {
 		cmd := exec.Command("git", "remote", "remove", removeName)
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			result.Message = fmt.Sprintf("Failed to remove remote: %s", strings.TrimSpace(string(output)))
+			result.Message = fmt.Sprintf("Failed to remove remote: %s", strings.TrimSpace(errBuf.String()))
 			result.RemoveSuccess = false
+			result.ErrorOutput = errBuf.String()
 		} else {
 			result.RemoveSuccess = true
 		}
@@ -87,10 +97,14 @@ func GitRemote(appName string, addName string, addURL string, removeName string,
 	if oldName != "" && newName != "" {
 		cmd := exec.Command("git", "remote", "rename", oldName, newName)
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			result.Message = fmt.Sprintf("Failed to rename remote: %s", strings.TrimSpace(string(output)))
+			result.Message = fmt.Sprintf("Failed to rename remote: %s", strings.TrimSpace(errBuf.String()))
 			result.RenameSuccess = false
+			result.ErrorOutput = errBuf.String()
 		} else {
 			result.RenameSuccess = true
 		}
@@ -100,22 +114,32 @@ func GitRemote(appName string, addName string, addURL string, removeName string,
 	if setURLName != "" && setURL != "" {
 		cmd := exec.Command("git", "remote", "set-url", setURLName, setURL)
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			result.Message = fmt.Sprintf("Failed to set remote URL: %s", strings.TrimSpace(string(output)))
+			result.Message = fmt.Sprintf("Failed to set remote URL: %s", strings.TrimSpace(errBuf.String()))
+			result.ErrorOutput = errBuf.String()
 		}
 	}
 
 	// List all remotes with their URLs
 	cmd := exec.Command("git", "remote", "-v")
 	cmd.Dir = appPath
-	output, err := cmd.Output()
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
+	err = cmd.Run()
 	if err != nil {
+		if result.ErrorOutput == "" {
+			result.ErrorOutput = errBuf.String()
+		}
 		return result, nil
 	}
 
 	// Parse remote list
-	lines := strings.Split(string(output), "\n")
+	lines := strings.Split(outBuf.String(), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {

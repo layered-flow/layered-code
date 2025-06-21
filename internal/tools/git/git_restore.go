@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,7 @@ type GitRestoreResult struct {
 	FilesRestored []string `json:"files_restored"`
 	IsRepo        bool     `json:"is_repo"`
 	Message       string   `json:"message,omitempty"`
+	ErrorOutput   string   `json:"error_output,omitempty"`
 }
 
 // GitRestore restores files in the specified app directory
@@ -81,10 +83,14 @@ func GitRestore(appName string, files []string, staged bool) (GitRestoreResult, 
 	// Run git restore
 	restoreCmd := exec.Command("git", args...)
 	restoreCmd.Dir = appPath
-	output, err := restoreCmd.CombinedOutput()
+	var outBuf, errBuf bytes.Buffer
+	restoreCmd.Stdout = &outBuf
+	restoreCmd.Stderr = &errBuf
+	err = restoreCmd.Run()
 	if err != nil {
+		errOutput := errBuf.String()
 		// Git restore doesn't exist in older versions, try checkout/reset
-		if strings.Contains(string(output), "is not a git command") {
+		if strings.Contains(errOutput, "is not a git command") {
 			if staged {
 				// Use git reset for staged files
 				args = []string{"reset", "HEAD"}
@@ -97,12 +103,16 @@ func GitRestore(appName string, files []string, staged bool) (GitRestoreResult, 
 			
 			fallbackCmd := exec.Command("git", args...)
 			fallbackCmd.Dir = appPath
-			output, err = fallbackCmd.CombinedOutput()
+			var outBuf2, errBuf2 bytes.Buffer
+			fallbackCmd.Stdout = &outBuf2
+			fallbackCmd.Stderr = &errBuf2
+			err = fallbackCmd.Run()
 			if err != nil {
-				return GitRestoreResult{}, fmt.Errorf("git restore (fallback) failed: %w - %s", err, strings.TrimSpace(string(output)))
+				return GitRestoreResult{}, fmt.Errorf("git restore (fallback) failed: %w - %s", err, strings.TrimSpace(errBuf2.String()))
 			}
+			errBuf = errBuf2
 		} else {
-			return GitRestoreResult{}, fmt.Errorf("git restore failed: %w - %s", err, strings.TrimSpace(string(output)))
+			return GitRestoreResult{}, fmt.Errorf("git restore failed: %w - %s", err, strings.TrimSpace(errOutput))
 		}
 	}
 
@@ -111,6 +121,7 @@ func GitRestore(appName string, files []string, staged bool) (GitRestoreResult, 
 		Success:       true,
 		FilesRestored: files,
 		Message:       "Files restored successfully",
+		ErrorOutput:   errBuf.String(),
 	}, nil
 }
 

@@ -20,12 +20,52 @@ fi
 
 echo "Downloading ripgrep v${RIPGREP_VERSION} binaries..."
 
+# Store version in a file for tracking
+VERSION_FILE="${SCRIPT_DIR}/.version"
+
+# Check if we already have the correct version
+if [ -f "${VERSION_FILE}" ]; then
+    CURRENT_VERSION=$(cat "${VERSION_FILE}")
+    if [ "${CURRENT_VERSION}" = "${RIPGREP_VERSION}" ]; then
+        # Check if all binaries exist
+        ALL_EXIST=true
+        for platform in "amd64-darwin" "arm64-darwin" "amd64-linux" "arm64-linux" "amd64-windows"; do
+            if [ "${platform}" = "amd64-windows" ]; then
+                BINARY="${SCRIPT_DIR}/${platform}/rg.exe"
+            else
+                BINARY="${SCRIPT_DIR}/${platform}/rg"
+            fi
+            if [ ! -f "${BINARY}" ]; then
+                ALL_EXIST=false
+                break
+            fi
+        done
+        
+        if [ "${ALL_EXIST}" = "true" ]; then
+            echo "All ripgrep binaries v${RIPGREP_VERSION} already exist. Skipping download."
+            exit 0
+        fi
+    fi
+fi
+
 # Function to download and extract ripgrep
 download_ripgrep() {
     local platform=$1
     local url=$2
     local archive_name=$3
     local binary_path=$4
+
+    # Check if binary already exists
+    if [ "${platform}" = "amd64-windows" ]; then
+        BINARY_CHECK="${SCRIPT_DIR}/${platform}/rg.exe"
+    else
+        BINARY_CHECK="${SCRIPT_DIR}/${platform}/rg"
+    fi
+    
+    if [ -f "${BINARY_CHECK}" ] && [ -f "${VERSION_FILE}" ] && [ "$(cat ${VERSION_FILE})" = "${RIPGREP_VERSION}" ]; then
+        echo "✓ ${platform} already exists with correct version"
+        return
+    fi
 
     echo "Downloading for ${platform}..."
 
@@ -99,3 +139,6 @@ download_ripgrep \
 # The build system will use the amd64-windows binary for both architectures
 
 echo "All ripgrep binaries downloaded successfully!"
+
+# Save the version file to track what we've downloaded
+echo "${RIPGREP_VERSION}" > "${VERSION_FILE}"

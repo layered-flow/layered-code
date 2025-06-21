@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,6 +20,8 @@ type PnpmInstallResult struct {
 	AppPath        string `json:"app_path"`
 	PackageManager string `json:"package_manager"`
 	Message        string `json:"message"`
+	Output         string `json:"output,omitempty"`
+	ErrorOutput    string `json:"error_output,omitempty"`
 }
 
 // PnpmInstall installs dependencies in an app directory using pnpm or npm
@@ -62,20 +65,21 @@ func PnpmInstall(appName string, showOutput bool) (PnpmInstallResult, error) {
 	cmd := exec.Command(packageManager, "install")
 	cmd.Dir = appPath
 	
-	// If showOutput is true (CLI), stream to stdout/stderr
-	// If false (MCP), capture the output
+	// Capture output
+	var outBuf, errBuf bytes.Buffer
+	
 	if showOutput {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		// For CLI, use MultiWriter to both stream and capture output
+		cmd.Stdout = io.MultiWriter(os.Stdout, &outBuf)
+		cmd.Stderr = io.MultiWriter(os.Stderr, &errBuf)
 	} else {
-		// Capture output for MCP to avoid polluting JSON response
-		var outBuf, errBuf bytes.Buffer
+		// For MCP, just capture to buffers
 		cmd.Stdout = &outBuf
 		cmd.Stderr = &errBuf
 	}
 
 	if err := cmd.Run(); err != nil {
-		return PnpmInstallResult{}, fmt.Errorf("failed to install dependencies: %w", err)
+		return PnpmInstallResult{}, fmt.Errorf("failed to install dependencies: %w\nError output: %s", err, errBuf.String())
 	}
 
 	return PnpmInstallResult{
@@ -83,6 +87,8 @@ func PnpmInstall(appName string, showOutput bool) (PnpmInstallResult, error) {
 		AppPath:        appPath,
 		PackageManager: packageManager,
 		Message:        fmt.Sprintf("Successfully installed dependencies for '%s' using %s", appName, packageManager),
+		Output:         outBuf.String(),
+		ErrorOutput:    errBuf.String(),
 	}, nil
 }
 

@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -23,9 +24,10 @@ type GitLogEntry struct {
 }
 
 type GitLogResult struct {
-	Commits []GitLogEntry `json:"commits"`
-	IsRepo  bool          `json:"is_repo"`
-	Message string        `json:"message,omitempty"`
+	Commits     []GitLogEntry `json:"commits"`
+	IsRepo      bool          `json:"is_repo"`
+	Message     string        `json:"message,omitempty"`
+	ErrorOutput string        `json:"error_output,omitempty"`
 }
 
 // GitLog retrieves git log for the specified app directory
@@ -73,26 +75,31 @@ func GitLog(appName string, limit int, oneline bool) (GitLogResult, error) {
 	// Run git log
 	logCmd := exec.Command("git", args...)
 	logCmd.Dir = appPath
-	output, err := logCmd.CombinedOutput()
+	var outBuf, errBuf bytes.Buffer
+	logCmd.Stdout = &outBuf
+	logCmd.Stderr = &errBuf
+	err = logCmd.Run()
 	if err != nil {
 		// Check if it's just an empty repository
-		outputStr := string(output)
-		if strings.Contains(outputStr, "does not have any commits") || strings.Contains(outputStr, "No commits yet") || strings.Contains(err.Error(), "does not have any commits") {
+		errorStr := errBuf.String()
+		if strings.Contains(errorStr, "does not have any commits") || strings.Contains(errorStr, "No commits yet") || strings.Contains(err.Error(), "does not have any commits") {
 			return GitLogResult{
-				IsRepo:  true,
-				Commits: []GitLogEntry{},
-				Message: "No commits yet",
+				IsRepo:      true,
+				Commits:     []GitLogEntry{},
+				Message:     "No commits yet",
+				ErrorOutput: errorStr,
 			}, nil
 		}
 		// Also check for exit status 128 which can indicate empty repo
-		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 128 && len(output) == 0 {
+		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 128 && outBuf.Len() == 0 {
 			return GitLogResult{
-				IsRepo:  true,
-				Commits: []GitLogEntry{},
-				Message: "No commits yet",
+				IsRepo:      true,
+				Commits:     []GitLogEntry{},
+				Message:     "No commits yet",
+				ErrorOutput: errorStr,
 			}, nil
 		}
-		return GitLogResult{}, fmt.Errorf("failed to run git log: %w", err)
+		return GitLogResult{}, fmt.Errorf("failed to run git log: %w\nError output: %s", err, errorStr)
 	}
 
 	result := GitLogResult{
@@ -101,7 +108,7 @@ func GitLog(appName string, limit int, oneline bool) (GitLogResult, error) {
 	}
 
 	// Parse output
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	lines := strings.Split(strings.TrimSpace(outBuf.String()), "\n")
 	for _, line := range lines {
 		if line == "" {
 			continue

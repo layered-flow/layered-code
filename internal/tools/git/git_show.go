@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,15 +15,16 @@ import (
 )
 
 type GitShowResult struct {
-	Success   bool   `json:"success"`
-	IsRepo    bool   `json:"is_repo"`
-	Message   string `json:"message,omitempty"`
-	Content   string `json:"content,omitempty"`
-	Hash      string `json:"hash,omitempty"`
-	Author    string `json:"author,omitempty"`
-	Date      string `json:"date,omitempty"`
-	Subject   string `json:"subject,omitempty"`
-	CommitRef string `json:"commit_ref,omitempty"`
+	Success     bool   `json:"success"`
+	IsRepo      bool   `json:"is_repo"`
+	Message     string `json:"message,omitempty"`
+	Content     string `json:"content,omitempty"`
+	Hash        string `json:"hash,omitempty"`
+	Author      string `json:"author,omitempty"`
+	Date        string `json:"date,omitempty"`
+	Subject     string `json:"subject,omitempty"`
+	CommitRef   string `json:"commit_ref,omitempty"`
+	ErrorOutput string `json:"error_output,omitempty"`
 }
 
 func GitShow(appName, commitRef string) (GitShowResult, error) {
@@ -62,10 +64,13 @@ func GitShow(appName, commitRef string) (GitShowResult, error) {
 	args := []string{"show", "--format=fuller", commitRef}
 	cmd := exec.Command("git", args...)
 	cmd.Dir = appPath
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
 
-	output, err := cmd.CombinedOutput()
+	err = cmd.Run()
 	if err != nil {
-		errOutput := string(output)
+		errOutput := errBuf.String()
 		// Check if it's because there are no commits yet (empty repo) or commit not found
 		if strings.Contains(errOutput, "does not have any commits") || 
 			strings.Contains(errOutput, "unknown revision") ||
@@ -74,17 +79,18 @@ func GitShow(appName, commitRef string) (GitShowResult, error) {
 			strings.Contains(errOutput, "ambiguous argument") {
 			// These are expected errors when commit doesn't exist - return structured result
 			return GitShowResult{
-				Success:   false,
-				IsRepo:    true,
-				Message:   fmt.Sprintf("Failed to show commit '%s': not found", commitRef),
-				CommitRef: originalCommitRef,
+				Success:     false,
+				IsRepo:      true,
+				Message:     fmt.Sprintf("Failed to show commit '%s': not found", commitRef),
+				CommitRef:   originalCommitRef,
+				ErrorOutput: errOutput,
 			}, nil
 		}
 		// For all other unexpected errors, return actual error
 		return GitShowResult{}, fmt.Errorf("git show failed: %w - %s", err, strings.TrimSpace(errOutput))
 	}
 
-	outputStr := strings.TrimSpace(string(output))
+	outputStr := strings.TrimSpace(outBuf.String())
 	if outputStr == "" {
 		return GitShowResult{}, fmt.Errorf("git show returned empty output for commit '%s'", commitRef)
 	}
@@ -92,15 +98,16 @@ func GitShow(appName, commitRef string) (GitShowResult, error) {
 	hash, author, date, subject := parseCommitInfo(outputStr)
 
 	return GitShowResult{
-		Success:   true,
-		IsRepo:    true,
-		Message:   fmt.Sprintf("Successfully retrieved commit '%s'", commitRef),
-		Content:   outputStr,
-		Hash:      hash,
-		Author:    author,
-		Date:      date,
-		Subject:   subject,
-		CommitRef: originalCommitRef,
+		Success:     true,
+		IsRepo:      true,
+		Message:     fmt.Sprintf("Successfully retrieved commit '%s'", commitRef),
+		Content:     outputStr,
+		Hash:        hash,
+		Author:      author,
+		Date:        date,
+		Subject:     subject,
+		CommitRef:   originalCommitRef,
+		ErrorOutput: errBuf.String(),
 	}, nil
 }
 

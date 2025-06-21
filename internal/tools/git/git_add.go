@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,7 @@ type GitAddResult struct {
 	FilesAdded  []string `json:"files_added"`
 	IsRepo      bool     `json:"is_repo"`
 	Message     string   `json:"message,omitempty"`
+	ErrorOutput string   `json:"error_output,omitempty"`
 }
 
 // GitAdd stages files in the specified app directory
@@ -80,19 +82,29 @@ func GitAdd(appName string, files []string, all bool) (GitAddResult, error) {
 	// Run git add
 	addCmd := exec.Command("git", args...)
 	addCmd.Dir = appPath
-	output, err := addCmd.CombinedOutput()
+	var outBuf, errBuf bytes.Buffer
+	addCmd.Stdout = &outBuf
+	addCmd.Stderr = &errBuf
+	err = addCmd.Run()
 	if err != nil {
-		return GitAddResult{}, fmt.Errorf("git add failed: %w - %s", err, strings.TrimSpace(string(output)))
+		return GitAddResult{
+			IsRepo:      true,
+			Success:     false,
+			Message:     "Git add failed",
+			ErrorOutput: errBuf.String(),
+		}, fmt.Errorf("git add failed: %w - %s", err, strings.TrimSpace(errBuf.String()))
 	}
 
 	// Get list of staged files
 	statusCmd := exec.Command("git", "diff", "--name-only", "--cached")
 	statusCmd.Dir = appPath
-	statusOutput, err := statusCmd.Output()
+	var statusBuf bytes.Buffer
+	statusCmd.Stdout = &statusBuf
+	err = statusCmd.Run()
 	
 	var filesAdded []string
 	if err == nil {
-		lines := strings.Split(strings.TrimSpace(string(statusOutput)), "\n")
+		lines := strings.Split(strings.TrimSpace(statusBuf.String()), "\n")
 		for _, line := range lines {
 			if line != "" {
 				filesAdded = append(filesAdded, line)

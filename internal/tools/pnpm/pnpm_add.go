@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,6 +22,8 @@ type PnpmAddResult struct {
 	PackageManager string `json:"package_manager"`
 	Package        string `json:"package"`
 	Message        string `json:"message"`
+	Output         string `json:"output,omitempty"`
+	ErrorOutput    string `json:"error_output,omitempty"`
 }
 
 // PnpmAdd adds a package to an app directory using pnpm or npm
@@ -74,20 +77,21 @@ func PnpmAdd(appName string, packageName string, showOutput bool) (PnpmAddResult
 	}
 	cmd.Dir = appPath
 	
-	// If showOutput is true (CLI), stream to stdout/stderr
-	// If false (MCP), capture the output
+	// Capture output
+	var outBuf, errBuf bytes.Buffer
+	
 	if showOutput {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		// For CLI, use MultiWriter to both stream and capture output
+		cmd.Stdout = io.MultiWriter(os.Stdout, &outBuf)
+		cmd.Stderr = io.MultiWriter(os.Stderr, &errBuf)
 	} else {
-		// Capture output for MCP to avoid polluting JSON response
-		var outBuf, errBuf bytes.Buffer
+		// For MCP, just capture to buffers
 		cmd.Stdout = &outBuf
 		cmd.Stderr = &errBuf
 	}
 
 	if err := cmd.Run(); err != nil {
-		return PnpmAddResult{}, fmt.Errorf("failed to add package '%s': %w", packageName, err)
+		return PnpmAddResult{}, fmt.Errorf("failed to add package '%s': %w\nError output: %s", packageName, err, errBuf.String())
 	}
 
 	return PnpmAddResult{
@@ -96,6 +100,8 @@ func PnpmAdd(appName string, packageName string, showOutput bool) (PnpmAddResult
 		PackageManager: packageManager,
 		Package:        packageName,
 		Message:        fmt.Sprintf("Successfully added '%s' to '%s' using %s", packageName, appName, packageManager),
+		Output:         outBuf.String(),
+		ErrorOutput:    errBuf.String(),
 	}, nil
 }
 

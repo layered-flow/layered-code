@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -58,10 +59,13 @@ func Checkout(appName, target string, isNewBranch bool, files []string) (string,
 	
 	cmd := exec.Command("git", args...)
 	cmd.Dir = repoPath
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
 
-	output, err := cmd.CombinedOutput()
+	err = cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("git checkout failed: %w\nOutput: %s", err, string(output))
+		return "", fmt.Errorf("git checkout failed: %w\nError output: %s", err, errBuf.String())
 	}
 
 	result := fmt.Sprintf("Successfully checked out %s", operation)
@@ -71,16 +75,22 @@ func Checkout(appName, target string, isNewBranch bool, files []string) (string,
 		// Show current branch after checkout
 		branchCmd := exec.Command("git", "branch", "--show-current")
 		branchCmd.Dir = repoPath
-		if branchOutput, err := branchCmd.CombinedOutput(); err == nil {
-			branch := strings.TrimSpace(string(branchOutput))
+		var branchOutBuf, branchErrBuf bytes.Buffer
+		branchCmd.Stdout = &branchOutBuf
+		branchCmd.Stderr = &branchErrBuf
+		if err := branchCmd.Run(); err == nil {
+			branch := strings.TrimSpace(branchOutBuf.String())
 			if branch != "" {
 				result += fmt.Sprintf("\n\nCurrent branch: %s", branch)
 			} else {
 				// Detached HEAD state
 				headCmd := exec.Command("git", "rev-parse", "--short", "HEAD")
 				headCmd.Dir = repoPath
-				if headOutput, err := headCmd.CombinedOutput(); err == nil {
-					result += fmt.Sprintf("\n\nHEAD is now at %s (detached)", strings.TrimSpace(string(headOutput)))
+				var headOutBuf, headErrBuf bytes.Buffer
+				headCmd.Stdout = &headOutBuf
+				headCmd.Stderr = &headErrBuf
+				if err := headCmd.Run(); err == nil {
+					result += fmt.Sprintf("\n\nHEAD is now at %s (detached)", strings.TrimSpace(headOutBuf.String()))
 				}
 			}
 		}
@@ -88,15 +98,21 @@ func Checkout(appName, target string, isNewBranch bool, files []string) (string,
 		// Show recent commits
 		logCmd := exec.Command("git", "log", "--oneline", "-5")
 		logCmd.Dir = repoPath
-		if logOutput, err := logCmd.CombinedOutput(); err == nil {
-			result += fmt.Sprintf("\n\nRecent commits:\n%s", string(logOutput))
+		var logOutBuf, logErrBuf bytes.Buffer
+		logCmd.Stdout = &logOutBuf
+		logCmd.Stderr = &logErrBuf
+		if err := logCmd.Run(); err == nil {
+			result += fmt.Sprintf("\n\nRecent commits:\n%s", logOutBuf.String())
 		}
 	} else {
 		// Show status of checked out files
 		statusCmd := exec.Command("git", "status", "--porcelain")
 		statusCmd.Dir = repoPath
-		if statusOutput, err := statusCmd.CombinedOutput(); err == nil && len(statusOutput) > 0 {
-			result += fmt.Sprintf("\n\nFile status:\n%s", string(statusOutput))
+		var statusOutBuf, statusErrBuf bytes.Buffer
+		statusCmd.Stdout = &statusOutBuf
+		statusCmd.Stderr = &statusErrBuf
+		if err := statusCmd.Run(); err == nil && statusOutBuf.Len() > 0 {
+			result += fmt.Sprintf("\n\nFile status:\n%s", statusOutBuf.String())
 		}
 	}
 
@@ -191,8 +207,9 @@ func GitCheckoutMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.Call
 
 	// Return structured result
 	type Result struct {
-		Success bool   `json:"success"`
-		Message string `json:"message"`
+		Success     bool   `json:"success"`
+		Message     string `json:"message"`
+		ErrorOutput string `json:"error_output,omitempty"`
 	}
 
 	response := Result{
