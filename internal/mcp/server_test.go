@@ -56,12 +56,12 @@ func TestRegisterFunctions(t *testing.T) {
 
 // TestToolCreation verifies tool creation with expected properties
 func TestToolCreation(t *testing.T) {
-	tool := mcp.NewTool("list_apps",
+	tool := mcp.NewTool("lc_list_apps",
 		mcp.WithDescription("List all available applications"),
 	)
 
-	if tool.Name != "list_apps" {
-		t.Errorf("Expected tool name 'list_apps', got '%s'", tool.Name)
+	if tool.Name != "lc_list_apps" {
+		t.Errorf("Expected tool name 'lc_list_apps', got '%s'", tool.Name)
 	}
 
 	if tool.Description != "List all available applications" {

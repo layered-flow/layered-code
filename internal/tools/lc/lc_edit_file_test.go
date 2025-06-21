@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// TestEditFile tests the core EditFile functionality
-func TestEditFile(t *testing.T) {
+// TestLcEditFile tests the core LcEditFile functionality
+func TestLcEditFile(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -31,14 +31,14 @@ func TestEditFile(t *testing.T) {
 		testFile := filepath.Join(appDir, "test1.txt")
 		os.WriteFile(testFile, []byte("hello world\nhello universe\nhello cosmos"), 0644)
 
-		params := EditFileParams{
+		params := LcEditFileParams{
 			AppName:     "testapp",
 			FilePath:    "test1.txt",
 			OldString:   "hello",
 			NewString:   "goodbye",
 			Occurrences: 0, // Replace all
 		}
-		result, err := EditFile(params)
+		result, err := LcEditFile(params)
 		if err != nil {
 			t.Fatalf("EditFile() failed: %v", err)
 		}
@@ -58,14 +58,14 @@ func TestEditFile(t *testing.T) {
 		testFile := filepath.Join(appDir, "test2.txt")
 		os.WriteFile(testFile, []byte("foo bar foo baz foo"), 0644)
 
-		params := EditFileParams{
+		params := LcEditFileParams{
 			AppName:     "testapp",
 			FilePath:    "test2.txt",
 			OldString:   "foo",
 			NewString:   "qux",
 			Occurrences: 2,
 		}
-		result, err := EditFile(params)
+		result, err := LcEditFile(params)
 		if err != nil {
 			t.Fatalf("EditFile() failed: %v", err)
 		}
@@ -85,14 +85,14 @@ func TestEditFile(t *testing.T) {
 		testFile := filepath.Join(appDir, "test3.txt")
 		os.WriteFile(testFile, []byte("TODO: implement this\nTODO: fix that"), 0644)
 
-		params := EditFileParams{
+		params := LcEditFileParams{
 			AppName:     "testapp",
 			FilePath:    "test3.txt",
 			OldString:   "TODO: ",
 			NewString:   "",
 			Occurrences: 0,
 		}
-		result, err := EditFile(params)
+		result, err := LcEditFile(params)
 		if err != nil {
 			t.Fatalf("EditFile() failed: %v", err)
 		}
@@ -113,14 +113,14 @@ func TestEditFile(t *testing.T) {
 		originalContent := "line1\nline2\ttab\nline3\r\nline4"
 		os.WriteFile(testFile, []byte(originalContent), 0644)
 
-		params := EditFileParams{
+		params := LcEditFileParams{
 			AppName:     "testapp",
 			FilePath:    "test4.txt",
 			OldString:   "line2",
 			NewString:   "LINE2",
 			Occurrences: 0,
 		}
-		_, err := EditFile(params)
+		_, err := LcEditFile(params)
 		if err != nil {
 			t.Fatalf("EditFile() failed: %v", err)
 		}
@@ -135,17 +135,17 @@ func TestEditFile(t *testing.T) {
 
 	t.Run("input validation errors", func(t *testing.T) {
 		tests := []struct {
-			params  EditFileParams
+			params  LcEditFileParams
 			wantErr string
 		}{
-			{EditFileParams{FilePath: "test.txt", OldString: "old", NewString: "new"}, "app_name is required"},
-			{EditFileParams{AppName: "testapp", OldString: "old", NewString: "new"}, "file_path is required"},
-			{EditFileParams{AppName: "testapp", FilePath: "test.txt", NewString: "new"}, "old_string is required"},
-			{EditFileParams{AppName: "testapp", FilePath: "test.txt", OldString: "old", NewString: "new", Occurrences: -1}, "occurrences must be non-negative"},
-			{EditFileParams{AppName: "testapp", FilePath: "nonexistent.txt", OldString: "old", NewString: "new"}, "failed to read file"},
+			{LcEditFileParams{FilePath: "test.txt", OldString: "old", NewString: "new"}, "app_name is required"},
+			{LcEditFileParams{AppName: "testapp", OldString: "old", NewString: "new"}, "file_path is required"},
+			{LcEditFileParams{AppName: "testapp", FilePath: "test.txt", NewString: "new"}, "old_string is required"},
+			{LcEditFileParams{AppName: "testapp", FilePath: "test.txt", OldString: "old", NewString: "new", Occurrences: -1}, "occurrences must be non-negative"},
+			{LcEditFileParams{AppName: "testapp", FilePath: "nonexistent.txt", OldString: "old", NewString: "new"}, "failed to read file"},
 		}
 		for _, tt := range tests {
-			_, err := EditFile(tt.params)
+			_, err := LcEditFile(tt.params)
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 				t.Errorf("EditFile(%+v) expected error containing %q, got: %v",
 					tt.params, tt.wantErr, err)
@@ -157,13 +157,13 @@ func TestEditFile(t *testing.T) {
 		testFile := filepath.Join(appDir, "test5.txt")
 		os.WriteFile(testFile, []byte("some content"), 0644)
 
-		params := EditFileParams{
+		params := LcEditFileParams{
 			AppName:   "testapp",
 			FilePath:  "test5.txt",
 			OldString: "nonexistent",
 			NewString: "replacement",
 		}
-		_, err := EditFile(params)
+		_, err := LcEditFile(params)
 		if err == nil || !strings.Contains(err.Error(), "old_string not found") {
 			t.Errorf("Expected 'old_string not found' error, got: %v", err)
 		}
@@ -173,26 +173,26 @@ func TestEditFile(t *testing.T) {
 		testFile := filepath.Join(appDir, "large.txt")
 		os.WriteFile(testFile, []byte(strings.Repeat("a", int(constants.MaxFileSize)+1)), 0644)
 
-		params := EditFileParams{
+		params := LcEditFileParams{
 			AppName:   "testapp",
 			FilePath:  "large.txt",
 			OldString: "a",
 			NewString: "b",
 		}
-		_, err := EditFile(params)
+		_, err := LcEditFile(params)
 		if err == nil || !strings.Contains(err.Error(), "exceeds maximum size") {
 			t.Errorf("Expected file size error, got: %v", err)
 		}
 	})
 
 	t.Run("path traversal attempt", func(t *testing.T) {
-		params := EditFileParams{
+		params := LcEditFileParams{
 			AppName:   "testapp",
 			FilePath:  "../../../etc/passwd",
 			OldString: "root",
 			NewString: "toor",
 		}
-		_, err := EditFile(params)
+		_, err := LcEditFile(params)
 		if err == nil || !strings.Contains(err.Error(), "outside app directory") {
 			t.Error("Expected error for path traversal attempt")
 		}
@@ -202,14 +202,14 @@ func TestEditFile(t *testing.T) {
 		testFile := filepath.Join(appDir, "test6.txt")
 		os.WriteFile(testFile, []byte("foo bar foo"), 0644)
 
-		params := EditFileParams{
+		params := LcEditFileParams{
 			AppName:     "testapp",
 			FilePath:    "test6.txt",
 			OldString:   "foo",
 			NewString:   "baz",
 			Occurrences: 10, // More than actual occurrences
 		}
-		result, err := EditFile(params)
+		result, err := LcEditFile(params)
 		if err != nil {
 			t.Fatalf("EditFile() failed: %v", err)
 		}
@@ -226,8 +226,8 @@ func TestEditFile(t *testing.T) {
 	})
 }
 
-// TestEditFileCli tests the CLI interface
-func TestEditFileCli(t *testing.T) {
+// TestLcEditFileCli tests the CLI interface
+func TestLcEditFileCli(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -264,7 +264,7 @@ func TestEditFileCli(t *testing.T) {
 		}
 		for _, tt := range tests {
 			os.Args = tt.args
-			err := EditFileCli()
+			err := LcEditFileCli()
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 				t.Errorf("EditFileCli() with args %v expected error containing %q, got: %v",
 					tt.args[3:], tt.wantErr, err)
@@ -275,7 +275,7 @@ func TestEditFileCli(t *testing.T) {
 	t.Run("help flag", func(t *testing.T) {
 		for _, helpFlag := range []string{"--help", "-h"} {
 			os.Args = []string{"cmd", "tool", "edit_file", helpFlag}
-			err := EditFileCli()
+			err := LcEditFileCli()
 			if err != nil {
 				t.Errorf("EditFileCli() with %s should not error, got: %v", helpFlag, err)
 			}
@@ -285,7 +285,7 @@ func TestEditFileCli(t *testing.T) {
 	t.Run("successful execution", func(t *testing.T) {
 		os.Args = []string{"cmd", "tool", "edit_file", "--app-name", "testapp",
 			"--file-path", "test.txt", "--old-string", "hello", "--new-string", "goodbye"}
-		err := EditFileCli()
+		err := LcEditFileCli()
 		if err != nil {
 			t.Errorf("EditFileCli() failed: %v", err)
 		}
@@ -303,7 +303,7 @@ func TestEditFileCli(t *testing.T) {
 
 		os.Args = []string{"cmd", "tool", "edit_file", "--app-name", "testapp",
 			"--file-path", "multi.txt", "--old-string", "a", "--new-string", "x", "--occurrences", "2"}
-		err := EditFileCli()
+		err := LcEditFileCli()
 		if err != nil {
 			t.Errorf("EditFileCli() failed: %v", err)
 		}
@@ -321,7 +321,7 @@ func TestEditFileCli(t *testing.T) {
 
 		os.Args = []string{"cmd", "tool", "edit_file", "--app-name", "testapp",
 			"--file-path", "delete.txt", "--old-string", "prefix-", "--new-string", ""}
-		err := EditFileCli()
+		err := LcEditFileCli()
 		if err != nil {
 			t.Errorf("EditFileCli() failed: %v", err)
 		}
@@ -334,8 +334,8 @@ func TestEditFileCli(t *testing.T) {
 	})
 }
 
-// TestEditFileMcp tests the MCP interface wrapper
-func TestEditFileMcp(t *testing.T) {
+// TestLcEditFileMcp tests the MCP interface wrapper
+func TestLcEditFileMcp(t *testing.T) {
 	ctx := context.Background()
 	request := mcp.CallToolRequest{}
 	request.Params.Name = "edit_file"
@@ -346,7 +346,7 @@ func TestEditFileMcp(t *testing.T) {
 		"new_string": "new",
 	}
 
-	_, err := EditFileMcp(ctx, request)
+	_, err := LcEditFileMcp(ctx, request)
 	if err == nil {
 		t.Error("Expected error for non-existent app")
 	}

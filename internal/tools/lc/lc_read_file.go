@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"context"
@@ -22,27 +22,27 @@ var (
 	ErrFileTooLarge = errors.New("file exceeds maximum size of " + constants.MaxFileSizeInWords)
 )
 
-// ReadFileResult represents the result of reading a file
-type ReadFileResult struct {
+// LcReadFileResult represents the result of reading a file
+type LcReadFileResult struct {
 	AppName      string     `json:"app_name"`
 	FilePath     string     `json:"file_path"`
 	Content      string     `json:"content"`
 	LastModified *time.Time `json:"last_modified,omitempty"`
 }
 
-// ReadFile reads the content of a file within an app directory
-func ReadFile(appName, filePath string) (ReadFileResult, error) {
+// LcReadFile reads the content of a file within an app directory
+func LcReadFile(appName, filePath string) (LcReadFileResult, error) {
 	if appName == "" {
-		return ReadFileResult{}, errors.New("app_name is required")
+		return LcReadFileResult{}, errors.New("app_name is required")
 	}
 	if filePath == "" {
-		return ReadFileResult{}, errors.New("file_path is required")
+		return LcReadFileResult{}, errors.New("file_path is required")
 	}
 
 	// Get and validate the apps directory
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return ReadFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcReadFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Construct and validate the full file path
@@ -52,29 +52,29 @@ func ReadFile(appName, filePath string) (ReadFileResult, error) {
 	// Ensure the file is within the app directory
 	appDir := filepath.Join(appsDir, appName)
 	if !config.IsWithinDirectory(cleanPath, appDir) {
-		return ReadFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
+		return LcReadFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
 	}
 
 	// Get file info
 	info, err := os.Lstat(cleanPath) // Use Lstat to detect symlinks
 	if err != nil {
-		return ReadFileResult{}, err
+		return LcReadFileResult{}, err
 	}
 
 	// Check for symlinks
 	if info.Mode()&os.ModeSymlink != 0 {
-		return ReadFileResult{}, ErrSymlink
+		return LcReadFileResult{}, ErrSymlink
 	}
 
 	// Check file size
 	if info.Size() > constants.MaxFileSize {
-		return ReadFileResult{}, ErrFileTooLarge
+		return LcReadFileResult{}, ErrFileTooLarge
 	}
 
 	// Read file content and check if binary in one operation
 	content, err := os.ReadFile(cleanPath)
 	if err != nil {
-		return ReadFileResult{}, fmt.Errorf("failed to read file: %w", err)
+		return LcReadFileResult{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	// Check if content is binary using the actual file content
@@ -86,12 +86,12 @@ func ReadFile(appName, filePath string) (ReadFileResult, error) {
 		}
 		contentType := http.DetectContentType(content[:sampleSize])
 		if !strings.HasPrefix(contentType, "text/") {
-			return ReadFileResult{}, ErrBinaryFile
+			return LcReadFileResult{}, ErrBinaryFile
 		}
 	}
 
 	modTime := info.ModTime()
-	return ReadFileResult{
+	return LcReadFileResult{
 		AppName:      appName,
 		FilePath:     filePath,
 		Content:      string(content),
@@ -100,7 +100,7 @@ func ReadFile(appName, filePath string) (ReadFileResult, error) {
 }
 
 // CLI
-func ReadFileCli() error {
+func LcReadFileCli() error {
 	args := os.Args[3:]
 
 	// Check for help flag
@@ -131,7 +131,7 @@ func ReadFileCli() error {
 			}
 		default:
 			if strings.HasPrefix(args[i], "--") {
-				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool read_file --help' for usage", args[i])
+				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_read_file --help' for usage", args[i])
 			}
 		}
 	}
@@ -143,7 +143,7 @@ func ReadFileCli() error {
 		return errors.New("--file-path is required")
 	}
 
-	result, err := ReadFile(appName, filePath)
+	result, err := LcReadFile(appName, filePath)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func ReadFileCli() error {
 }
 
 func printReadFileHelp() {
-	fmt.Println("Usage: layered-code tool read_file [options]")
+	fmt.Println("Usage: layered-code tool lc_read_file [options]")
 	fmt.Println()
 	fmt.Println("Read the contents of a file within an application directory")
 	fmt.Println()
@@ -168,14 +168,14 @@ func printReadFileHelp() {
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  # Read a source file")
-	fmt.Println("  layered-code tool read_file --app-name myapp --file-path src/main.go")
+	fmt.Println("  layered-code tool lc_read_file --app-name myapp --file-path src/main.go")
 	fmt.Println()
 	fmt.Println("  # Read a configuration file")
-	fmt.Println("  layered-code tool read_file --app-name myapp --file-path config/settings.json")
+	fmt.Println("  layered-code tool lc_read_file --app-name myapp --file-path config/settings.json")
 }
 
 // MCP
-func ReadFileMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func LcReadFileMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
 		AppName  string `json:"app_name"`
 		FilePath string `json:"file_path"`
@@ -185,7 +185,7 @@ func ReadFileMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToo
 		return nil, err
 	}
 
-	result, err := ReadFile(args.AppName, args.FilePath)
+	result, err := LcReadFile(args.AppName, args.FilePath)
 	if err != nil {
 		return nil, err
 	}

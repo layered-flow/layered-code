@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"context"
@@ -13,23 +13,23 @@ import (
 )
 
 // Types
-type ListAppsResult struct {
+type LcListAppsResult struct {
 	Apps      []string `json:"apps"`
 	Directory string   `json:"directory"`
 }
 
-// ListApps lists all applications (folders)
-func ListApps() (ListAppsResult, error) {
+// LcListApps lists all applications (folders)
+func LcListApps() (LcListAppsResult, error) {
 	// Ensure the apps directory exists and get its path
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return ListAppsResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcListAppsResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Read directory entries
 	entries, err := os.ReadDir(appsDir)
 	if err != nil {
-		return ListAppsResult{}, fmt.Errorf("failed to read apps directory: %w", err)
+		return LcListAppsResult{}, fmt.Errorf("failed to read apps directory: %w", err)
 	}
 
 	// Filter directories only
@@ -43,19 +43,19 @@ func ListApps() (ListAppsResult, error) {
 	// Sort apps alphabetically
 	sort.Strings(apps)
 
-	return ListAppsResult{Apps: apps, Directory: appsDir}, nil
+	return LcListAppsResult{Apps: apps, Directory: appsDir}, nil
 }
 
 // CLI
-func ListAppsCli() error {
+func LcListAppsCli() error {
 	args := os.Args[3:]
 
 	// Check for any arguments (list_apps doesn't take any)
 	if len(args) > 0 {
-		return fmt.Errorf("list_apps does not accept any arguments, got: %v", args)
+		return fmt.Errorf("lc_list_apps does not accept any arguments, got: %v", args)
 	}
 
-	result, err := ListApps()
+	result, err := LcListApps()
 	if err != nil {
 		return fmt.Errorf("failed to list apps: %w", err)
 	}
@@ -73,8 +73,8 @@ func ListAppsCli() error {
 }
 
 // MCP
-func ListAppsMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	result, err := ListApps()
+func LcListAppsMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	result, err := LcListApps()
 	if err != nil {
 		return nil, err
 	}

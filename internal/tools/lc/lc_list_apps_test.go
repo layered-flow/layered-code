@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"context"
@@ -9,17 +9,17 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// TestListAppsResult tests the ListAppsResult struct creation and field assignment
-func TestListAppsResult(t *testing.T) {
-	result := ListAppsResult{Apps: []string{"app1", "app2"}, Directory: "/test/dir"}
+// TestLcListAppsResult tests the LcListAppsResult struct creation and field assignment
+func TestLcListAppsResult(t *testing.T) {
+	result := LcListAppsResult{Apps: []string{"app1", "app2"}, Directory: "/test/dir"}
 
 	if len(result.Apps) != 2 || result.Directory != "/test/dir" {
-		t.Errorf("ListAppsResult not created correctly")
+		t.Errorf("LcListAppsResult not created correctly")
 	}
 }
 
-// TestListApps tests the core ListApps functionality with real directory structures
-func TestListApps(t *testing.T) {
+// TestLcListApps tests the core LcListApps functionality with real directory structures
+func TestLcListApps(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -34,9 +34,9 @@ func TestListApps(t *testing.T) {
 	t.Run("empty directory", func(t *testing.T) {
 		t.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
 
-		result, err := ListApps()
+		result, err := LcListApps()
 		if err != nil {
-			t.Fatalf("ListApps() failed: %v", err)
+			t.Fatalf("LcListApps() failed: %v", err)
 		}
 		if len(result.Apps) != 0 {
 			t.Errorf("Expected 0 apps, got %d", len(result.Apps))
@@ -56,9 +56,9 @@ func TestListApps(t *testing.T) {
 
 		t.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
 
-		result, err := ListApps()
+		result, err := LcListApps()
 		if err != nil {
-			t.Fatalf("ListApps() failed: %v", err)
+			t.Fatalf("LcListApps() failed: %v", err)
 		}
 
 		expectedApps := []string{"app1", "app2", "zebra-app"}
@@ -75,9 +75,9 @@ func TestListApps(t *testing.T) {
 	})
 }
 
-// TestListAppsMcp tests the MCP interface wrapper for proper JSON marshaling
+// TestLcListAppsMcp tests the MCP interface wrapper for proper JSON marshaling
 // and error handling
-func TestListAppsMcp(t *testing.T) {
+func TestLcListAppsMcp(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -94,11 +94,11 @@ func TestListAppsMcp(t *testing.T) {
 
 	ctx := context.Background()
 	request := mcp.CallToolRequest{}
-	request.Params.Name = "list_apps"
+	request.Params.Name = "lc_list_apps"
 
-	result, err := ListAppsMcp(ctx, request)
+	result, err := LcListAppsMcp(ctx, request)
 	if err != nil {
-		t.Fatalf("ListAppsMcp() failed: %v", err)
+		t.Fatalf("LcListAppsMcp() failed: %v", err)
 	}
 
 	if result == nil {
@@ -113,13 +113,13 @@ func TestFunctionExecutions(t *testing.T) {
 		name string
 		fn   func() error
 	}{
-		{"ListApps", func() error { _, err := ListApps(); return err }},
-		{"ListAppsCli", func() error { return ListAppsCli() }},
-		{"ListAppsMcp", func() error {
+		{"LcListApps", func() error { _, err := LcListApps(); return err }},
+		{"LcListAppsCli", func() error { return LcListAppsCli() }},
+		{"LcListAppsMcp", func() error {
 			ctx := context.Background()
 			request := mcp.CallToolRequest{}
-			request.Params.Name = "list_apps"
-			_, err := ListAppsMcp(ctx, request)
+			request.Params.Name = "lc_list_apps"
+			_, err := LcListAppsMcp(ctx, request)
 			return err
 		}},
 	}

@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"context"
@@ -16,16 +16,16 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// WriteFileParams represents the parameters for writing a file
-type WriteFileParams struct {
+// LcWriteFileParams represents the parameters for writing a file
+type LcWriteFileParams struct {
 	AppName  string `json:"app_name"`
 	FilePath string `json:"file_path"`
 	Content  string `json:"content"`
 	Mode     string `json:"mode"` // "create" or "overwrite"
 }
 
-// WriteFileResult represents the result of writing a file
-type WriteFileResult struct {
+// LcWriteFileResult represents the result of writing a file
+type LcWriteFileResult struct {
 	AppName      string     `json:"app_name"`
 	FilePath     string     `json:"file_path"`
 	BytesWritten int        `json:"bytes_written"`
@@ -33,30 +33,30 @@ type WriteFileResult struct {
 	LastModified *time.Time `json:"last_modified,omitempty"`
 }
 
-// WriteFile writes content to a file within an app directory
-func WriteFile(params WriteFileParams) (WriteFileResult, error) {
+// LcWriteFile writes content to a file within an app directory
+func LcWriteFile(params LcWriteFileParams) (LcWriteFileResult, error) {
 	if params.AppName == "" {
-		return WriteFileResult{}, errors.New("app_name is required")
+		return LcWriteFileResult{}, errors.New("app_name is required")
 	}
 	if params.FilePath == "" {
-		return WriteFileResult{}, errors.New("file_path is required")
+		return LcWriteFileResult{}, errors.New("file_path is required")
 	}
 	if params.Mode == "" {
 		params.Mode = "create" // Default mode
 	}
 	if params.Mode != "create" && params.Mode != "overwrite" {
-		return WriteFileResult{}, fmt.Errorf("invalid mode: %s (must be 'create' or 'overwrite')", params.Mode)
+		return LcWriteFileResult{}, fmt.Errorf("invalid mode: %s (must be 'create' or 'overwrite')", params.Mode)
 	}
 
 	// Check file size limit
 	if len(params.Content) > int(constants.MaxFileSize) {
-		return WriteFileResult{}, fmt.Errorf("content exceeds maximum file size of %s", constants.MaxFileSizeInWords)
+		return LcWriteFileResult{}, fmt.Errorf("content exceeds maximum file size of %s", constants.MaxFileSizeInWords)
 	}
 
 	// Get and validate the apps directory
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return WriteFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcWriteFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Construct and validate the full file path
@@ -66,43 +66,43 @@ func WriteFile(params WriteFileParams) (WriteFileResult, error) {
 	// Ensure the file is within the app directory
 	appDir := filepath.Join(appsDir, params.AppName)
 	if !config.IsWithinDirectory(cleanPath, appDir) {
-		return WriteFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
+		return LcWriteFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
 	}
 
 	// Check if app directory exists
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
-		return WriteFileResult{}, fmt.Errorf("app directory does not exist: %s", params.AppName)
+		return LcWriteFileResult{}, fmt.Errorf("app directory does not exist: %s", params.AppName)
 	}
 
 	// Check if file exists
 	fileExists := false
 	if info, err := os.Stat(cleanPath); err == nil {
 		if info.IsDir() {
-			return WriteFileResult{}, fmt.Errorf("path is a directory, not a file")
+			return LcWriteFileResult{}, fmt.Errorf("path is a directory, not a file")
 		}
 		fileExists = true
 	}
 
 	// Handle create vs overwrite mode
 	if params.Mode == "create" && fileExists {
-		return WriteFileResult{}, fmt.Errorf("file already exists (use mode 'overwrite' to replace)")
+		return LcWriteFileResult{}, fmt.Errorf("file already exists (use mode 'overwrite' to replace)")
 	}
 
 	// Create parent directories if needed
 	dir := filepath.Dir(cleanPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return WriteFileResult{}, fmt.Errorf("failed to create parent directories: %w", err)
+		return LcWriteFileResult{}, fmt.Errorf("failed to create parent directories: %w", err)
 	}
 
 	// Write the file
 	if err := os.WriteFile(cleanPath, []byte(params.Content), 0644); err != nil {
-		return WriteFileResult{}, fmt.Errorf("failed to write file: %w", err)
+		return LcWriteFileResult{}, fmt.Errorf("failed to write file: %w", err)
 	}
 
 	// Get file info for the result
 	info, err := os.Stat(cleanPath)
 	if err != nil {
-		return WriteFileResult{}, fmt.Errorf("failed to stat written file: %w", err)
+		return LcWriteFileResult{}, fmt.Errorf("failed to stat written file: %w", err)
 	}
 
 	// Send WebSocket notification
@@ -114,7 +114,7 @@ func WriteFile(params WriteFileParams) (WriteFileResult, error) {
 	notifications.NotifyFileChange(notificationPath, action)
 
 	modTime := info.ModTime()
-	return WriteFileResult{
+	return LcWriteFileResult{
 		AppName:      params.AppName,
 		FilePath:     params.FilePath,
 		BytesWritten: len(params.Content),
@@ -124,7 +124,7 @@ func WriteFile(params WriteFileParams) (WriteFileResult, error) {
 }
 
 // CLI
-func WriteFileCli() error {
+func LcWriteFileCli() error {
 	args := os.Args[3:]
 
 	// Check for help flag
@@ -135,7 +135,7 @@ func WriteFileCli() error {
 		}
 	}
 
-	var params WriteFileParams
+	var params LcWriteFileParams
 	var contentFile string
 
 	for i := 0; i < len(args); i++ {
@@ -177,7 +177,7 @@ func WriteFileCli() error {
 			}
 		default:
 			if strings.HasPrefix(args[i], "--") {
-				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool write_file --help' for usage", args[i])
+				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_write_file --help' for usage", args[i])
 			}
 		}
 	}
@@ -206,7 +206,7 @@ func WriteFileCli() error {
 		params.Content = string(content)
 	}
 
-	result, err := WriteFile(params)
+	result, err := LcWriteFile(params)
 	if err != nil {
 		return err
 	}
@@ -221,7 +221,7 @@ func WriteFileCli() error {
 }
 
 func printWriteFileHelp() {
-	fmt.Println("Usage: layered-code tool write_file [options]")
+	fmt.Println("Usage: layered-code tool lc_write_file [options]")
 	fmt.Println()
 	fmt.Println("Write or create a file within an application directory")
 	fmt.Println()
@@ -244,24 +244,24 @@ func printWriteFileHelp() {
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  # Create a new file")
-	fmt.Println("  layered-code tool write_file --app-name myapp --file-path src/new.go --content 'package main'")
+	fmt.Println("  layered-code tool lc_write_file --app-name myapp --file-path src/new.go --content 'package main'")
 	fmt.Println()
 	fmt.Println("  # Overwrite an existing file")
-	fmt.Println("  layered-code tool write_file --app-name myapp --file-path config.json --mode overwrite --content '{}'")
+	fmt.Println("  layered-code tool lc_write_file --app-name myapp --file-path config.json --mode overwrite --content '{}'")
 	fmt.Println()
 	fmt.Println("  # Write content from another file")
-	fmt.Println("  layered-code tool write_file --app-name myapp --file-path data.txt --content-file /tmp/source.txt")
+	fmt.Println("  layered-code tool lc_write_file --app-name myapp --file-path data.txt --content-file /tmp/source.txt")
 }
 
 // MCP
-func WriteFileMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	var params WriteFileParams
+func LcWriteFileMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	var params LcWriteFileParams
 
 	if err := request.BindArguments(&params); err != nil {
 		return nil, err
 	}
 
-	result, err := WriteFile(params)
+	result, err := LcWriteFile(params)
 	if err != nil {
 		return nil, err
 	}
