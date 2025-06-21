@@ -213,8 +213,8 @@ func TestCheckout(t *testing.T) {
 		if err == nil {
 			t.Error("expected error for missing app name")
 		}
-		if !strings.Contains(err.Error(), "app_name is required") {
-			t.Errorf("expected error to contain %q, got %q", "app_name is required", err.Error())
+		if !strings.Contains(err.Error(), "app name cannot be empty") {
+			t.Errorf("expected error to contain %q, got %q", "app name cannot be empty", err.Error())
 		}
 		
 		// No target or files

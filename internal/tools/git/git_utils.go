@@ -4,29 +4,36 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	
+	"github.com/layered-flow/layered-code/internal/config"
 )
-
-// ValidateAppName validates the app name to ensure it's safe
-func ValidateAppName(appName string) error {
-	if appName == "" {
-		return fmt.Errorf("app_name is required")
-	}
-
-	// Check for path traversal attempts
-	if strings.Contains(appName, "..") || strings.Contains(appName, "/") || strings.Contains(appName, "\\") {
-		return fmt.Errorf("invalid app_name: must not contain path separators or '..'")
-	}
-
-	return nil
-}
 
 // ValidateAppPath validates that the app path is safe and doesn't escape the apps directory
 func ValidateAppPath(appPath string) error {
-	// Clean the path to resolve any ../ or ./ segments
-	cleanPath := filepath.Clean(appPath)
+	// Get the apps directory
+	appsDir, err := config.GetAppsDirectory()
+	if err != nil {
+		return fmt.Errorf("failed to get apps directory: %w", err)
+	}
 	
-	// Ensure the path doesn't escape the apps directory
-	if !strings.HasPrefix(cleanPath, filepath.Clean(appPath)) {
+	// Clean both paths to resolve any ../ or ./ segments
+	cleanAppPath := filepath.Clean(appPath)
+	cleanAppsDir := filepath.Clean(appsDir)
+	
+	// Ensure the app path doesn't escape the apps directory
+	// Check if the app path starts with the apps directory
+	if !strings.HasPrefix(cleanAppPath, cleanAppsDir) {
+		return fmt.Errorf("invalid app path: potential directory traversal detected")
+	}
+	
+	// Additional check: ensure the relative path from appsDir to appPath doesn't contain ".."
+	relPath, err := filepath.Rel(cleanAppsDir, cleanAppPath)
+	if err != nil {
+		return fmt.Errorf("invalid app path: %w", err)
+	}
+	
+	// Check if the relative path tries to escape using ".."
+	if strings.Contains(relPath, "..") {
 		return fmt.Errorf("invalid app path: potential directory traversal detected")
 	}
 

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/layered-flow/layered-code/internal/config"
+	"github.com/layered-flow/layered-code/internal/helpers"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -30,7 +31,7 @@ func GitPull(appName string, remote string, branch string, rebase bool) (GitPull
 		return GitPullResult{}, err
 	}
 
-	if err := ValidateAppName(appName); err != nil {
+	if err := helpers.ValidateAppName(appName); err != nil {
 		return GitPullResult{}, err
 	}
 

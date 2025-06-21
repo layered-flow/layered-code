@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/layered-flow/layered-code/internal/config"
+	"github.com/layered-flow/layered-code/internal/helpers"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -31,7 +32,7 @@ func PnpmInstall(appName string, showOutput bool) (PnpmInstallResult, error) {
 		return PnpmInstallResult{}, fmt.Errorf("app name is required")
 	}
 	
-	if err := ValidateAppName(appName); err != nil {
+	if err := helpers.ValidateAppName(appName); err != nil {
 		return PnpmInstallResult{}, fmt.Errorf("invalid app name: %w", err)
 	}
 

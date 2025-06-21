@@ -9,9 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/layered-flow/layered-code/internal/config"
+	"github.com/layered-flow/layered-code/internal/helpers"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -28,8 +28,8 @@ type ViteCreateAppResult struct {
 // ViteCreateApp creates a new Vite app in the apps directory with the specified template
 func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreateAppResult, error) {
 	// Validate app name
-	if appName == "" {
-		return ViteCreateAppResult{}, fmt.Errorf("app name is required")
+	if err := helpers.ValidateAppName(appName); err != nil {
+		return ViteCreateAppResult{}, err
 	}
 
 	// Validate template
@@ -54,10 +54,6 @@ func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreate
 		return ViteCreateAppResult{}, fmt.Errorf("invalid template '%s'. Valid templates are: vanilla, vanilla-ts, vue, vue-ts, react, react-ts, react-swc, react-swc-ts, preact, preact-ts, lit, lit-ts, svelte, svelte-ts, solid, solid-ts, qwik, qwik-ts", template)
 	}
 
-	// Check for directory traversal attempts
-	if strings.Contains(appName, "..") || strings.Contains(appName, "/") || strings.Contains(appName, "\\") {
-		return ViteCreateAppResult{}, fmt.Errorf("app name cannot contain path separators or '..'")
-	}
 
 	// Ensure apps directory exists
 	appsDir, err := config.EnsureAppsDirectory()
