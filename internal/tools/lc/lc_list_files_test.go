@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// TestListFiles tests the core ListFiles functionality including basic listing,
+// TestLcListFiles tests the core LcListFiles functionality including basic listing,
 // pattern matching, and error handling
-func TestListFiles(t *testing.T) {
+func TestLcListFiles(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -33,9 +33,9 @@ func TestListFiles(t *testing.T) {
 	t.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
 
 	t.Run("basic listing", func(t *testing.T) {
-		result, err := ListFiles("testapp", nil, false, false, false)
+		result, err := LcListFiles("testapp", nil, false, false, false)
 		if err != nil {
-			t.Fatalf("ListFiles() failed: %v", err)
+			t.Fatalf("LcListFiles() failed: %v", err)
 		}
 		if result.AppName != "testapp" {
 			t.Errorf("AppName = %s; want testapp", result.AppName)
@@ -48,9 +48,9 @@ func TestListFiles(t *testing.T) {
 
 	t.Run("pattern matching", func(t *testing.T) {
 		pattern := "*.go"
-		result, err := ListFiles("testapp", &pattern, false, false, false)
+		result, err := LcListFiles("testapp", &pattern, false, false, false)
 		if err != nil {
-			t.Fatalf("ListFiles() failed: %v", err)
+			t.Fatalf("LcListFiles() failed: %v", err)
 		}
 		// Should find only main.go
 		fileCount := 0
@@ -65,24 +65,24 @@ func TestListFiles(t *testing.T) {
 	})
 
 	t.Run("error cases", func(t *testing.T) {
-		if _, err := ListFiles("", nil, false, false, false); err == nil {
+		if _, err := LcListFiles("", nil, false, false, false); err == nil {
 			t.Error("Expected error for empty app name")
 		}
-		if _, err := ListFiles("nonexistent", nil, false, false, false); err == nil {
+		if _, err := LcListFiles("nonexistent", nil, false, false, false); err == nil {
 			t.Error("Expected error for non-existent app")
 		}
 	})
 }
 
-// TestListFilesMcp tests the MCP interface wrapper to ensure it properly
+// TestLcListFilesMcp tests the MCP interface wrapper to ensure it properly
 // handles requests and returns appropriate errors
-func TestListFilesMcp(t *testing.T) {
+func TestLcListFilesMcp(t *testing.T) {
 	ctx := context.Background()
 	request := mcp.CallToolRequest{}
-	request.Params.Name = "list_files"
+	request.Params.Name = "lc_list_files"
 	request.Params.Arguments = map[string]any{"app_name": "nonexistent"}
 
-	_, err := ListFilesMcp(ctx, request)
+	_, err := LcListFilesMcp(ctx, request)
 	if err == nil {
 		t.Error("Expected error for non-existent app")
 	}

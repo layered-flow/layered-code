@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-type ListFilesResult struct {
+type LcListFilesResult struct {
 	AppName string      `json:"app_name"`
 	AppPath string      `json:"app_path"`
 	Files   []FileEntry `json:"files"`
@@ -34,25 +34,25 @@ type FileEntry struct {
 var sizeCache = make(map[string]int64)
 var sizeCacheMutex sync.RWMutex
 
-func ListFiles(appName string, pattern *string, includeLastModified, includeSize, includeChildCount bool) (ListFilesResult, error) {
+func LcListFiles(appName string, pattern *string, includeLastModified, includeSize, includeChildCount bool) (LcListFilesResult, error) {
 	if appName == "" {
-		return ListFilesResult{}, errors.New("app_name is required")
+		return LcListFilesResult{}, errors.New("app_name is required")
 	}
 
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return ListFilesResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcListFilesResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 	appPath := filepath.Join(appsDir, appName)
 
 	if _, err := os.Stat(appPath); os.IsNotExist(err) {
-		return ListFilesResult{}, fmt.Errorf("app '%s' not found in apps directory", appName)
+		return LcListFilesResult{}, fmt.Errorf("app '%s' not found in apps directory", appName)
 	}
 
 	// Validate pattern if provided
 	if pattern != nil && *pattern != "" {
 		if strings.Contains(*pattern, "..") {
-			return ListFilesResult{}, errors.New("invalid pattern: directory traversal is not allowed")
+			return LcListFilesResult{}, errors.New("invalid pattern: directory traversal is not allowed")
 		}
 	}
 
@@ -146,10 +146,10 @@ func ListFiles(appName string, pattern *string, includeLastModified, includeSize
 	})
 
 	if err != nil {
-		return ListFilesResult{}, err
+		return LcListFilesResult{}, err
 	}
 
-	return ListFilesResult{
+	return LcListFilesResult{
 		AppName: appName,
 		AppPath: appPath,
 		Files:   entries,
@@ -254,13 +254,13 @@ func formatSize(bytes int64) string {
 	}
 }
 
-func ListFilesCli() error {
+func LcListFilesCli() error {
 	args := os.Args[3:]
 
 	// Check for help flag
 	for _, arg := range args {
 		if arg == "--help" || arg == "-h" {
-			printListFilesHelp()
+			printLcListFilesHelp()
 			return nil
 		}
 	}
@@ -293,7 +293,7 @@ func ListFilesCli() error {
 			includeChildCount = true
 		default:
 			if strings.HasPrefix(args[i], "--") {
-				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool list_files --help' for usage", args[i])
+				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_list_files --help' for usage", args[i])
 			}
 		}
 	}
@@ -302,7 +302,7 @@ func ListFilesCli() error {
 		return errors.New("--app-name is required")
 	}
 
-	result, err := ListFiles(appName, pattern, includeLastModified, includeSize, includeChildCount)
+	result, err := LcListFiles(appName, pattern, includeLastModified, includeSize, includeChildCount)
 	if err != nil {
 		return err
 	}
@@ -342,8 +342,8 @@ func ListFilesCli() error {
 	return nil
 }
 
-func printListFilesHelp() {
-	fmt.Println("Usage: layered-code tool list_files [options]")
+func printLcListFilesHelp() {
+	fmt.Println("Usage: layered-code tool lc_list_files [options]")
 	fmt.Println()
 	fmt.Println("List files and directories within an application")
 	fmt.Println()
@@ -364,19 +364,19 @@ func printListFilesHelp() {
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  # List basic files")
-	fmt.Println("  layered-code tool list_files --app-name myapp")
+	fmt.Println("  layered-code tool lc_list_files --app-name myapp")
 	fmt.Println()
 	fmt.Println("  # List files with all metadata")
-	fmt.Println("  layered-code tool list_files --app-name myapp --include-size --include-last-modified --include-child-count")
+	fmt.Println("  layered-code tool lc_list_files --app-name myapp --include-size --include-last-modified --include-child-count")
 	fmt.Println()
 	fmt.Println("  # List files matching a pattern")
-	fmt.Println("  layered-code tool list_files --app-name myapp --pattern '*.js'")
+	fmt.Println("  layered-code tool lc_list_files --app-name myapp --pattern '*.js'")
 	fmt.Println()
 	fmt.Println("  # List files in specific subdirectory")
-	fmt.Println("  layered-code tool list_files --app-name myapp --pattern 'src/*.go'")
+	fmt.Println("  layered-code tool lc_list_files --app-name myapp --pattern 'src/*.go'")
 }
 
-func ListFilesMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func LcListFilesMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
 		AppName             string  `json:"app_name"`
 		Pattern             *string `json:"pattern"`
@@ -389,7 +389,7 @@ func ListFilesMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTo
 		return nil, err
 	}
 
-	result, err := ListFiles(args.AppName, args.Pattern, args.IncludeLastModified, args.IncludeSize, args.IncludeChildCount)
+	result, err := LcListFiles(args.AppName, args.Pattern, args.IncludeLastModified, args.IncludeSize, args.IncludeChildCount)
 	if err != nil {
 		return nil, err
 	}

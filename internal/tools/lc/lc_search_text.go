@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"bytes"
@@ -16,25 +16,25 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// SearchTextResult represents the result of searching for text in files
-type SearchTextResult struct {
+// LcSearchTextResult represents the result of searching for text in files
+type LcSearchTextResult struct {
 	AppName     string        `json:"app_name"`
 	Pattern     string        `json:"pattern"`
-	Matches     []SearchMatch `json:"matches"`
+	Matches     []LcSearchMatch `json:"matches"`
 	Total       int           `json:"total_matches"`
 	ErrorOutput string        `json:"error_output,omitempty"`
 }
 
-// SearchMatch represents a single search match
-type SearchMatch struct {
+// LcSearchMatch represents a single search match
+type LcSearchMatch struct {
 	FilePath   string `json:"file_path"`
 	LineNumber int    `json:"line_number"`
 	LineText   string `json:"line_text"`
 	Match      string `json:"match"`
 }
 
-// SearchTextOptions configures the search behavior
-type SearchTextOptions struct {
+// LcSearchTextOptions configures the search behavior
+type LcSearchTextOptions struct {
 	CaseSensitive bool
 	WholeWord     bool
 	FilePattern   string
@@ -42,31 +42,31 @@ type SearchTextOptions struct {
 	IncludeHidden bool
 }
 
-// SearchText searches for a pattern in files within an app directory using ripgrep
-func SearchText(appName, pattern string, options SearchTextOptions) (SearchTextResult, error) {
+// LcSearchText searches for a pattern in files within an app directory using ripgrep
+func LcSearchText(appName, pattern string, options LcSearchTextOptions) (LcSearchTextResult, error) {
 	if appName == "" {
-		return SearchTextResult{}, errors.New("app_name is required")
+		return LcSearchTextResult{}, errors.New("app_name is required")
 	}
 	if pattern == "" {
-		return SearchTextResult{}, errors.New("pattern is required")
+		return LcSearchTextResult{}, errors.New("pattern is required")
 	}
 
 	// Get and validate the apps directory
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return SearchTextResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcSearchTextResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Construct and validate the app directory path
 	appDir := filepath.Join(appsDir, appName)
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
-		return SearchTextResult{}, fmt.Errorf("app '%s' not found in apps directory", appName)
+		return LcSearchTextResult{}, fmt.Errorf("app '%s' not found in apps directory", appName)
 	}
 
 	// Get ripgrep binary path
 	rgPath, err := getRipgrepPath()
 	if err != nil {
-		return SearchTextResult{}, err
+		return LcSearchTextResult{}, err
 	}
 
 	// Build ripgrep command arguments
@@ -107,21 +107,21 @@ func SearchText(appName, pattern string, options SearchTextOptions) (SearchTextR
 	if err != nil {
 		// Exit code 1 means no matches found, which is not an error
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
-			return SearchTextResult{
+			return LcSearchTextResult{
 				AppName:     appName,
 				Pattern:     pattern,
-				Matches:     []SearchMatch{},
+				Matches:     []LcSearchMatch{},
 				Total:       0,
 				ErrorOutput: stderr.String(),
 			}, nil
 		}
-		return SearchTextResult{}, fmt.Errorf("ripgrep failed: %w (stderr: %s)", err, stderr.String())
+		return LcSearchTextResult{}, fmt.Errorf("ripgrep failed: %w (stderr: %s)", err, stderr.String())
 	}
 
 	// Parse ripgrep JSON output
 	matches, err := parseRipgrepOutput(stdout.String(), appDir)
 	if err != nil {
-		return SearchTextResult{}, fmt.Errorf("failed to parse ripgrep output: %w", err)
+		return LcSearchTextResult{}, fmt.Errorf("failed to parse ripgrep output: %w", err)
 	}
 
 	// Apply max results limit if needed
@@ -129,7 +129,7 @@ func SearchText(appName, pattern string, options SearchTextOptions) (SearchTextR
 		matches = matches[:options.MaxResults]
 	}
 
-	return SearchTextResult{
+	return LcSearchTextResult{
 		AppName:     appName,
 		Pattern:     pattern,
 		Matches:     matches,
@@ -139,8 +139,8 @@ func SearchText(appName, pattern string, options SearchTextOptions) (SearchTextR
 }
 
 // parseRipgrepOutput parses the JSON output from ripgrep
-func parseRipgrepOutput(output string, appDir string) ([]SearchMatch, error) {
-	var matches []SearchMatch
+func parseRipgrepOutput(output string, appDir string) ([]LcSearchMatch, error) {
+	var matches []LcSearchMatch
 
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	for _, line := range lines {
@@ -156,7 +156,7 @@ func parseRipgrepOutput(output string, appDir string) ([]SearchMatch, error) {
 		// We're only interested in "match" type messages
 		if msgType, ok := msg["type"].(string); ok && msgType == "match" {
 			if data, ok := msg["data"].(map[string]interface{}); ok {
-				match := SearchMatch{}
+				match := LcSearchMatch{}
 
 				// Extract file path
 				if pathData, ok := data["path"].(map[string]interface{}); ok {
@@ -253,7 +253,7 @@ func getRipgrepPath() (string, error) {
 }
 
 // CLI
-func SearchTextCli() error {
+func LcSearchTextCli() error {
 	args := os.Args[3:]
 
 	// Check for help flag
@@ -265,7 +265,7 @@ func SearchTextCli() error {
 	}
 
 	var appName, pattern string
-	var options SearchTextOptions
+	var options LcSearchTextOptions
 	options.MaxResults = 100 // Default limit
 
 	for i := 0; i < len(args); i++ {
@@ -310,7 +310,7 @@ func SearchTextCli() error {
 			options.IncludeHidden = true
 		default:
 			if strings.HasPrefix(args[i], "--") {
-				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool search_text --help' for usage", args[i])
+				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_search_text --help' for usage", args[i])
 			}
 		}
 	}
@@ -322,7 +322,7 @@ func SearchTextCli() error {
 		return errors.New("--pattern is required")
 	}
 
-	result, err := SearchText(appName, pattern, options)
+	result, err := LcSearchText(appName, pattern, options)
 	if err != nil {
 		return err
 	}
@@ -338,7 +338,7 @@ func SearchTextCli() error {
 }
 
 func printSearchTextHelp() {
-	fmt.Println("Usage: layered-code tool search_text [options]")
+	fmt.Println("Usage: layered-code tool lc_search_text [options]")
 	fmt.Println()
 	fmt.Println("Search for text patterns in files within an application directory using ripgrep")
 	fmt.Println()
@@ -356,17 +356,17 @@ func printSearchTextHelp() {
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  # Search for a simple pattern")
-	fmt.Println("  layered-code tool search_text --app-name myapp --pattern 'TODO'")
+	fmt.Println("  layered-code tool lc_search_text --app-name myapp --pattern 'TODO'")
 	fmt.Println()
 	fmt.Println("  # Case-sensitive search in specific file types")
-	fmt.Println("  layered-code tool search_text --app-name myapp --pattern 'Config' --case-sensitive --file-pattern '*.go'")
+	fmt.Println("  layered-code tool lc_search_text --app-name myapp --pattern 'Config' --case-sensitive --file-pattern '*.go'")
 	fmt.Println()
 	fmt.Println("  # Search for whole words with limited results")
-	fmt.Println("  layered-code tool search_text --app-name myapp --pattern 'test' --whole-word --max-results 50")
+	fmt.Println("  layered-code tool lc_search_text --app-name myapp --pattern 'test' --whole-word --max-results 50")
 }
 
 // MCP
-func SearchTextMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func LcSearchTextMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
 		AppName       string `json:"app_name"`
 		Pattern       string `json:"pattern"`
@@ -386,7 +386,7 @@ func SearchTextMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallT
 		args.MaxResults = 100
 	}
 
-	options := SearchTextOptions{
+	options := LcSearchTextOptions{
 		CaseSensitive: args.CaseSensitive,
 		WholeWord:     args.WholeWord,
 		FilePattern:   args.FilePattern,
@@ -394,7 +394,7 @@ func SearchTextMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallT
 		IncludeHidden: args.IncludeHidden,
 	}
 
-	result, err := SearchText(args.AppName, args.Pattern, options)
+	result, err := LcSearchText(args.AppName, args.Pattern, options)
 	if err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// TestSearchText tests the core SearchText functionality
-func TestSearchText(t *testing.T) {
+// TestLcSearchText tests the core LcSearchText functionality
+func TestLcSearchText(t *testing.T) {
 	// Skip if ripgrep is not available
 	if _, err := getRipgrepPath(); err != nil {
 		t.Skip("Skipping test: ripgrep not available")
@@ -85,21 +85,21 @@ This is a test application for searching.
 	tests := []struct {
 		name         string
 		pattern      string
-		options      SearchTextOptions
+		options      LcSearchTextOptions
 		wantMinCount int
 		wantMaxCount int
-		checkMatches func(t *testing.T, matches []SearchMatch)
+		checkMatches func(t *testing.T, matches []LcSearchMatch)
 	}{
 		{
 			name:         "simple pattern search",
 			pattern:      "TODO",
-			options:      SearchTextOptions{},
+			options:      LcSearchTextOptions{},
 			wantMinCount: 4, // Should find TODO in multiple files
 		},
 		{
 			name:    "case sensitive search",
 			pattern: "todo",
-			options: SearchTextOptions{
+			options: LcSearchTextOptions{
 				CaseSensitive: true,
 			},
 			wantMinCount: 0,
@@ -108,7 +108,7 @@ This is a test application for searching.
 		{
 			name:    "case insensitive search",
 			pattern: "todo",
-			options: SearchTextOptions{
+			options: LcSearchTextOptions{
 				CaseSensitive: false,
 			},
 			wantMinCount: 4,
@@ -116,7 +116,7 @@ This is a test application for searching.
 		{
 			name:    "whole word search",
 			pattern: "Config",
-			options: SearchTextOptions{
+			options: LcSearchTextOptions{
 				WholeWord: true,
 			},
 			wantMinCount: 2, // Should match Config but not LoadConfig
@@ -124,11 +124,11 @@ This is a test application for searching.
 		{
 			name:    "file pattern filter",
 			pattern: "TODO",
-			options: SearchTextOptions{
+			options: LcSearchTextOptions{
 				FilePattern: "*.go",
 			},
 			wantMinCount: 3,
-			checkMatches: func(t *testing.T, matches []SearchMatch) {
+			checkMatches: func(t *testing.T, matches []LcSearchMatch) {
 				for _, match := range matches {
 					if !strings.HasSuffix(match.FilePath, ".go") {
 						t.Errorf("Expected only .go files, got: %s", match.FilePath)
@@ -139,7 +139,7 @@ This is a test application for searching.
 		{
 			name:    "max results limit",
 			pattern: "TODO",
-			options: SearchTextOptions{
+			options: LcSearchTextOptions{
 				MaxResults: 2,
 			},
 			wantMinCount: 2,
@@ -148,7 +148,7 @@ This is a test application for searching.
 		{
 			name:    "include hidden files",
 			pattern: "TODO",
-			options: SearchTextOptions{
+			options: LcSearchTextOptions{
 				IncludeHidden: true,
 			},
 			wantMinCount: 5, // Should include .hidden file
@@ -156,7 +156,7 @@ This is a test application for searching.
 		{
 			name:         "no matches",
 			pattern:      "NONEXISTENT",
-			options:      SearchTextOptions{},
+			options:      LcSearchTextOptions{},
 			wantMinCount: 0,
 			wantMaxCount: 0,
 		},
@@ -164,7 +164,7 @@ This is a test application for searching.
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := SearchText("testapp", tt.pattern, tt.options)
+			result, err := LcSearchText("testapp", tt.pattern, tt.options)
 			if err != nil {
 				t.Fatalf("SearchText() failed: %v", err)
 			}
@@ -204,8 +204,8 @@ This is a test application for searching.
 	}
 }
 
-// TestSearchTextErrors tests error conditions
-func TestSearchTextErrors(t *testing.T) {
+// TestLcSearchTextErrors tests error conditions
+func TestLcSearchTextErrors(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -246,7 +246,7 @@ func TestSearchTextErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := SearchText(tt.appName, tt.pattern, SearchTextOptions{})
+			_, err := LcSearchText(tt.appName, tt.pattern, LcSearchTextOptions{})
 			if err == nil {
 				t.Fatal("Expected error but got none")
 			}
@@ -257,8 +257,8 @@ func TestSearchTextErrors(t *testing.T) {
 	}
 }
 
-// TestSearchTextCli tests the CLI interface
-func TestSearchTextCli(t *testing.T) {
+// TestLcSearchTextCli tests the CLI interface
+func TestLcSearchTextCli(t *testing.T) {
 	// Skip if ripgrep is not available
 	if _, err := getRipgrepPath(); err != nil {
 		t.Skip("Skipping test: ripgrep not available")
@@ -330,7 +330,7 @@ func TestSearchTextCli(t *testing.T) {
 			defer func() { os.Args = oldArgs }()
 
 			os.Args = tt.args
-			err := SearchTextCli()
+			err := LcSearchTextCli()
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SearchTextCli() error = %v, wantErr %v", err, tt.wantErr)
@@ -339,8 +339,8 @@ func TestSearchTextCli(t *testing.T) {
 	}
 }
 
-// TestSearchTextMcp tests the MCP interface
-func TestSearchTextMcp(t *testing.T) {
+// TestLcSearchTextMcp tests the MCP interface
+func TestLcSearchTextMcp(t *testing.T) {
 	// Skip if ripgrep is not available
 	if _, err := getRipgrepPath(); err != nil {
 		t.Skip("Skipping test: ripgrep not available")
@@ -374,7 +374,7 @@ func TestSearchTextMcp(t *testing.T) {
 		request := mcp.CallToolRequest{}
 		data, _ := json.Marshal(args)
 		json.Unmarshal(data, &request.Params.Arguments)
-		result, err := SearchTextMcp(context.Background(), request)
+		result, err := LcSearchTextMcp(context.Background(), request)
 		if err != nil {
 			t.Fatalf("SearchTextMcp() failed: %v", err)
 		}
@@ -414,7 +414,7 @@ func TestSearchTextMcp(t *testing.T) {
 		request := mcp.CallToolRequest{}
 		data, _ := json.Marshal(args)
 		json.Unmarshal(data, &request.Params.Arguments)
-		result, err := SearchTextMcp(context.Background(), request)
+		result, err := LcSearchTextMcp(context.Background(), request)
 		if err != nil {
 			t.Fatalf("SearchTextMcp() failed: %v", err)
 		}

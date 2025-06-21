@@ -1,4 +1,4 @@
-package tools
+package lc
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// TestReadFile tests the core ReadFile functionality including successful reads
+// TestLcReadFile tests the core LcReadFile functionality including successful reads
 // and various error conditions
-func TestReadFile(t *testing.T) {
+func TestLcReadFile(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -36,7 +36,7 @@ func TestReadFile(t *testing.T) {
 	t.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
 
 	t.Run("successful read", func(t *testing.T) {
-		result, err := ReadFile("testapp", "main.go")
+		result, err := LcReadFile("testapp", "main.go")
 		if err != nil {
 			t.Fatalf("ReadFile() failed: %v", err)
 		}
@@ -60,7 +60,7 @@ func TestReadFile(t *testing.T) {
 			{"testapp", "nonexistent.go", "no such file"},
 		}
 		for _, tt := range tests {
-			_, err := ReadFile(tt.appName, tt.filePath)
+			_, err := LcReadFile(tt.appName, tt.filePath)
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 				t.Errorf("ReadFile(%q, %q) expected error containing %q, got: %v",
 					tt.appName, tt.filePath, tt.wantErr, err)
@@ -78,7 +78,7 @@ func TestReadFile(t *testing.T) {
 			{"symlink.go", ErrSymlink},
 		}
 		for _, tt := range tests {
-			_, err := ReadFile("testapp", tt.filePath)
+			_, err := LcReadFile("testapp", tt.filePath)
 			if err != tt.wantErr {
 				t.Errorf("ReadFile(testapp, %q) = %v; want %v", tt.filePath, err, tt.wantErr)
 			}
@@ -86,15 +86,15 @@ func TestReadFile(t *testing.T) {
 	})
 
 	t.Run("path traversal attempt", func(t *testing.T) {
-		_, err := ReadFile("testapp", "../../../etc/passwd")
+		_, err := LcReadFile("testapp", "../../../etc/passwd")
 		if err == nil || !strings.Contains(err.Error(), "outside app directory") {
 			t.Error("Expected error for path traversal attempt")
 		}
 	})
 }
 
-// TestReadFileCli tests the CLI interface
-func TestReadFileCli(t *testing.T) {
+// TestLcReadFileCli tests the CLI interface
+func TestLcReadFileCli(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -127,7 +127,7 @@ func TestReadFileCli(t *testing.T) {
 		}
 		for _, tt := range tests {
 			os.Args = tt.args
-			err := ReadFileCli()
+			err := LcReadFileCli()
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 				t.Errorf("ReadFileCli() with args %v expected error containing %q, got: %v",
 					tt.args[3:], tt.wantErr, err)
@@ -138,7 +138,7 @@ func TestReadFileCli(t *testing.T) {
 	t.Run("help flag", func(t *testing.T) {
 		for _, helpFlag := range []string{"--help", "-h"} {
 			os.Args = []string{"cmd", "tool", "read_file", helpFlag}
-			err := ReadFileCli()
+			err := LcReadFileCli()
 			if err != nil {
 				t.Errorf("ReadFileCli() with %s should not error, got: %v", helpFlag, err)
 			}
@@ -147,15 +147,15 @@ func TestReadFileCli(t *testing.T) {
 
 	t.Run("successful execution", func(t *testing.T) {
 		os.Args = []string{"cmd", "tool", "read_file", "--app-name", "testapp", "--file-path", "test.go"}
-		err := ReadFileCli()
+		err := LcReadFileCli()
 		if err != nil {
 			t.Errorf("ReadFileCli() failed: %v", err)
 		}
 	})
 }
 
-// TestReadFileMcp tests the MCP interface wrapper
-func TestReadFileMcp(t *testing.T) {
+// TestLcReadFileMcp tests the MCP interface wrapper
+func TestLcReadFileMcp(t *testing.T) {
 	ctx := context.Background()
 	request := mcp.CallToolRequest{}
 	request.Params.Name = "read_file"
@@ -164,7 +164,7 @@ func TestReadFileMcp(t *testing.T) {
 		"file_path": "test.go",
 	}
 
-	_, err := ReadFileMcp(ctx, request)
+	_, err := LcReadFileMcp(ctx, request)
 	if err == nil {
 		t.Error("Expected error for non-existent app")
 	}
