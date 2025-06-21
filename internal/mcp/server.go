@@ -54,7 +54,6 @@ func StartServer(name, version string) error {
 // registerTools registers all available tools with the MCP server
 func registerTools(s *server.MCPServer) {
 	// File management tools
-	registerCreateAppTool(s)
 	registerListAppsTool(s)
 	registerListFilesTool(s)
 	registerSearchTextTool(s)
@@ -67,6 +66,8 @@ func registerTools(s *server.MCPServer) {
 	
 	// Package Manager tools
 	registerPnpmInstallTool(s)
+	registerPnpmAddTool(s)
+	registerPnpmPm2Tool(s)
 	
 	// Git tools
 	registerGitStatusTool(s)
@@ -85,16 +86,6 @@ func registerTools(s *server.MCPServer) {
 	registerGitRevertTool(s)
 	registerGitCheckoutTool(s)
 	registerGitShowTool(s)
-}
-
-// registerCreateAppTool registers the create_app tool
-func registerCreateAppTool(s *server.MCPServer) {
-	tool := mcp.NewTool("create_app",
-		mcp.WithDescription("Create a new application directory"),
-		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to create (must be unique, cannot contain special characters or '..')")),
-	)
-
-	s.AddTool(tool, tools.CreateAppMcp)
 }
 
 // registerListAppsTool registers the list_apps tool
@@ -392,4 +383,26 @@ func registerPnpmInstallTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, pnpm.PnpmInstallMcp)
+}
+
+// registerPnpmAddTool registers the pnpm_add tool
+func registerPnpmAddTool(s *server.MCPServer) {
+	tool := mcp.NewTool("pnpm_add",
+		mcp.WithDescription("Add a package to an app directory using pnpm (preferred) or npm"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to add package to (must exactly match an app name from list_apps)")),
+		mcp.WithString("package_name", mcp.Required(), mcp.Description("Name of the package to add (e.g. 'express', 'react@18', '@types/node')")),
+	)
+
+	s.AddTool(tool, pnpm.PnpmAddMcp)
+}
+
+// registerPnpmPm2Tool registers the pnpm_pm2 tool
+func registerPnpmPm2Tool(s *server.MCPServer) {
+	tool := mcp.NewTool("pnpm_pm2",
+		mcp.WithDescription("Manage Node.js apps with PM2. Smart defaults: 'start' auto-detects dev/start scripts, uses ecosystem.config.js if present"),
+		mcp.WithString("command", mcp.Required(), mcp.Description("Command: 'start', 'stop', 'restart', 'delete', 'list', 'logs'")),
+		mcp.WithString("target", mcp.Description("App name for start/stop/restart/delete, or 'all' for stop/restart/delete. Not needed for 'list'")),
+	)
+
+	s.AddTool(tool, pnpm.PnpmPm2Mcp)
 }

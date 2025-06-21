@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,12 +16,13 @@ import (
 
 // Types
 type GitStatusResult struct {
-	Branch    string   `json:"branch"`
-	Staged    []string `json:"staged"`
-	Modified  []string `json:"modified"`
-	Untracked []string `json:"untracked"`
-	IsRepo    bool     `json:"is_repo"`
-	Message   string   `json:"message,omitempty"`
+	Branch      string   `json:"branch"`
+	Staged      []string `json:"staged"`
+	Modified    []string `json:"modified"`
+	Untracked   []string `json:"untracked"`
+	IsRepo      bool     `json:"is_repo"`
+	Message     string   `json:"message,omitempty"`
+	ErrorOutput string   `json:"error_output,omitempty"`
 }
 
 // GitStatus runs git status command in the specified app directory
@@ -55,14 +57,14 @@ func GitStatus(appName string) (GitStatusResult, error) {
 	// Get current branch
 	branchCmd := exec.Command("git", "branch", "--show-current")
 	branchCmd.Dir = appPath
-	branchOutput, err := branchCmd.Output()
-	if err != nil {
+	branchOutput, branchErr := branchCmd.CombinedOutput()
+	if branchErr != nil {
 		// Try alternative method for detached HEAD
 		branchCmd = exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
 		branchCmd.Dir = appPath
-		branchOutput, err = branchCmd.Output()
-		if err != nil {
-			return GitStatusResult{}, fmt.Errorf("failed to get current branch: %w", err)
+		branchOutput, branchErr = branchCmd.CombinedOutput()
+		if branchErr != nil {
+			return GitStatusResult{}, fmt.Errorf("failed to get current branch: %w", branchErr)
 		}
 	}
 	branch := strings.TrimSpace(string(branchOutput))
@@ -70,21 +72,25 @@ func GitStatus(appName string) (GitStatusResult, error) {
 	// Get git status
 	statusCmd := exec.Command("git", "status", "--porcelain=v1")
 	statusCmd.Dir = appPath
-	output, err := statusCmd.Output()
+	var statusOut, statusErr bytes.Buffer
+	statusCmd.Stdout = &statusOut
+	statusCmd.Stderr = &statusErr
+	err = statusCmd.Run()
 	if err != nil {
 		return GitStatusResult{}, fmt.Errorf("failed to run git status: %w", err)
 	}
 
 	result := GitStatusResult{
-		Branch:    branch,
-		IsRepo:    true,
-		Staged:    []string{},
-		Modified:  []string{},
-		Untracked: []string{},
+		Branch:      branch,
+		IsRepo:      true,
+		Staged:      []string{},
+		Modified:    []string{},
+		Untracked:   []string{},
+		ErrorOutput: statusErr.String(),
 	}
 
 	// Parse git status output
-	lines := strings.Split(string(output), "\n")
+	lines := strings.Split(statusOut.String(), "\n")
 	for _, line := range lines {
 		if len(line) < 3 {
 			continue

@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -20,11 +21,12 @@ type GitStashEntry struct {
 }
 
 type GitStashResult struct {
-	Success  bool            `json:"success"`
-	Stashes  []GitStashEntry `json:"stashes"`
-	IsRepo   bool            `json:"is_repo"`
-	Message  string          `json:"message,omitempty"`
-	Action   string          `json:"action,omitempty"`
+	Success     bool            `json:"success"`
+	Stashes     []GitStashEntry `json:"stashes"`
+	IsRepo      bool            `json:"is_repo"`
+	Message     string          `json:"message,omitempty"`
+	Action      string          `json:"action,omitempty"`
+	ErrorOutput string          `json:"error_output,omitempty"`
 }
 
 // GitStash manages git stash in the specified app directory
@@ -73,9 +75,12 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		
 		cmd := exec.Command("git", args...)
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			return GitStashResult{}, fmt.Errorf("git stash push failed: %w - %s", err, strings.TrimSpace(string(output)))
+			return GitStashResult{}, fmt.Errorf("git stash push failed: %w\nError output: %s", err, strings.TrimSpace(errBuf.String()))
 		}
 		result.Success = true
 		result.Message = "Changes stashed successfully"
@@ -84,9 +89,12 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		// Pop the latest stash
 		cmd := exec.Command("git", "stash", "pop")
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			return GitStashResult{}, fmt.Errorf("git stash pop failed: %w - %s", err, strings.TrimSpace(string(output)))
+			return GitStashResult{}, fmt.Errorf("git stash pop failed: %w\nError output: %s", err, strings.TrimSpace(errBuf.String()))
 		}
 		result.Success = true
 		result.Message = "Stash applied and removed"
@@ -95,9 +103,12 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		// Apply the latest stash without removing it
 		cmd := exec.Command("git", "stash", "apply")
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			return GitStashResult{}, fmt.Errorf("git stash apply failed: %w - %s", err, strings.TrimSpace(string(output)))
+			return GitStashResult{}, fmt.Errorf("git stash apply failed: %w\nError output: %s", err, strings.TrimSpace(errBuf.String()))
 		}
 		result.Success = true
 		result.Message = "Stash applied"
@@ -106,9 +117,12 @@ func GitStash(appName string, action string, message string) (GitStashResult, er
 		// Drop the latest stash
 		cmd := exec.Command("git", "stash", "drop")
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			return GitStashResult{}, fmt.Errorf("git stash drop failed: %w - %s", err, strings.TrimSpace(string(output)))
+			return GitStashResult{}, fmt.Errorf("git stash drop failed: %w\nError output: %s", err, strings.TrimSpace(errBuf.String()))
 		}
 		result.Success = true
 		result.Message = "Stash dropped"

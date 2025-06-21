@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,10 +16,11 @@ import (
 
 // Types
 type GitPushResult struct {
-	Success bool   `json:"success"`
-	IsRepo  bool   `json:"is_repo"`
-	Message string `json:"message"`
-	Output  string `json:"output,omitempty"`
+	Success     bool   `json:"success"`
+	IsRepo      bool   `json:"is_repo"`
+	Message     string `json:"message"`
+	Output      string `json:"output,omitempty"`
+	ErrorOutput string `json:"error_output,omitempty"`
 }
 
 // GitPush pushes commits to remote repository
@@ -76,12 +78,22 @@ func GitPush(appName string, remote string, branch string, setUpstream bool, for
 	// Run git push
 	pushCmd := exec.Command("git", args...)
 	pushCmd.Dir = appPath
-	output, err := pushCmd.CombinedOutput()
+	var outBuf, errBuf bytes.Buffer
+	pushCmd.Stdout = &outBuf
+	pushCmd.Stderr = &errBuf
+	err = pushCmd.Run()
 	
-	outputStr := strings.TrimSpace(string(output))
+	outputStr := strings.TrimSpace(outBuf.String())
+	errorStr := strings.TrimSpace(errBuf.String())
 	
 	if err != nil {
-		return GitPushResult{}, fmt.Errorf("git push failed: %w - %s", err, outputStr)
+		return GitPushResult{
+			IsRepo:      true,
+			Success:     false,
+			Message:     "Git push failed",
+			Output:      outputStr,
+			ErrorOutput: errorStr,
+		}, fmt.Errorf("git push failed: %w - %s", err, errorStr)
 	}
 
 	return GitPushResult{

@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -22,6 +23,7 @@ type GitBranchResult struct {
 	CreateSuccess  bool     `json:"create_success,omitempty"`
 	SwitchSuccess  bool     `json:"switch_success,omitempty"`
 	DeleteSuccess  bool     `json:"delete_success,omitempty"`
+	ErrorOutput    string   `json:"error_output,omitempty"`
 }
 
 // GitBranch manages git branches in the specified app directory
@@ -59,10 +61,14 @@ func GitBranch(appName string, createBranch string, switchBranch string, deleteB
 	if createBranch != "" {
 		cmd := exec.Command("git", "branch", createBranch)
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			result.Message = fmt.Sprintf("Failed to create branch: %s", strings.TrimSpace(string(output)))
+			result.Message = fmt.Sprintf("Failed to create branch: %s", strings.TrimSpace(errBuf.String()))
 			result.CreateSuccess = false
+			result.ErrorOutput = errBuf.String()
 		} else {
 			result.CreateSuccess = true
 		}
@@ -72,10 +78,14 @@ func GitBranch(appName string, createBranch string, switchBranch string, deleteB
 	if switchBranch != "" {
 		cmd := exec.Command("git", "checkout", switchBranch)
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
-			result.Message = fmt.Sprintf("Failed to switch branch: %s", strings.TrimSpace(string(output)))
+			result.Message = fmt.Sprintf("Failed to switch branch: %s", strings.TrimSpace(errBuf.String()))
 			result.SwitchSuccess = false
+			result.ErrorOutput = errBuf.String()
 		} else {
 			result.SwitchSuccess = true
 		}
@@ -85,15 +95,21 @@ func GitBranch(appName string, createBranch string, switchBranch string, deleteB
 	if deleteBranch != "" {
 		cmd := exec.Command("git", "branch", "-d", deleteBranch)
 		cmd.Dir = appPath
-		output, err := cmd.CombinedOutput()
+		var outBuf, errBuf bytes.Buffer
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+		err := cmd.Run()
 		if err != nil {
 			// Try force delete if regular delete fails
 			cmd = exec.Command("git", "branch", "-D", deleteBranch)
 			cmd.Dir = appPath
-			output, err = cmd.CombinedOutput()
+			cmd.Stdout = &outBuf
+			cmd.Stderr = &errBuf
+			err = cmd.Run()
 			if err != nil {
-				result.Message = fmt.Sprintf("Failed to delete branch: %s", strings.TrimSpace(string(output)))
+				result.Message = fmt.Sprintf("Failed to delete branch: %s", strings.TrimSpace(errBuf.String()))
 				result.DeleteSuccess = false
+				result.ErrorOutput = errBuf.String()
 			} else {
 				result.DeleteSuccess = true
 			}

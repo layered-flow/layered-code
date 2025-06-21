@@ -1,6 +1,7 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,11 +16,12 @@ import (
 
 // Types
 type GitPullResult struct {
-	Success bool   `json:"success"`
-	IsRepo  bool   `json:"is_repo"`
-	Message string `json:"message"`
-	Output  string `json:"output,omitempty"`
-	Updated bool   `json:"updated"`
+	Success     bool   `json:"success"`
+	IsRepo      bool   `json:"is_repo"`
+	Message     string `json:"message"`
+	Output      string `json:"output,omitempty"`
+	Updated     bool   `json:"updated"`
+	ErrorOutput string `json:"error_output,omitempty"`
 }
 
 // GitPull pulls changes from remote repository
@@ -73,12 +75,22 @@ func GitPull(appName string, remote string, branch string, rebase bool) (GitPull
 	// Run git pull
 	pullCmd := exec.Command("git", args...)
 	pullCmd.Dir = appPath
-	output, err := pullCmd.CombinedOutput()
+	var outBuf, errBuf bytes.Buffer
+	pullCmd.Stdout = &outBuf
+	pullCmd.Stderr = &errBuf
+	err = pullCmd.Run()
 	
-	outputStr := strings.TrimSpace(string(output))
+	outputStr := strings.TrimSpace(outBuf.String())
+	errorStr := strings.TrimSpace(errBuf.String())
 	
 	if err != nil {
-		return GitPullResult{}, fmt.Errorf("git pull failed: %w - %s", err, outputStr)
+		return GitPullResult{
+			IsRepo:      true,
+			Success:     false,
+			Message:     "Git pull failed",
+			Output:      outputStr,
+			ErrorOutput: errorStr,
+		}, fmt.Errorf("git pull failed: %w - %s", err, errorStr)
 	}
 
 	// Check if repository was updated

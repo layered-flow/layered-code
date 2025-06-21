@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,11 +17,12 @@ import (
 
 // Types
 type ViteCreateAppResult struct {
-	AppName   string `json:"app_name"`
-	AppPath   string `json:"app_path"`
-	Template  string `json:"template"`
-	Manager   string `json:"package_manager"`
-	Message   string `json:"message"`
+	AppName     string `json:"app_name"`
+	AppPath     string `json:"app_path"`
+	Template    string `json:"template"`
+	Manager     string `json:"package_manager"`
+	Message     string `json:"message"`
+	ErrorOutput string `json:"error_output,omitempty"`
 }
 
 // ViteCreateApp creates a new Vite app in the apps directory with the specified template
@@ -89,14 +91,15 @@ func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreate
 	
 	cmd.Dir = appsDir
 	
-	// If showOutput is true (CLI), stream to stdout/stderr
-	// If false (MCP), capture the output
+	// Capture output
+	var outBuf, errBuf bytes.Buffer
+	
 	if showOutput {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		// For CLI, use MultiWriter to both stream and capture output
+		cmd.Stdout = io.MultiWriter(os.Stdout, &outBuf)
+		cmd.Stderr = io.MultiWriter(os.Stderr, &errBuf)
 	} else {
-		// Capture output for MCP to avoid polluting JSON response
-		var outBuf, errBuf bytes.Buffer
+		// For MCP, just capture to buffers
 		cmd.Stdout = &outBuf
 		cmd.Stderr = &errBuf
 	}
@@ -104,15 +107,16 @@ func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreate
 	if err := cmd.Run(); err != nil {
 		// Clean up if creation failed
 		os.RemoveAll(appPath)
-		return ViteCreateAppResult{}, fmt.Errorf("failed to create Vite app: %w", err)
+		return ViteCreateAppResult{}, fmt.Errorf("failed to create Vite app: %w\nError output: %s", err, errBuf.String())
 	}
 
 	return ViteCreateAppResult{
-		AppName: appName,
-		AppPath: appPath,
-		Template: template,
-		Manager: packageManager,
-		Message: fmt.Sprintf("Successfully created Vite %s app '%s'. Run 'pnpm_install' or 'npm install' to install dependencies", template, appName),
+		AppName:     appName,
+		AppPath:     appPath,
+		Template:    template,
+		Manager:     packageManager,
+		Message:     fmt.Sprintf("Successfully created Vite %s app '%s'. Run 'pnpm_install' or 'npm install' to install dependencies", template, appName),
+		ErrorOutput: errBuf.String(),
 	}, nil
 }
 
