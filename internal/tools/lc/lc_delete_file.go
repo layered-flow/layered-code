@@ -53,7 +53,7 @@ func LcDeleteFile(params LcDeleteFileParams) (LcDeleteFileResult, error) {
 
 	// Ensure path is within the app directory
 	cleanPath := filepath.Clean(fullPath)
-	if !strings.HasPrefix(cleanPath, appPath) {
+	if !config.IsWithinDirectory(cleanPath, appPath) {
 		return LcDeleteFileResult{}, errors.New("path must be within the app directory")
 	}
 

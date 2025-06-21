@@ -63,7 +63,7 @@ func LcCopyFile(params LcCopyFileParams) (LcCopyFileResult, error) {
 	// Ensure paths are within the app directory
 	cleanSourcePath := filepath.Clean(sourcePath)
 	cleanDestPath := filepath.Clean(destPath)
-	if !strings.HasPrefix(cleanSourcePath, appPath) || !strings.HasPrefix(cleanDestPath, appPath) {
+	if !config.IsWithinDirectory(cleanSourcePath, appPath) || !config.IsWithinDirectory(cleanDestPath, appPath) {
 		return LcCopyFileResult{}, errors.New("paths must be within the app directory")
 	}
 
