@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCheckout(t *testing.T) {
@@ -32,13 +29,21 @@ func TestCheckout(t *testing.T) {
 		
 		// Use our checkout function
 		output, err := Checkout(repo, "feature-branch", false, nil)
-		require.NoError(t, err)
-		assert.Contains(t, output, "Successfully checked out branch/commit 'feature-branch'")
-		assert.Contains(t, output, "Current branch: feature-branch")
+		if err != nil {
+			t.Fatalf("checkout failed: %v", err)
+		}
+		if !strings.Contains(output, "Successfully checked out branch/commit 'feature-branch'") {
+			t.Errorf("expected output to contain %q, got %q", "Successfully checked out branch/commit 'feature-branch'", output)
+		}
+		if !strings.Contains(output, "Current branch: feature-branch") {
+			t.Errorf("expected output to contain %q, got %q", "Current branch: feature-branch", output)
+		}
 		
 		// Verify we're on feature branch
 		branch := runGitCommand(t, repo, "branch", "--show-current")
-		assert.Contains(t, branch, "feature-branch")
+		if !strings.Contains(branch, "feature-branch") {
+			t.Errorf("expected branch to contain %q, got %q", "feature-branch", branch)
+		}
 		
 		// Verify feature file exists
 		assertFileExists(t, repo, "feature.txt")
@@ -49,13 +54,21 @@ func TestCheckout(t *testing.T) {
 		
 		// Create new branch
 		output, err := Checkout(repo, "new-feature", true, nil)
-		require.NoError(t, err)
-		assert.Contains(t, output, "Successfully checked out new branch 'new-feature'")
-		assert.Contains(t, output, "Current branch: new-feature")
+		if err != nil {
+			t.Fatalf("checkout failed: %v", err)
+		}
+		if !strings.Contains(output, "Successfully checked out new branch 'new-feature'") {
+			t.Errorf("expected output to contain %q, got %q", "Successfully checked out new branch 'new-feature'", output)
+		}
+		if !strings.Contains(output, "Current branch: new-feature") {
+			t.Errorf("expected output to contain %q, got %q", "Current branch: new-feature", output)
+		}
 		
 		// Verify we're on the new branch
 		branch := runGitCommand(t, repo, "branch", "--show-current")
-		assert.Contains(t, branch, "new-feature")
+		if !strings.Contains(branch, "new-feature") {
+			t.Errorf("expected branch to contain %q, got %q", "new-feature", branch)
+		}
 	})
 
 	t.Run("checkout specific commit", func(t *testing.T) {
@@ -73,14 +86,25 @@ func TestCheckout(t *testing.T) {
 		
 		// Checkout first commit
 		output, err := Checkout(repo, firstCommit, false, nil)
-		require.NoError(t, err)
-		assert.Contains(t, output, fmt.Sprintf("Successfully checked out branch/commit '%s'", firstCommit))
-		assert.Contains(t, output, "HEAD is now at")
-		assert.Contains(t, output, "(detached)")
+		if err != nil {
+			t.Fatalf("checkout failed: %v", err)
+		}
+		expectedMsg := fmt.Sprintf("Successfully checked out branch/commit '%s'", firstCommit)
+		if !strings.Contains(output, expectedMsg) {
+			t.Errorf("expected output to contain %q, got %q", expectedMsg, output)
+		}
+		if !strings.Contains(output, "HEAD is now at") {
+			t.Errorf("expected output to contain %q, got %q", "HEAD is now at", output)
+		}
+		if !strings.Contains(output, "(detached)") {
+			t.Errorf("expected output to contain %q, got %q", "(detached)", output)
+		}
 		
 		// Verify file content
 		content := readTestFile(t, repo, "file1.txt")
-		assert.Equal(t, "v1", content)
+		if content != "v1" {
+			t.Errorf("expected content to be %q, got %q", "v1", content)
+		}
 	})
 
 	t.Run("checkout specific files from HEAD", func(t *testing.T) {
@@ -96,12 +120,18 @@ func TestCheckout(t *testing.T) {
 		
 		// Checkout file from HEAD
 		output, err := Checkout(repo, "", false, []string{"file1.txt"})
-		require.NoError(t, err)
-		assert.Contains(t, output, "Successfully checked out files from HEAD")
+		if err != nil {
+			t.Fatalf("checkout failed: %v", err)
+		}
+		if !strings.Contains(output, "Successfully checked out files from HEAD") {
+			t.Errorf("expected output to contain %q, got %q", "Successfully checked out files from HEAD", output)
+		}
 		
 		// Verify file was restored
 		content := readTestFile(t, repo, "file1.txt")
-		assert.Equal(t, "original", content)
+		if content != "original" {
+			t.Errorf("expected content to be %q, got %q", "original", content)
+		}
 	})
 
 	t.Run("checkout files from specific commit", func(t *testing.T) {
@@ -122,14 +152,23 @@ func TestCheckout(t *testing.T) {
 		
 		// Checkout file1 from first commit
 		output, err := Checkout(repo, firstCommit, false, []string{"file1.txt"})
-		require.NoError(t, err)
-		assert.Contains(t, output, fmt.Sprintf("Successfully checked out files from %s", firstCommit))
+		if err != nil {
+			t.Fatalf("checkout failed: %v", err)
+		}
+		expectedMsg := fmt.Sprintf("Successfully checked out files from %s", firstCommit)
+		if !strings.Contains(output, expectedMsg) {
+			t.Errorf("expected output to contain %q, got %q", expectedMsg, output)
+		}
 		
 		// Verify file1 is v1, file2 is still v2
 		content1 := readTestFile(t, repo, "file1.txt")
 		content2 := readTestFile(t, repo, "file2.txt")
-		assert.Equal(t, "v1", content1)
-		assert.Equal(t, "v2", content2)
+		if content1 != "v1" {
+			t.Errorf("expected file1 content to be %q, got %q", "v1", content1)
+		}
+		if content2 != "v2" {
+			t.Errorf("expected file2 content to be %q, got %q", "v2", content2)
+		}
 	})
 
 	t.Run("checkout multiple files", func(t *testing.T) {
@@ -149,35 +188,61 @@ func TestCheckout(t *testing.T) {
 		
 		// Checkout only file1 and file2
 		output, err := Checkout(repo, "", false, []string{"file1.txt", "file2.txt"})
-		require.NoError(t, err)
-		assert.Contains(t, output, "Successfully checked out files from HEAD")
+		if err != nil {
+			t.Fatalf("checkout failed: %v", err)
+		}
+		if !strings.Contains(output, "Successfully checked out files from HEAD") {
+			t.Errorf("expected output to contain %q, got %q", "Successfully checked out files from HEAD", output)
+		}
 		
 		// Verify file1 and file2 restored, file3 still modified
-		assert.Equal(t, "original1", readTestFile(t, repo, "file1.txt"))
-		assert.Equal(t, "original2", readTestFile(t, repo, "file2.txt"))
-		assert.Equal(t, "modified3", readTestFile(t, repo, "file3.txt"))
+		if content := readTestFile(t, repo, "file1.txt"); content != "original1" {
+			t.Errorf("expected file1 content to be %q, got %q", "original1", content)
+		}
+		if content := readTestFile(t, repo, "file2.txt"); content != "original2" {
+			t.Errorf("expected file2 content to be %q, got %q", "original2", content)
+		}
+		if content := readTestFile(t, repo, "file3.txt"); content != "modified3" {
+			t.Errorf("expected file3 content to be %q, got %q", "modified3", content)
+		}
 	})
 
 	t.Run("error cases", func(t *testing.T) {
 		// Missing app name
 		_, err := Checkout("", "main", false, nil)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "app_name is required")
+		if err == nil {
+			t.Error("expected error for missing app name")
+		}
+		if !strings.Contains(err.Error(), "app_name is required") {
+			t.Errorf("expected error to contain %q, got %q", "app_name is required", err.Error())
+		}
 		
 		// No target or files
 		_, err = Checkout("test-app", "", false, nil)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "either target branch/commit or files must be specified")
+		if err == nil {
+			t.Error("expected error for no target or files")
+		}
+		if !strings.Contains(err.Error(), "either target branch/commit or files must be specified") {
+			t.Errorf("expected error to contain %q, got %q", "either target branch/commit or files must be specified", err.Error())
+		}
 		
 		// Non-existent branch
 		repo := setupTestRepo(t)
 		_, err = Checkout(repo, "non-existent-branch", false, nil)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "git checkout failed")
+		if err == nil {
+			t.Error("expected error for non-existent branch")
+		}
+		if !strings.Contains(err.Error(), "git checkout failed") {
+			t.Errorf("expected error to contain %q, got %q", "git checkout failed", err.Error())
+		}
 		
 		// Non-existent file
 		_, err = Checkout(repo, "", false, []string{"non-existent.txt"})
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "git checkout failed")
+		if err == nil {
+			t.Error("expected error for non-existent file")
+		}
+		if !strings.Contains(err.Error(), "git checkout failed") {
+			t.Errorf("expected error to contain %q, got %q", "git checkout failed", err.Error())
+		}
 	})
 }
