@@ -15,7 +15,6 @@ func TestRegisterFunctions(t *testing.T) {
 		name string
 		fn   func(*server.MCPServer)
 	}{
-		{"registerCreateAppTool", registerCreateAppTool},
 		{"registerListAppsTool", registerListAppsTool},
 		{"registerListFilesTool", registerListFilesTool},
 		{"registerSearchTextTool", registerSearchTextTool},
@@ -24,6 +23,7 @@ func TestRegisterFunctions(t *testing.T) {
 		{"registerEditFileTool", registerEditFileTool},
 		{"registerViteCreateAppTool", registerViteCreateAppTool},
 		{"registerPnpmInstallTool", registerPnpmInstallTool},
+		{"registerPnpmAddTool", registerPnpmAddTool},
 		{"registerGitStatusTool", registerGitStatusTool},
 		{"registerGitDiffTool", registerGitDiffTool},
 		{"registerGitCommitTool", registerGitCommitTool},

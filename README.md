@@ -251,7 +251,6 @@ layered-code --help
 - `tool` - Run various tools and utilities (use with subcommands like below)
 
   **File Management Tools:**
-  - `tool create_app` - Create a new application directory
   - `tool list_apps` - List all available applications in the ~/LayeredApps directory
   - `tool list_files` - List files and directories within an application with optional metadata (max depth: 10,000 levels)
   - `tool search_text` - Search for text patterns in files within an application directory using ripgrep
@@ -264,6 +263,12 @@ layered-code --help
 
   **Package Manager Tools:**
   - `tool pnpm_install` - Install dependencies using pnpm (preferred) or npm
+  - `tool pnpm_add` - Add a package using pnpm (preferred) or npm
+  - `tool pnpm_pm2` - Manage Node.js processes with PM2
+    - Commands: `start <app>`, `stop <app|all>`, `restart <app|all>`, `delete <app|all>`, `list`, `logs [app]`
+    - Auto-detects dev/start scripts from package.json
+    - Uses ecosystem.config.js if present
+    - Automatically installs PM2 if not available
 
   **Git Tools:**
   - `tool git_status` - Show the working tree status of a git repository

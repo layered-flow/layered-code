@@ -18,7 +18,6 @@ func PrintUsage() {
 	fmt.Println("  mcp_server                Start the MCP server")
 	fmt.Println()
 	fmt.Println("  File Management Tools:")
-	fmt.Println("  tool create_app           Create a new app directory")
 	fmt.Println("  tool list_apps            List all available apps")
 	fmt.Println("  tool list_files           List files and directories within an app")
 	fmt.Println("  tool search_text          Search for text patterns in files using ripgrep")
@@ -31,6 +30,8 @@ func PrintUsage() {
 	fmt.Println()
 	fmt.Println("  Package Manager Tools:")
 	fmt.Println("  tool pnpm_install         Install dependencies using pnpm (preferred) or npm")
+	fmt.Println("  tool pnpm_add             Add a package using pnpm (preferred) or npm")
+	fmt.Println("  tool pnpm_pm2             Manage Node.js processes with PM2 (auto-detects scripts)")
 	fmt.Println()
 	fmt.Println("  Git Tools:")
 	fmt.Println("  tool git_status           Show the working tree status")
@@ -62,8 +63,6 @@ func RunTool() error {
 	subcommand := os.Args[2]
 	switch subcommand {
 	// File management tools
-	case "create_app":
-		return tools.CreateAppCli()
 	case "list_apps":
 		return tools.ListAppsCli()
 	case "list_files":
@@ -84,6 +83,10 @@ func RunTool() error {
 	// Package Manager tools
 	case "pnpm_install":
 		return pnpm.PnpmInstallCli()
+	case "pnpm_add":
+		return pnpm.PnpmAddCli()
+	case "pnpm_pm2":
+		return pnpm.PnpmPm2Cli()
 
 	// Git tools
 	case "git_status":
