@@ -24,6 +24,9 @@ func PrintUsage() {
 	fmt.Println("  tool lc_read_file         Read the contents of a file within an app")
 	fmt.Println("  tool lc_write_file        Write or create a file within an app")
 	fmt.Println("  tool lc_edit_file         Edit a file using find-and-replace")
+	fmt.Println("  tool lc_move_file         Move or rename a file within an app")
+	fmt.Println("  tool lc_delete_file       Delete a file within an app")
+	fmt.Println("  tool lc_copy_file         Copy a file within an app")
 	fmt.Println()
 	fmt.Println("  Vite Tools:")
 	fmt.Println("  tool vite_create_app      Create a new Vite app with template")
@@ -75,6 +78,12 @@ func RunTool() error {
 		return lc.LcWriteFileCli()
 	case "lc_edit_file":
 		return lc.LcEditFileCli()
+	case "lc_move_file":
+		return lc.LcMoveFileCli()
+	case "lc_delete_file":
+		return lc.LcDeleteFileCli()
+	case "lc_copy_file":
+		return lc.LcCopyFileCli()
 
 	// Vite tools
 	case "vite_create_app":

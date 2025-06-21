@@ -257,6 +257,9 @@ layered-code --help
   - `tool lc_read_file` - Read the contents of a file within an application directory
   - `tool lc_write_file` - Write or create a file within an application directory
   - `tool lc_edit_file` - Edit a file by performing find-and-replace operations
+  - `tool lc_move_file` - Move or rename a file within an application directory
+  - `tool lc_delete_file` - Delete a file within an application directory
+  - `tool lc_copy_file` - Copy a file within an application directory
 
   **Vite Tools:**
   - `tool vite_create_app` - Create a new Vite app with various templates (React, Vue, Svelte, etc.)
