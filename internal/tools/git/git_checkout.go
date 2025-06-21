@@ -11,13 +11,14 @@ import (
 	"strings"
 
 	"github.com/layered-flow/layered-code/internal/config"
+	"github.com/layered-flow/layered-code/internal/helpers"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // Checkout switches branches or restores working tree files
 func Checkout(appName, target string, isNewBranch bool, files []string) (string, error) {
-	if appName == "" {
-		return "", fmt.Errorf("app_name is required")
+	if err := helpers.ValidateAppName(appName); err != nil {
+		return "", err
 	}
 	if target == "" && len(files) == 0 {
 		return "", fmt.Errorf("either target branch/commit or files must be specified")

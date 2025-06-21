@@ -17,31 +17,37 @@ func TestViteCreateAppValidation(t *testing.T) {
 			name:      "empty app name",
 			appName:   "",
 			wantErr:   true,
-			errMsg:    "app name is required",
+			errMsg:    "app name cannot be empty",
 		},
 		{
 			name:      "app name with directory traversal",
 			appName:   "../evil",
 			wantErr:   true,
-			errMsg:    "app name cannot contain path separators or '..'",
+			errMsg:    "app name cannot contain '..'",
 		},
 		{
 			name:      "app name with forward slash",
 			appName:   "path/to/app",
 			wantErr:   true,
-			errMsg:    "app name cannot contain path separators or '..'",
+			errMsg:    "app name cannot contain '/'",
 		},
 		{
 			name:      "app name with backslash",
 			appName:   "path\\to\\app",
 			wantErr:   true,
-			errMsg:    "app name cannot contain path separators or '..'",
+			errMsg:    "app name cannot contain '\\'",
 		},
 		{
 			name:      "app name with dots only",
 			appName:   "..",
 			wantErr:   true,
-			errMsg:    "app name cannot contain path separators or '..'",
+			errMsg:    "app name cannot contain '..'",
+		},
+		{
+			name:      "app name starting with period",
+			appName:   ".hidden",
+			wantErr:   true,
+			errMsg:    "app name cannot start with a period (hidden directories are not allowed)",
 		},
 	}
 

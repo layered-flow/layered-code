@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/layered-flow/layered-code/internal/config"
+	"github.com/layered-flow/layered-code/internal/helpers"
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
@@ -29,7 +30,7 @@ func GitInit(appName string, bare bool) (GitInitResult, error) {
 		return GitInitResult{}, err
 	}
 
-	if err := ValidateAppName(appName); err != nil {
+	if err := helpers.ValidateAppName(appName); err != nil {
 		return GitInitResult{}, err
 	}
 

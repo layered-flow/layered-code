@@ -20,8 +20,8 @@ const (
 	OwnerWritePermission = 0200
 
 	// File size constants
-	MaxFileSize        = 1024 * 1024
-	MaxFileSizeInWords = "1MB"
+	MaxFileSize        = 10 * 1024 * 1024 // 10MB
+	MaxFileSizeInWords = "10MB"
 
 	// Directory traversal constants
 	MaxDirectoryDepth = 10000

@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/layered-flow/layered-code/internal/config"
 )
 
 // Test helper functions
 func setupTestRepo(t *testing.T) string {
 	appsDir, err := config.EnsureAppsDirectory()
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("failed to ensure apps directory: %v", err)
+	}
 	
 	testApp := fmt.Sprintf("test-git-%d", os.Getpid())
 	testAppPath := filepath.Join(appsDir, testApp)
@@ -25,11 +25,15 @@ func setupTestRepo(t *testing.T) string {
 	os.RemoveAll(testAppPath)
 	
 	// Create directory and init git
-	require.NoError(t, os.MkdirAll(testAppPath, 0755))
+	if err := os.MkdirAll(testAppPath, 0755); err != nil {
+		t.Fatalf("failed to create test app directory: %v", err)
+	}
 	
 	cmd := exec.Command("git", "init")
 	cmd.Dir = testAppPath
-	require.NoError(t, cmd.Run())
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("failed to init git repo: %v", err)
+	}
 	
 	// Configure git
 	cmd = exec.Command("git", "config", "user.email", "test@example.com")
@@ -52,7 +56,9 @@ func writeTestFile(t *testing.T, repo, filename, content string) {
 	appsDir, _ := config.EnsureAppsDirectory()
 	testAppPath := filepath.Join(appsDir, repo)
 	filePath := filepath.Join(testAppPath, filename)
-	require.NoError(t, os.WriteFile(filePath, []byte(content), 0644))
+	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
 }
 
 func readTestFile(t *testing.T, repo, filename string) string {
@@ -60,7 +66,9 @@ func readTestFile(t *testing.T, repo, filename string) string {
 	testAppPath := filepath.Join(appsDir, repo)
 	filePath := filepath.Join(testAppPath, filename)
 	content, err := os.ReadFile(filePath)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("failed to read test file: %v", err)
+	}
 	return string(content)
 }
 
@@ -70,7 +78,9 @@ func runGitCommand(t *testing.T, repo string, args ...string) string {
 	cmd := exec.Command("git", args...)
 	cmd.Dir = testAppPath
 	output, err := cmd.CombinedOutput()
-	require.NoError(t, err, "git command failed: %s", string(output))
+	if err != nil {
+		t.Fatalf("git command failed: %v, output: %s", err, string(output))
+	}
 	return string(output)
 }
 
@@ -84,7 +94,9 @@ func assertFileExists(t *testing.T, repo, filename string) {
 	testAppPath := filepath.Join(appsDir, repo)
 	filePath := filepath.Join(testAppPath, filename)
 	_, err := os.Stat(filePath)
-	require.NoError(t, err, "file should exist: %s", filename)
+	if err != nil {
+		t.Errorf("file should exist: %s, error: %v", filename, err)
+	}
 }
 
 func TestReset(t *testing.T) {
@@ -106,13 +118,21 @@ func TestReset(t *testing.T) {
 		
 		// Test hard reset
 		output, err := Reset(repo, initialCommit, ResetModeHard)
-		require.NoError(t, err)
-		assert.Contains(t, output, "Successfully reset to commit")
-		assert.Contains(t, output, "hard mode")
+		if err != nil {
+			t.Fatalf("reset failed: %v", err)
+		}
+		if !strings.Contains(output, "Successfully reset to commit") {
+			t.Errorf("expected output to contain %q, got %q", "Successfully reset to commit", output)
+		}
+		if !strings.Contains(output, "hard mode") {
+			t.Errorf("expected output to contain %q, got %q", "hard mode", output)
+		}
 		
 		// Verify file content was reset
 		content := readTestFile(t, repo, "file1.txt")
-		assert.Equal(t, "initial content", content)
+		if content != "initial content" {
+			t.Errorf("expected content to be %q, got %q", "initial content", content)
+		}
 	})
 
 	t.Run("soft reset keeps changes staged", func(t *testing.T) {
@@ -131,12 +151,18 @@ func TestReset(t *testing.T) {
 		
 		// Soft reset
 		output, err := Reset(repo, initialCommit, ResetModeSoft)
-		require.NoError(t, err)
-		assert.Contains(t, output, "soft mode")
+		if err != nil {
+			t.Fatalf("reset failed: %v", err)
+		}
+		if !strings.Contains(output, "soft mode") {
+			t.Errorf("expected output to contain %q, got %q", "soft mode", output)
+		}
 		
 		// Check that changes are staged
 		status := runGitCommand(t, repo, "status", "--porcelain")
-		assert.Contains(t, status, "M  file1.txt")
+		if !strings.Contains(status, "M  file1.txt") {
+			t.Errorf("expected status to show staged file, got %q", status)
+		}
 	})
 
 	t.Run("mixed reset (default) unstages changes", func(t *testing.T) {
@@ -155,33 +181,53 @@ func TestReset(t *testing.T) {
 		
 		// Mixed reset (default)
 		output, err := Reset(repo, initialCommit, "")
-		require.NoError(t, err)
-		assert.Contains(t, output, "mixed mode")
+		if err != nil {
+			t.Fatalf("reset failed: %v", err)
+		}
+		if !strings.Contains(output, "mixed mode") {
+			t.Errorf("expected output to contain %q, got %q", "mixed mode", output)
+		}
 		
 		// Check that changes are unstaged
 		status := runGitCommand(t, repo, "status", "--porcelain")
-		assert.Contains(t, status, " M file1.txt")
+		if !strings.Contains(status, " M file1.txt") {
+			t.Errorf("expected status to show unstaged file, got %q", status)
+		}
 	})
 
 	t.Run("error cases", func(t *testing.T) {
 		// Missing app name
 		_, err := Reset("", "abc123", ResetModeHard)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "app_name is required")
+		if err == nil {
+			t.Error("expected error for missing app name")
+		}
+		if !strings.Contains(err.Error(), "app_name is required") {
+			t.Errorf("expected error to contain %q, got %q", "app_name is required", err.Error())
+		}
 		
 		// Missing commit hash
 		_, err = Reset("test-app", "", ResetModeHard)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "commit_hash is required")
+		if err == nil {
+			t.Error("expected error for missing commit hash")
+		}
+		if !strings.Contains(err.Error(), "commit_hash is required") {
+			t.Errorf("expected error to contain %q, got %q", "commit_hash is required", err.Error())
+		}
 		
 		// Invalid mode
 		_, err = Reset("test-app", "abc123", "invalid")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid reset mode")
+		if err == nil {
+			t.Error("expected error for invalid mode")
+		}
+		if !strings.Contains(err.Error(), "invalid reset mode") {
+			t.Errorf("expected error to contain %q, got %q", "invalid reset mode", err.Error())
+		}
 		
 		// Invalid commit hash
 		repo := setupTestRepo(t)
 		_, err = Reset(repo, "invalid-hash", ResetModeHard)
-		assert.Error(t, err)
+		if err == nil {
+			t.Error("expected error for invalid commit hash")
+		}
 	})
 }
