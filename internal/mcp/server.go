@@ -60,6 +60,9 @@ func registerTools(s *server.MCPServer) {
 	registerReadFileTool(s)
 	registerWriteFileTool(s)
 	registerEditFileTool(s)
+	registerMoveFileTool(s)
+	registerDeleteFileTool(s)
+	registerCopyFileTool(s)
 	
 	// Vite tools
 	registerViteCreateAppTool(s)
@@ -163,6 +166,42 @@ func registerEditFileTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, lc.LcEditFileMcp)
+}
+
+// registerMoveFileTool registers the lc_move_file tool
+func registerMoveFileTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_move_file",
+		mcp.WithDescription("Move or rename a file within an application directory"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_list_apps)")),
+		mcp.WithString("source_path", mcp.Required(), mcp.Description("Source file path relative to the app directory")),
+		mcp.WithString("dest_path", mcp.Required(), mcp.Description("Destination file path relative to the app directory")),
+	)
+
+	s.AddTool(tool, lc.LcMoveFileMcp)
+}
+
+// registerDeleteFileTool registers the lc_delete_file tool
+func registerDeleteFileTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_delete_file",
+		mcp.WithDescription("Delete a file within an application directory"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_list_apps)")),
+		mcp.WithString("file_path", mcp.Required(), mcp.Description("Path to the file relative to the app directory")),
+	)
+
+	s.AddTool(tool, lc.LcDeleteFileMcp)
+}
+
+// registerCopyFileTool registers the lc_copy_file tool
+func registerCopyFileTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_copy_file",
+		mcp.WithDescription("Copy a file within an application directory"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_list_apps)")),
+		mcp.WithString("source_path", mcp.Required(), mcp.Description("Source file path relative to the app directory")),
+		mcp.WithString("dest_path", mcp.Required(), mcp.Description("Destination file path relative to the app directory")),
+		mcp.WithBoolean("overwrite", mcp.Description("Overwrite destination if it exists (default: false)")),
+	)
+
+	s.AddTool(tool, lc.LcCopyFileMcp)
 }
 
 // registerGitStatusTool registers the git_status tool
