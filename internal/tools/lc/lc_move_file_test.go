@@ -158,6 +158,53 @@ func TestLcMoveFile(t *testing.T) {
 			t.Error("Expected error when trying to move directory")
 		}
 	})
+
+	t.Run("successful overwrite", func(t *testing.T) {
+		// Create source and destination files
+		os.WriteFile(filepath.Join(appDir, "source.txt"), []byte("source content"), 0644)
+		os.WriteFile(filepath.Join(appDir, "existing.txt"), []byte("existing content"), 0644)
+
+		params := LcMoveFileParams{
+			AppName:    "testapp",
+			SourcePath: "source.txt",
+			DestPath:   "existing.txt",
+			Overwrite:  true,
+		}
+
+		_, err := LcMoveFile(params)
+		if err != nil {
+			t.Fatalf("LcMoveFile() with overwrite failed: %v", err)
+		}
+
+		// Verify source doesn't exist
+		if _, err := os.Stat(filepath.Join(appDir, "source.txt")); !os.IsNotExist(err) {
+			t.Error("Source file still exists after move")
+		}
+
+		// Verify destination has source content
+		content, _ := os.ReadFile(filepath.Join(appDir, "existing.txt"))
+		if string(content) != "source content" {
+			t.Error("Destination file content not updated after overwrite")
+		}
+	})
+
+	t.Run("overwrite flag false still fails", func(t *testing.T) {
+		// Create both files
+		os.WriteFile(filepath.Join(appDir, "source2.txt"), []byte("source"), 0644)
+		os.WriteFile(filepath.Join(appDir, "dest2.txt"), []byte("dest"), 0644)
+
+		params := LcMoveFileParams{
+			AppName:    "testapp",
+			SourcePath: "source2.txt",
+			DestPath:   "dest2.txt",
+			Overwrite:  false,
+		}
+
+		_, err := LcMoveFile(params)
+		if err == nil {
+			t.Error("Expected error when destination exists and overwrite is false")
+		}
+	})
 }
 
 // TestLcMoveFileCli tests the CLI interface

@@ -19,6 +19,7 @@ type LcMoveFileParams struct {
 	AppName     string `json:"app_name"`
 	SourcePath  string `json:"source_path"`
 	DestPath    string `json:"dest_path"`
+	Overwrite   bool   `json:"overwrite,omitempty"`
 }
 
 // LcMoveFileResult represents the result of a move/rename operation
@@ -79,14 +80,25 @@ func LcMoveFile(params LcMoveFileParams) (LcMoveFileResult, error) {
 	}
 
 	// Check if destination exists
+	destExists := false
 	if _, err := os.Stat(cleanDestPath); err == nil {
-		return LcMoveFileResult{}, fmt.Errorf("destination already exists: %s", params.DestPath)
+		if !params.Overwrite {
+			return LcMoveFileResult{}, fmt.Errorf("destination already exists: %s", params.DestPath)
+		}
+		destExists = true
 	}
 
 	// Create destination directory if needed
 	destDir := filepath.Dir(cleanDestPath)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
 		return LcMoveFileResult{}, fmt.Errorf("failed to create destination directory: %w", err)
+	}
+
+	// If overwriting, remove the destination file first
+	if destExists {
+		if err := os.Remove(cleanDestPath); err != nil {
+			return LcMoveFileResult{}, fmt.Errorf("failed to remove existing destination file: %w", err)
+		}
 	}
 
 	// Perform the move/rename
@@ -148,6 +160,8 @@ func LcMoveFileCli() error {
 			} else {
 				return errors.New("--dest requires a value")
 			}
+		case "--overwrite":
+			params.Overwrite = true
 		default:
 			if strings.HasPrefix(args[i], "--") {
 				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_move_file --help' for usage", args[i])
@@ -178,13 +192,16 @@ func printLcMoveFileHelp() {
 	fmt.Println("  --source <path>      Source file path relative to the app directory")
 	fmt.Println("  --dest <path>        Destination file path relative to the app directory")
 	fmt.Println()
+	fmt.Println("Optional options:")
+	fmt.Println("  --overwrite          Overwrite destination if it already exists")
+	fmt.Println()
 	fmt.Println("Aliases:")
 	fmt.Println("  --from               Alias for --source")
 	fmt.Println("  --to                 Alias for --dest")
 	fmt.Println()
 	fmt.Println("Notes:")
 	fmt.Println("  - Moving directories is not supported")
-	fmt.Println("  - Destination must not already exist")
+	fmt.Println("  - Destination must not already exist (unless --overwrite is used)")
 	fmt.Println("  - Parent directories will be created if needed")
 	fmt.Println()
 	fmt.Println("Examples:")
@@ -193,6 +210,9 @@ func printLcMoveFileHelp() {
 	fmt.Println()
 	fmt.Println("  # Move a file to a different directory")
 	fmt.Println("  layered-code tool lc_move_file --app-name myapp --from src/old.js --to archive/old.js")
+	fmt.Println()
+	fmt.Println("  # Move and overwrite existing file")
+	fmt.Println("  layered-code tool lc_move_file --app-name myapp --source temp.txt --dest final.txt --overwrite")
 }
 
 // MCP
