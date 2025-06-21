@@ -27,6 +27,10 @@ func PnpmInstall(appName string, showOutput bool) (PnpmInstallResult, error) {
 	if appName == "" {
 		return PnpmInstallResult{}, fmt.Errorf("app name is required")
 	}
+	
+	if err := ValidateAppName(appName); err != nil {
+		return PnpmInstallResult{}, fmt.Errorf("invalid app name: %w", err)
+	}
 
 	// Get apps directory
 	appsDir, err := config.GetAppsDirectory()

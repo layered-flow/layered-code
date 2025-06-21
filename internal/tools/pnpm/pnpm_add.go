@@ -29,6 +29,10 @@ func PnpmAdd(appName string, packageName string, showOutput bool) (PnpmAddResult
 	if appName == "" {
 		return PnpmAddResult{}, fmt.Errorf("app name is required")
 	}
+	
+	if err := ValidateAppName(appName); err != nil {
+		return PnpmAddResult{}, fmt.Errorf("invalid app name: %w", err)
+	}
 
 	// Validate package name
 	if packageName == "" {

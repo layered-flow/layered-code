@@ -104,6 +104,7 @@ func TestPnpmPm2Result(t *testing.T) {
 		PackageManager: "pnpm",
 		Command:        "pnpm dlx pm2 list",
 		Output:         "process list output",
+		ErrorOutput:    "some warnings",
 		Message:        "Successfully executed: pnpm dlx pm2 list",
 	}
 
@@ -123,7 +124,61 @@ func TestPnpmPm2Result(t *testing.T) {
 	if result.Output != "process list output" {
 		t.Errorf("Expected Output to be 'process list output', got '%s'", result.Output)
 	}
+	if result.ErrorOutput != "some warnings" {
+		t.Errorf("Expected ErrorOutput to be 'some warnings', got '%s'", result.ErrorOutput)
+	}
 	if !strings.Contains(result.Message, "Successfully executed") {
 		t.Errorf("Expected Message to contain 'Successfully executed', got '%s'", result.Message)
+	}
+}
+
+func TestValidateAppName(t *testing.T) {
+	tests := []struct {
+		name        string
+		appName     string
+		shouldError bool
+	}{
+		{
+			name:        "Valid app name",
+			appName:     "my-app",
+			shouldError: false,
+		},
+		{
+			name:        "Empty app name",
+			appName:     "",
+			shouldError: true,
+		},
+		{
+			name:        "Path traversal attempt",
+			appName:     "../evil",
+			shouldError: true,
+		},
+		{
+			name:        "Contains forward slash",
+			appName:     "my/app",
+			shouldError: true,
+		},
+		{
+			name:        "Contains backslash",
+			appName:     "my\\app",
+			shouldError: true,
+		},
+		{
+			name:        "Contains special characters",
+			appName:     "my*app",
+			shouldError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateAppName(tt.appName)
+			if tt.shouldError && err == nil {
+				t.Errorf("Expected error for app name '%s' but got none", tt.appName)
+			}
+			if !tt.shouldError && err != nil {
+				t.Errorf("Unexpected error for app name '%s': %v", tt.appName, err)
+			}
+		})
 	}
 }

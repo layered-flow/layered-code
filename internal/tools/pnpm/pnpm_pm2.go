@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,6 +22,7 @@ type PnpmPm2Result struct {
 	PackageManager string `json:"package_manager"`
 	Command        string `json:"command"`
 	Output         string `json:"output,omitempty"`
+	ErrorOutput    string `json:"error_output,omitempty"`
 	Message        string `json:"message"`
 }
 
@@ -53,6 +55,11 @@ func PnpmPm2(command string, target string, showOutput bool) (PnpmPm2Result, err
 	case "start":
 		if target == "" {
 			return PnpmPm2Result{}, fmt.Errorf("app name is required for start command")
+		}
+		
+		// Validate app name
+		if err := ValidateAppName(target); err != nil {
+			return PnpmPm2Result{}, fmt.Errorf("invalid app name: %w", err)
 		}
 		
 		// Get apps directory
@@ -112,6 +119,7 @@ func PnpmPm2(command string, target string, showOutput bool) (PnpmPm2Result, err
 		shell = "/bin/sh"
 	}
 	
+	// Use -l flag to ensure proper environment initialization (needed for asdf, nvm, etc.)
 	cmd := exec.Command(shell, "-l", "-c", pm2Command)
 	if appPath != "" {
 		cmd.Dir = appPath
@@ -121,45 +129,25 @@ func PnpmPm2(command string, target string, showOutput bool) (PnpmPm2Result, err
 	var outBuf, errBuf bytes.Buffer
 	
 	if showOutput {
-		// For CLI, also stream to stdout/stderr
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		// For CLI, use MultiWriter to both stream and capture output
+		cmd.Stdout = io.MultiWriter(os.Stdout, &outBuf)
+		cmd.Stderr = io.MultiWriter(os.Stderr, &errBuf)
 	} else {
+		// For MCP, just capture to buffers
 		cmd.Stdout = &outBuf
 		cmd.Stderr = &errBuf
 	}
 	
-	// Always capture for result
-	if !showOutput {
-		if err := cmd.Run(); err != nil {
-			return PnpmPm2Result{}, fmt.Errorf("failed to execute pm2 command '%s': %w\nError output: %s", pm2Command, err, errBuf.String())
-		}
-	} else {
-		// For CLI, we need to capture output too
-		cmd = exec.Command(shell, "-l", "-c", pm2Command)
-		if appPath != "" {
-			cmd.Dir = appPath
-		}
-		cmd.Stdout = &outBuf
-		cmd.Stderr = &errBuf
-		
-		if err := cmd.Run(); err != nil {
-			return PnpmPm2Result{}, fmt.Errorf("failed to execute pm2 command '%s': %w\nError output: %s", pm2Command, err, errBuf.String())
-		}
-		
-		// Print the output
-		if outBuf.Len() > 0 {
-			fmt.Print(outBuf.String())
-		}
-		if errBuf.Len() > 0 {
-			fmt.Fprint(os.Stderr, errBuf.String())
-		}
+	// Execute the command once
+	if err := cmd.Run(); err != nil {
+		return PnpmPm2Result{}, fmt.Errorf("failed to execute pm2 command '%s': %w\nError output: %s", pm2Command, err, errBuf.String())
 	}
 	
 	result := PnpmPm2Result{
 		PackageManager: packageManager,
 		Command:        pm2Command,
 		Output:         outBuf.String(),
+		ErrorOutput:    errBuf.String(),
 		Message:        fmt.Sprintf("Successfully executed: %s", pm2Command),
 	}
 	
