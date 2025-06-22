@@ -214,7 +214,7 @@ By default, **Layered Code** uses `~/LayeredApps` as the directory for your appl
 
 ```bash
 export LAYERED_APPS_DIRECTORY="~/MyCustomAppsFolder"
-layered-code tool lc_list_apps
+layered-code tool lc_apps_list
 ```
 
 ### 🔒 Security
@@ -233,7 +233,7 @@ Use layered-code directly from the command line:
 layered-code mcp_server
 
 # List apps
-layered-code tool lc_list_apps
+layered-code tool lc_apps_list
 
 # Get version information
 layered-code version
@@ -251,7 +251,7 @@ layered-code --help
 - `tool` - Run various tools and utilities (use with subcommands like below)
 
   **File Management Tools:**
-  - `tool lc_list_apps` - List all available applications in the ~/LayeredApps directory
+  - `tool lc_apps_list` - List all available applications in the ~/LayeredApps directory
   - `tool lc_list_files` - List files and directories within an application with optional metadata (max depth: 10,000 levels)
   - `tool lc_search_text` - Search for text patterns in files within an application directory using ripgrep
   - `tool lc_read_file` - Read the contents of a file within an application directory
