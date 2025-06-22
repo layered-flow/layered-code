@@ -259,7 +259,7 @@ layered-code --help
   - `tool lc_file_edit` - Edit a file by performing find-and-replace operations
   - `tool lc_file_move` - Move or rename a file within an application directory
   - `tool lc_file_delete` - Delete a file within an application directory
-  - `tool lc_copy_file` - Copy a file within an application directory
+  - `tool lc_file_copy` - Copy a file within an application directory
 
   **Vite Tools:**
   - `tool vite_create_app` - Create a new Vite app with various templates (React, Vue, Svelte, etc.)

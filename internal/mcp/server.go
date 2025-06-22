@@ -62,7 +62,7 @@ func registerTools(s *server.MCPServer) {
 	registerFileEditTool(s)
 	registerFileMoveTool(s)
 	registerFileDeleteTool(s)
-	registerCopyFileTool(s)
+	registerFileCopyTool(s)
 	
 	// Vite tools
 	registerViteCreateAppTool(s)
@@ -191,9 +191,9 @@ func registerFileDeleteTool(s *server.MCPServer) {
 	s.AddTool(tool, lc.LcFileDeleteMcp)
 }
 
-// registerCopyFileTool registers the lc_copy_file tool
-func registerCopyFileTool(s *server.MCPServer) {
-	tool := mcp.NewTool("lc_copy_file",
+// registerFileCopyTool registers the lc_file_copy tool
+func registerFileCopyTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_file_copy",
 		mcp.WithDescription("Copy a file within an application directory"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
 		mcp.WithString("source_path", mcp.Required(), mcp.Description("Source file path relative to the app directory")),
@@ -201,7 +201,7 @@ func registerCopyFileTool(s *server.MCPServer) {
 		mcp.WithBoolean("overwrite", mcp.Description("Overwrite destination if it exists (default: false)")),
 	)
 
-	s.AddTool(tool, lc.LcCopyFileMcp)
+	s.AddTool(tool, lc.LcFileCopyMcp)
 }
 
 // registerGitStatusTool registers the git_status tool
