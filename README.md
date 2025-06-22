@@ -258,7 +258,7 @@ layered-code --help
   - `tool lc_file_write` - Write or create a file within an application directory
   - `tool lc_file_edit` - Edit a file by performing find-and-replace operations
   - `tool lc_file_move` - Move or rename a file within an application directory
-  - `tool lc_delete_file` - Delete a file within an application directory
+  - `tool lc_file_delete` - Delete a file within an application directory
   - `tool lc_copy_file` - Copy a file within an application directory
 
   **Vite Tools:**

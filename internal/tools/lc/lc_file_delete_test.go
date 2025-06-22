@@ -9,8 +9,8 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// TestLcDeleteFile tests the core LcDeleteFile functionality
-func TestLcDeleteFile(t *testing.T) {
+// TestLcFileDelete tests the core LcFileDelete functionality
+func TestLcFileDelete(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -30,12 +30,12 @@ func TestLcDeleteFile(t *testing.T) {
 		testFile := filepath.Join(appDir, "delete-me.txt")
 		os.WriteFile(testFile, []byte("test content"), 0644)
 
-		params := LcDeleteFileParams{
+		params := LcFileDeleteParams{
 			AppName:  "testapp",
 			FilePath: "delete-me.txt",
 		}
 
-		result, err := LcDeleteFile(params)
+		result, err := LcFileDelete(params)
 		if err != nil {
 			t.Fatalf("LcDeleteFile() failed: %v", err)
 		}
@@ -57,12 +57,12 @@ func TestLcDeleteFile(t *testing.T) {
 		testFile := filepath.Join(subdir, "file.txt")
 		os.WriteFile(testFile, []byte("test"), 0644)
 
-		params := LcDeleteFileParams{
+		params := LcFileDeleteParams{
 			AppName:  "testapp",
 			FilePath: "subdir/file.txt",
 		}
 
-		result, err := LcDeleteFile(params)
+		result, err := LcFileDelete(params)
 		if err != nil {
 			t.Fatalf("LcDeleteFile() failed: %v", err)
 		}
@@ -80,16 +80,16 @@ func TestLcDeleteFile(t *testing.T) {
 	t.Run("input validation errors", func(t *testing.T) {
 		tests := []struct {
 			name   string
-			params LcDeleteFileParams
+			params LcFileDeleteParams
 		}{
-			{"empty app name", LcDeleteFileParams{FilePath: "file.txt"}},
-			{"empty file path", LcDeleteFileParams{AppName: "testapp"}},
-			{"path traversal", LcDeleteFileParams{AppName: "testapp", FilePath: "../file.txt"}},
+			{"empty app name", LcFileDeleteParams{FilePath: "file.txt"}},
+			{"empty file path", LcFileDeleteParams{AppName: "testapp"}},
+			{"path traversal", LcFileDeleteParams{AppName: "testapp", FilePath: "../file.txt"}},
 		}
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				_, err := LcDeleteFile(tt.params)
+				_, err := LcFileDelete(tt.params)
 				if err == nil {
 					t.Errorf("Expected error for %s", tt.name)
 				}
@@ -98,12 +98,12 @@ func TestLcDeleteFile(t *testing.T) {
 	})
 
 	t.Run("file not found", func(t *testing.T) {
-		params := LcDeleteFileParams{
+		params := LcFileDeleteParams{
 			AppName:  "testapp",
 			FilePath: "nonexistent.txt",
 		}
 
-		_, err := LcDeleteFile(params)
+		_, err := LcFileDelete(params)
 		if err == nil {
 			t.Error("Expected error for nonexistent file")
 		}
@@ -113,20 +113,20 @@ func TestLcDeleteFile(t *testing.T) {
 		// Create directory
 		os.Mkdir(filepath.Join(appDir, "testdir"), 0755)
 
-		params := LcDeleteFileParams{
+		params := LcFileDeleteParams{
 			AppName:  "testapp",
 			FilePath: "testdir",
 		}
 
-		_, err := LcDeleteFile(params)
+		_, err := LcFileDelete(params)
 		if err == nil {
 			t.Error("Expected error when trying to delete directory")
 		}
 	})
 }
 
-// TestLcDeleteFileCli tests the CLI interface
-func TestLcDeleteFileCli(t *testing.T) {
+// TestLcFileDeleteCli tests the CLI interface
+func TestLcFileDeleteCli(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -146,7 +146,7 @@ func TestLcDeleteFileCli(t *testing.T) {
 
 	t.Run("help flag", func(t *testing.T) {
 		os.Args = []string{"layered-code", "tool", "lc_delete_file", "--help"}
-		err := LcDeleteFileCli()
+		err := LcFileDeleteCli()
 		if err != nil {
 			t.Errorf("Help flag should not return error: %v", err)
 		}
@@ -154,7 +154,7 @@ func TestLcDeleteFileCli(t *testing.T) {
 
 	t.Run("missing arguments", func(t *testing.T) {
 		os.Args = []string{"layered-code", "tool", "lc_delete_file", "--app-name", "testapp"}
-		err := LcDeleteFileCli()
+		err := LcFileDeleteCli()
 		if err == nil {
 			t.Error("Expected error for missing arguments")
 		}
@@ -171,7 +171,7 @@ func TestLcDeleteFileCli(t *testing.T) {
 			"--file-path", "force-delete.txt",
 			"--force"}
 		
-		err := LcDeleteFileCli()
+		err := LcFileDeleteCli()
 		if err != nil {
 			t.Errorf("Delete with force failed: %v", err)
 		}
@@ -183,8 +183,8 @@ func TestLcDeleteFileCli(t *testing.T) {
 	})
 }
 
-// TestLcDeleteFileMcp tests the MCP interface
-func TestLcDeleteFileMcp(t *testing.T) {
+// TestLcFileDeleteMcp tests the MCP interface
+func TestLcFileDeleteMcp(t *testing.T) {
 	ctx := context.Background()
 	request := mcp.CallToolRequest{}
 	request.Params.Name = "lc_delete_file"
@@ -193,7 +193,7 @@ func TestLcDeleteFileMcp(t *testing.T) {
 		"file_path": "file.txt",
 	}
 
-	_, err := LcDeleteFileMcp(ctx, request)
+	_, err := LcFileDeleteMcp(ctx, request)
 	if err == nil {
 		t.Error("Expected error for non-existent app")
 	}

@@ -25,7 +25,7 @@ func PrintUsage() {
 	fmt.Println("  tool lc_file_write        Write or create a file within an app")
 	fmt.Println("  tool lc_file_edit         Edit a file using find-and-replace")
 	fmt.Println("  tool lc_file_move         Move or rename a file within an app")
-	fmt.Println("  tool lc_delete_file       Delete a file within an app")
+	fmt.Println("  tool lc_file_delete       Delete a file within an app")
 	fmt.Println("  tool lc_copy_file         Copy a file within an app")
 	fmt.Println()
 	fmt.Println("  Vite Tools:")
@@ -80,8 +80,8 @@ func RunTool() error {
 		return lc.LcFileEditCli()
 	case "lc_file_move":
 		return lc.LcFileMoveCli()
-	case "lc_delete_file":
-		return lc.LcDeleteFileCli()
+	case "lc_file_delete":
+		return lc.LcFileDeleteCli()
 	case "lc_copy_file":
 		return lc.LcCopyFileCli()
 
