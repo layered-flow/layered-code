@@ -7,6 +7,7 @@ import (
 	"github.com/layered-flow/layered-code/internal/tools/git"
 	"github.com/layered-flow/layered-code/internal/tools/lc"
 	"github.com/layered-flow/layered-code/internal/tools/pnpm"
+	"github.com/layered-flow/layered-code/internal/tools/prompts"
 	"github.com/layered-flow/layered-code/internal/tools/vite"
 )
 
@@ -27,6 +28,9 @@ func PrintUsage() {
 	fmt.Println("  tool lc_move_file         Move or rename a file within an app")
 	fmt.Println("  tool lc_delete_file       Delete a file within an app")
 	fmt.Println("  tool lc_copy_file         Copy a file within an app")
+	fmt.Println()
+	fmt.Println("  Prompts Tools:")
+	fmt.Println("  tool prompts_index        List all available prompts with descriptions")
 	fmt.Println()
 	fmt.Println("  Vite Tools:")
 	fmt.Println("  tool vite_create_app      Create a new Vite app with template")
@@ -84,6 +88,10 @@ func RunTool() error {
 		return lc.LcDeleteFileCli()
 	case "lc_copy_file":
 		return lc.LcCopyFileCli()
+
+	// Prompts tools
+	case "prompts_index":
+		return prompts.PromptsIndexCli()
 
 	// Vite tools
 	case "vite_create_app":

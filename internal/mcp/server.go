@@ -9,6 +9,7 @@ import (
 	"github.com/layered-flow/layered-code/internal/tools/git"
 	"github.com/layered-flow/layered-code/internal/tools/lc"
 	"github.com/layered-flow/layered-code/internal/tools/pnpm"
+	"github.com/layered-flow/layered-code/internal/tools/prompts"
 	"github.com/layered-flow/layered-code/internal/tools/vite"
 	"github.com/layered-flow/layered-code/internal/websocket"
 
@@ -63,15 +64,18 @@ func registerTools(s *server.MCPServer) {
 	registerMoveFileTool(s)
 	registerDeleteFileTool(s)
 	registerCopyFileTool(s)
-	
+
+	// Prompts tools
+	registerPromptsIndexTool(s)
+
 	// Vite tools
 	registerViteCreateAppTool(s)
-	
+
 	// Package Manager tools
 	registerPnpmInstallTool(s)
 	registerPnpmAddTool(s)
 	registerPnpmPm2Tool(s)
-	
+
 	// Git tools
 	registerGitStatusTool(s)
 	registerGitDiffTool(s)
@@ -444,4 +448,13 @@ func registerPnpmPm2Tool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, pnpm.PnpmPm2Mcp)
+}
+
+// registerPromptsIndexTool registers the prompts_index tool
+func registerPromptsIndexTool(s *server.MCPServer) {
+	tool := mcp.NewTool("prompts_index",
+		mcp.WithDescription("List all available prompts with their names and descriptions that the LLM can use to help the user. IMPORTANT: Start with this tool when the user wants to interact with layered-code, it contains useful workflows with better expected results."),
+	)
+
+	s.AddTool(tool, prompts.PromptsIndexMcp)
 }
