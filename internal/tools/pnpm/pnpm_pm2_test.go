@@ -132,3 +132,58 @@ func TestPnpmPm2Result(t *testing.T) {
 	}
 }
 
+func TestPnpmPm2WithFlags(t *testing.T) {
+	// Since we can't easily test the full PM2 execution without PM2 installed,
+	// we'll test the command building logic by checking error messages
+	tests := []struct {
+		name          string
+		command       string
+		target        string
+		flags         []string
+		expectedError string
+	}{
+		{
+			name:          "logs command without flags",
+			command:       "logs",
+			target:        "",
+			flags:         []string{},
+			expectedError: "pm2 logs --nostream",
+		},
+		{
+			name:          "logs command with target",
+			command:       "logs", 
+			target:        "myapp",
+			flags:         []string{},
+			expectedError: "pm2 logs myapp --nostream",
+		},
+		{
+			name:          "logs command with additional flags",
+			command:       "logs",
+			target:        "myapp",
+			flags:         []string{"--lines", "100"},
+			expectedError: "pm2 logs myapp --nostream --lines 100",
+		},
+		{
+			name:          "logs command with multiple flags",
+			command:       "logs",
+			target:        "",
+			flags:         []string{"--lines", "50", "--err"},
+			expectedError: "pm2 logs --nostream --lines 50 --err",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Call PnpmPm2 which will fail because PM2 is not installed in test env
+			_, err := PnpmPm2(tt.command, tt.target, tt.flags, false)
+			
+			// We expect an error, and the error should contain the command that was attempted
+			if err == nil {
+				t.Errorf("Expected error but got none")
+			} else if !strings.Contains(err.Error(), tt.expectedError) {
+				t.Errorf("Expected error to contain '%s', but got: %v", tt.expectedError, err)
+			}
+		})
+	}
+}
+

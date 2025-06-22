@@ -438,9 +438,10 @@ func registerPnpmAddTool(s *server.MCPServer) {
 // registerPnpmPm2Tool registers the pnpm_pm2 tool
 func registerPnpmPm2Tool(s *server.MCPServer) {
 	tool := mcp.NewTool("pnpm_pm2",
-		mcp.WithDescription("Manage Node.js apps with PM2. Smart defaults: 'start' auto-detects dev/start scripts, uses ecosystem.config.js if present"),
+		mcp.WithDescription("Manage Node.js apps with PM2. Smart defaults: 'start' auto-detects dev/start scripts, uses ecosystem.config.js if present. 'logs' command includes --nostream by default"),
 		mcp.WithString("command", mcp.Required(), mcp.Description("Command: 'start', 'stop', 'restart', 'delete', 'list', 'logs'")),
 		mcp.WithString("target", mcp.Description("App name for start/stop/restart/delete, or 'all' for stop/restart/delete. Not needed for 'list'")),
+		mcp.WithArray("flags", mcp.Description("Additional PM2 flags (e.g., ['--lines', '100'] for logs command)"), mcp.ArrayOf(mcp.StringSchema())),
 	)
 
 	s.AddTool(tool, pnpm.PnpmPm2Mcp)
