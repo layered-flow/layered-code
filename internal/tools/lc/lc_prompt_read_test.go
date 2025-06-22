@@ -13,8 +13,8 @@ func TestPromptRead(t *testing.T) {
 		errorMessage string
 	}{
 		{
-			name:        "Read by ID",
-			promptName:  "general_principles",
+			name:        "Read by numeric ID",
+			promptName:  "1",
 			expectError: false,
 		},
 		{
@@ -75,7 +75,7 @@ func TestPromptRead(t *testing.T) {
 				}
 				
 				// Verify content contains expected text
-				if !strings.Contains(result.Content, "Collaborative Coding Assistant") {
+				if !strings.Contains(result.Content, "General Principles") {
 					t.Error("Content does not contain expected text")
 				}
 			}
@@ -86,12 +86,12 @@ func TestPromptRead(t *testing.T) {
 func TestPromptsMapIntegrity(t *testing.T) {
 	// Verify all prompts in the map have valid data
 	for key, prompt := range promptsMap {
-		if prompt.ID == "" {
-			t.Errorf("Prompt with key '%s' has empty ID", key)
+		if prompt.ID == 0 {
+			t.Errorf("Prompt with key %d has empty ID", key)
 		}
 		
 		if prompt.Name == "" {
-			t.Errorf("Prompt with key '%s' has empty name", key)
+			t.Errorf("Prompt with key %d has empty name", key)
 		}
 		
 		if prompt.Description == "" {
@@ -104,13 +104,7 @@ func TestPromptsMapIntegrity(t *testing.T) {
 		
 		// Verify key matches ID
 		if key != prompt.ID {
-			t.Errorf("Key '%s' does not match prompt ID '%s'", key, prompt.ID)
-		}
-		
-		// Verify key matches normalized name
-		expectedKey := strings.ToLower(strings.ReplaceAll(prompt.Name, " ", "_"))
-		if key != expectedKey {
-			t.Errorf("Key '%s' does not match normalized name '%s'", key, expectedKey)
+			t.Errorf("Key %d does not match prompt ID %d", key, prompt.ID)
 		}
 	}
 }

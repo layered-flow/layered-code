@@ -41,7 +41,7 @@ func PromptListCli() error {
 	
 	fmt.Printf("Available prompts (%d):\n\n", result.Count)
 	for _, prompt := range result.Prompts {
-		fmt.Printf("• %s (ID: %s)\n", prompt.Name, prompt.ID)
+		fmt.Printf("• %s (ID: %d)\n", prompt.Name, prompt.ID)
 		fmt.Printf("  %s\n\n", prompt.Description)
 	}
 	

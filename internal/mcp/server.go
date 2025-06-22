@@ -53,7 +53,8 @@ func StartServer(name, version string) error {
 
 // registerTools registers all available tools with the MCP server
 func registerTools(s *server.MCPServer) {
-	// IMPORTANT: Prompt tools - LLMs should read 'general_principles' first
+	// 🚨🚨🚨 CRITICAL: Prompt tools MUST be called first in every conversation 🚨🚨🚨
+	// LLMs MUST read General Principles (ID: 1) before any other actions
 	registerPromptListTool(s)
 	registerPromptReadTool(s)
 	
@@ -454,7 +455,7 @@ func registerPnpmPm2Tool(s *server.MCPServer) {
 // registerPromptListTool registers the lc_prompt_list tool
 func registerPromptListTool(s *server.MCPServer) {
 	tool := mcp.NewTool("lc_prompt_list",
-		mcp.WithDescription("🚨 CRITICAL: List available prompts. You MUST read 'general_principles' at the start of EVERY conversation to understand how to interact with users safely and collaboratively."),
+		mcp.WithDescription("🚨🚨🚨 CRITICAL MANDATORY FIRST ACTION 🚨🚨🚨 List available prompts. BEFORE doing ANYTHING else, you MUST IMMEDIATELY read prompt ID '1' (General Principles) to understand how to interact with users. This is REQUIRED for ALL conversations. DO NOT skip this step."),
 	)
 
 	s.AddTool(tool, lc.PromptListMcp)
@@ -463,8 +464,8 @@ func registerPromptListTool(s *server.MCPServer) {
 // registerPromptReadTool registers the lc_prompt_read tool
 func registerPromptReadTool(s *server.MCPServer) {
 	tool := mcp.NewTool("lc_prompt_read",
-		mcp.WithDescription("🚨 CRITICAL: Read prompt content. You MUST call this with 'general_principles' at the START of EVERY new conversation or task. This prompt contains essential guidance on collaborative coding assistance, safety practices, and proper interaction style. ALWAYS read it BEFORE any other actions."),
-		mcp.WithString("prompt_name", mcp.Required(), mcp.Description("ID or name of the prompt to read. START EVERY CONVERSATION by reading 'general_principles'")),
+		mcp.WithDescription("🚨🚨🚨 MANDATORY FIRST CALL 🚨🚨🚨 Read prompt content. You MUST call this with ID '1' (General Principles) as your VERY FIRST ACTION in EVERY conversation. This is NOT optional. This prompt contains CRITICAL guidance on how to interact with users. Failure to read this will result in improper assistance. CALL THIS NOW."),
+		mcp.WithString("prompt_name", mcp.Required(), mcp.Description("MUST be '1' for your first call to read General Principles. This is MANDATORY before any other actions.")),
 	)
 
 	s.AddTool(tool, lc.PromptReadMcp)

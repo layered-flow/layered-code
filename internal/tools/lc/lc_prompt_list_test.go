@@ -21,8 +21,8 @@ func TestPromptList(t *testing.T) {
 		if prompt.Name == "General Principles" {
 			found = true
 			// Verify the prompt has expected fields
-			if prompt.ID != "general_principles" {
-				t.Errorf("Expected ID 'general_principles', got '%s'", prompt.ID)
+			if prompt.ID != 1 {
+				t.Errorf("Expected ID 1, got %d", prompt.ID)
 			}
 			if prompt.Description == "" {
 				t.Error("General Principles prompt has empty description")

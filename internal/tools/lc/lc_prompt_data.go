@@ -6,7 +6,7 @@ import (
 
 // Prompt represents a single prompt with metadata
 type Prompt struct {
-	ID          string `json:"id"`
+	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Content     string `json:"content,omitempty"`
@@ -29,10 +29,10 @@ type PromptReadResult struct {
 //go:embed data/general_principles.md
 var generalPrinciplesPrompt string
 
-// promptsMap stores all available prompts
-var promptsMap = map[string]Prompt{
-	"general_principles": {
-		ID:          "general_principles",
+// promptsMap stores all available prompts with numeric IDs as keys
+var promptsMap = map[int]Prompt{
+	1: {
+		ID:          1,
 		Name:        "General Principles",
 		Description: "Collaborative coding assistant principles for adaptive, safe, and empowering development",
 		Content:     generalPrinciplesPrompt,

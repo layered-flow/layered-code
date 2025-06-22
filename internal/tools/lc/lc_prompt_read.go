@@ -12,26 +12,19 @@ import (
 
 // PromptRead returns the full content of a specific prompt by ID or name
 func PromptRead(identifier string) (PromptReadResult, error) {
-	// First try to find by ID (exact match)
-	if prompt, exists := promptsMap[identifier]; exists {
-		return PromptReadResult{
-			Name:        prompt.Name,
-			Description: prompt.Description,
-			Content:     prompt.Content,
-		}, nil
+	// First try to parse as numeric ID
+	var promptID int
+	if _, err := fmt.Sscanf(identifier, "%d", &promptID); err == nil {
+		if prompt, exists := promptsMap[promptID]; exists {
+			return PromptReadResult{
+				Name:        prompt.Name,
+				Description: prompt.Description,
+				Content:     prompt.Content,
+			}, nil
+		}
 	}
 	
-	// Then try to find by name (case-insensitive)
-	normalizedName := strings.ToLower(strings.ReplaceAll(identifier, " ", "_"))
-	if prompt, exists := promptsMap[normalizedName]; exists {
-		return PromptReadResult{
-			Name:        prompt.Name,
-			Description: prompt.Description,
-			Content:     prompt.Content,
-		}, nil
-	}
-	
-	// Finally, search through all prompts for a case-insensitive name match
+	// Search by name (case-insensitive)
 	lowerIdentifier := strings.ToLower(identifier)
 	for _, prompt := range promptsMap {
 		if strings.ToLower(prompt.Name) == lowerIdentifier {
