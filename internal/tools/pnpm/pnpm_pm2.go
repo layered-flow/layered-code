@@ -33,7 +33,7 @@ type PackageJSON struct {
 }
 
 // PnpmPm2 executes PM2 commands with opinionated defaults for app management
-func PnpmPm2(command string, target string, showOutput bool) (PnpmPm2Result, error) {
+func PnpmPm2(command string, target string, flags string, showOutput bool) (PnpmPm2Result, error) {
 	// Determine package manager
 	packageManager, err := DetectPackageManager()
 	if err != nil {
@@ -93,21 +93,38 @@ func PnpmPm2(command string, target string, showOutput bool) (PnpmPm2Result, err
 			// Build PM2 start command with the detected script
 			pm2Command = fmt.Sprintf("%s start \"%s run %s\" --name %s", pm2Prefix, packageManager, scriptToRun, appName)
 		}
+		// Append any additional flags
+		if flags != "" {
+			pm2Command = fmt.Sprintf("%s %s", pm2Command, flags)
+		}
 		
 	case "stop", "restart", "delete":
 		if target == "" {
 			return PnpmPm2Result{}, fmt.Errorf("target (app name or 'all') is required for %s command", command)
 		}
 		pm2Command = fmt.Sprintf("%s %s %s", pm2Prefix, command, target)
+		if flags != "" {
+			pm2Command = fmt.Sprintf("%s %s", pm2Command, flags)
+		}
 		
 	case "list", "status", "ls":
 		pm2Command = fmt.Sprintf("%s list", pm2Prefix)
+		if flags != "" {
+			pm2Command = fmt.Sprintf("%s %s", pm2Command, flags)
+		}
 		
 	case "logs":
+		// Default to --lines 100 --nostream if no flags provided to prevent open-ended streaming
+		if flags == "" {
+			flags = "--lines 100 --nostream"
+		} else if !strings.Contains(flags, "--nostream") && !strings.Contains(flags, "--raw") {
+			// Add --nostream if not already present and not using --raw
+			flags = fmt.Sprintf("%s --nostream", flags)
+		}
 		if target != "" {
-			pm2Command = fmt.Sprintf("%s logs %s", pm2Prefix, target)
+			pm2Command = fmt.Sprintf("%s logs %s %s", pm2Prefix, target, flags)
 		} else {
-			pm2Command = fmt.Sprintf("%s logs", pm2Prefix)
+			pm2Command = fmt.Sprintf("%s logs %s", pm2Prefix, flags)
 		}
 		
 	default:
@@ -144,12 +161,24 @@ func PnpmPm2(command string, target string, showOutput bool) (PnpmPm2Result, err
 		return PnpmPm2Result{}, fmt.Errorf("failed to execute pm2 command '%s': %w\nError output: %s", pm2Command, err, errBuf.String())
 	}
 	
+	// Create appropriate message based on command
+	var message string
+	if command == "logs" {
+		if target != "" {
+			message = fmt.Sprintf("Showing last 100 lines of logs for '%s'", target)
+		} else {
+			message = "Showing last 100 lines of logs for all apps"
+		}
+	} else {
+		message = fmt.Sprintf("Successfully executed: %s", pm2Command)
+	}
+
 	result := PnpmPm2Result{
 		PackageManager: packageManager,
 		Command:        pm2Command,
 		Output:         outBuf.String(),
 		ErrorOutput:    errBuf.String(),
-		Message:        fmt.Sprintf("Successfully executed: %s", pm2Command),
+		Message:        message,
 	}
 	
 	if appName != "" {
@@ -195,23 +224,45 @@ func PnpmPm2Cli() error {
 	args := os.Args[3:]
 	
 	if len(args) < 1 {
-		return fmt.Errorf("usage: layered-code tool pnpm_pm2 <command> [target]\n" +
+		return fmt.Errorf("usage: layered-code tool pnpm_pm2 <command> [target] [flags...]\n" +
 			"Commands:\n" +
-			"  start <app-name>    Start an app (uses ecosystem.config.js or package.json scripts)\n" +
-			"  stop <app-name|all> Stop a specific app or all apps\n" +
-			"  restart <app-name|all> Restart a specific app or all apps\n" +
-			"  delete <app-name|all>  Delete a specific app or all apps\n" +
-			"  list                Show all PM2 processes\n" +
-			"  logs [app-name]     Show logs for all apps or a specific app")
+			"  start <app-name> [flags]    Start an app (uses ecosystem.config.js or package.json scripts)\n" +
+			"  stop <app-name|all> [flags] Stop a specific app or all apps\n" +
+			"  restart <app-name|all> [flags] Restart a specific app or all apps\n" +
+			"  delete <app-name|all> [flags]  Delete a specific app or all apps\n" +
+			"  list [flags]                Show all PM2 processes\n" +
+			"  logs [app-name] [flags]     Show logs (default: --lines 100 --nostream, or specify custom flags)")
 	}
 	
 	command := args[0]
 	var target string
+	var flags string
+	
+	// Parse target and flags based on command
 	if len(args) > 1 {
-		target = args[1]
+		switch command {
+		case "list", "status", "ls", "logs":
+			// For these commands, everything after command could be either target or flags
+			if command == "logs" && len(args) > 1 && !strings.HasPrefix(args[1], "-") {
+				// First arg is target if it doesn't start with -
+				target = args[1]
+				if len(args) > 2 {
+					flags = strings.Join(args[2:], " ")
+				}
+			} else {
+				// Everything after command is flags
+				flags = strings.Join(args[1:], " ")
+			}
+		default:
+			// For other commands, first arg is always target
+			target = args[1]
+			if len(args) > 2 {
+				flags = strings.Join(args[2:], " ")
+			}
+		}
 	}
 	
-	result, err := PnpmPm2(command, target, true)
+	result, err := PnpmPm2(command, target, flags, true)
 	if err != nil {
 		return fmt.Errorf("failed to execute pm2 command: %w", err)
 	}
@@ -230,6 +281,7 @@ func PnpmPm2Mcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTool
 	var args struct {
 		Command string `json:"command"`
 		Target  string `json:"target,omitempty"`
+		Flags   string `json:"flags,omitempty"`
 	}
 	
 	if err := request.BindArguments(&args); err != nil {
@@ -240,7 +292,7 @@ func PnpmPm2Mcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTool
 		return nil, fmt.Errorf("command is required")
 	}
 	
-	result, err := PnpmPm2(args.Command, args.Target, false)
+	result, err := PnpmPm2(args.Command, args.Target, args.Flags, false)
 	if err != nil {
 		return nil, err
 	}

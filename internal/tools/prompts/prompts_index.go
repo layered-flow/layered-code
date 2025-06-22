@@ -16,7 +16,7 @@ import (
 // Types
 type Prompt struct {
 	Name        string `json:"name"`
-	Description string `json:"description"`
+	Body 				string `json:"body"`
 }
 
 type PromptsIndexResult struct {
@@ -36,36 +36,12 @@ func PromptsIndex() (PromptsIndexResult, error) {
 	// Later these can be loaded from files in the prompts directory
 	prompts := []Prompt{
 		{
-			Name:        "create_html_app",
-			Description: "Collaboratively creates minimal Vite HTML app. First ask user's technical level. Gather requirements: app name, TypeScript, CSS framework (Radix UI, Tailwind, Bootstrap, Material-UI). Create plan and get approval before coding. Dark theme, mobile-responsive. Only commit after confirms",
+			Name: "general_requirements",
+			Body:	"You are a collaborative assistant for building applications. Begin by asking the user what they want to achieve. Then work with them step by step to help reach that goal. Start by creating a plan and presenting it for the user’s approval. Only proceed after they confirm the plan. For each step, prefer small, incremental changes so the user has regular opportunities to review and give feedback. Stop if any unexpected issues arise, and clearly explain the problem. Offer the user several options for how to proceed. Only commit changes when the user explicitly approves them and confirms they’re satisfied with the result. Always default to careful, user-guided progress unless instructed otherwise.",
 		},
 		{
-			Name:        "create_react_app",
-			Description: "Collaboratively creates minimal React TypeScript app. First ask user's technical level. Gather requirements: app name, UI library (Radix UI, Tailwind, Bootstrap, Material-UI). Present plan for approval before coding. Dark theme, mobile responsive. Only commit after approval",
-		},
-		{
-			Name:        "create_vue_app",
-			Description: "Collaboratively creates minimal Vue 3 app. First ask user's technical level. Gather requirements: app name, UI framework (Radix UI, Tailwind, Bootstrap, Material-UI). Share plan and get feedback before coding. Dark theme, mobile-first. Only commit after verifies",
-		},
-		{
-			Name:        "create_fullstack_app",
-			Description: "Collaboratively creates minimal full-stack app. First ask user's technical level. Gather requirements: app name, frontend/backend, database. Present architecture plan for approval before coding. Dark theme UI (Radix UI, Tailwind, Bootstrap, Material-UI). Only commit after confirms",
-		},
-		{
-			Name:        "add_component_library",
-			Description: "Collaboratively adds UI library. First ask user's technical level. Gather requirements: which app, library (Radix UI, Tailwind, Bootstrap, Material-UI). Present integration plan before coding. Get approval for components. Dark theme, mobile responsive. Only commit after verifies",
-		},
-		{
-			Name:        "setup_testing_framework",
-			Description: "Collaboratively sets up minimal testing. First ask user's technical level. Gather requirements: which app, test runner (Vitest/Jest), E2E needs. Present testing strategy for approval before coding. Only essential packages. Only commit after user runs tests and approves",
-		},
-		{
-			Name:        "deploy_app_setup",
-			Description: "Collaboratively prepares deployment. First ask user's technical level. Gather requirements: which app, deployment target (Vercel/Netlify/AWS/Docker). Present deployment plan for review before creating configs. Only required configs. Only commit after user reviews settings",
-		},
-		{
-			Name:        "search_and_refactor",
-			Description: "Collaboratively refactors code. First ask user's technical level. Gather requirements: which app, search pattern, replacement. Show matches and refactoring plan for approval before making changes. Only requested changes. Only commit after user tests and confirms",
+			Name: "create_react_app",
+			Body:	"Gather requirements: app name, UI library (Radix UI, Tailwind, Bootstrap, Material-UI). Dark theme, mobile responsive.",
 		},
 	}
 
@@ -116,7 +92,7 @@ func PromptsIndexCli() error {
 
 	fmt.Printf("Available prompts in '%s':\n", result.Directory)
 	for _, prompt := range result.Prompts {
-		fmt.Printf("  %-20s - %s\n", prompt.Name, prompt.Description)
+		fmt.Printf("  %-20s - %s\n", prompt.Name, prompt.Body)				
 	}
 	return nil
 }

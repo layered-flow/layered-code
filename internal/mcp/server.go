@@ -431,9 +431,9 @@ func registerPnpmInstallTool(s *server.MCPServer) {
 // registerPnpmAddTool registers the pnpm_add tool
 func registerPnpmAddTool(s *server.MCPServer) {
 	tool := mcp.NewTool("pnpm_add",
-		mcp.WithDescription("Add a package to an app directory using pnpm (preferred) or npm"),
-		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to add package to (must exactly match an app name from lc_list_apps)")),
-		mcp.WithString("package_name", mcp.Required(), mcp.Description("Name of the package to add (e.g. 'express', 'react@18', '@types/node')")),
+		mcp.WithDescription("Add one or more packages to an app directory using pnpm (preferred) or npm"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to add packages to (must exactly match an app name from lc_list_apps)")),
+		mcp.WithString("package_name", mcp.Required(), mcp.Description("Package(s) to add - can be multiple packages separated by spaces (e.g. 'express', 'react react-dom @types/react', 'vue@3 pinia')")),
 	)
 
 	s.AddTool(tool, pnpm.PnpmAddMcp)
@@ -442,9 +442,10 @@ func registerPnpmAddTool(s *server.MCPServer) {
 // registerPnpmPm2Tool registers the pnpm_pm2 tool
 func registerPnpmPm2Tool(s *server.MCPServer) {
 	tool := mcp.NewTool("pnpm_pm2",
-		mcp.WithDescription("Manage Node.js apps with PM2. Smart defaults: 'start' auto-detects dev/start scripts, uses ecosystem.config.js if present"),
+		mcp.WithDescription("Manage Node.js apps with PM2. Smart defaults: 'start' auto-detects dev/start scripts, uses ecosystem.config.js if present. Logs default to --lines 100 --nostream unless custom flags provided"),
 		mcp.WithString("command", mcp.Required(), mcp.Description("Command: 'start', 'stop', 'restart', 'delete', 'list', 'logs'")),
-		mcp.WithString("target", mcp.Description("App name for start/stop/restart/delete, or 'all' for stop/restart/delete. Not needed for 'list'")),
+		mcp.WithString("target", mcp.Description("App name for start/stop/restart/delete/logs, or 'all' for stop/restart/delete. Optional for 'list' and 'logs'")),
+		mcp.WithString("flags", mcp.Description("Additional PM2 flags (e.g., '--lines 50' for logs, '--watch' for start, '--json' for list)")),
 	)
 
 	s.AddTool(tool, pnpm.PnpmPm2Mcp)
@@ -453,7 +454,7 @@ func registerPnpmPm2Tool(s *server.MCPServer) {
 // registerPromptsIndexTool registers the prompts_index tool
 func registerPromptsIndexTool(s *server.MCPServer) {
 	tool := mcp.NewTool("prompts_index",
-		mcp.WithDescription("List all available prompts with their names and descriptions that the LLM can use to help the user. IMPORTANT: Start with this tool when the user wants to interact with layered-code, it contains useful workflows with better expected results."),
+		mcp.WithDescription("Lists all available prompts with name and body that the LLM can use to assist the user. IMPORTANT: Begin the coding session with this tool and follow the relevant prompts, as they contain useful workflows to achieve better results."),
 	)
 
 	s.AddTool(tool, prompts.PromptsIndexMcp)
