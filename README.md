@@ -266,7 +266,9 @@ layered-code --help
 
   **Package Manager Tools:**
   - `tool pnpm_install` - Install dependencies using pnpm (preferred) or npm
-  - `tool pnpm_add` - Add a package using pnpm (preferred) or npm
+  - `tool pnpm_add` - Add one or more packages using pnpm (preferred) or npm
+    - Single package: `pnpm_add myapp express`
+    - Multiple packages: `pnpm_add myapp express cors @types/node`
   - `tool pnpm_pm2` - Manage Node.js processes with PM2
     - Commands: `start <app>`, `stop <app|all>`, `restart <app|all>`, `delete <app|all>`, `list`, `logs [app] [flags]`
     - Auto-detects dev/start scripts from package.json

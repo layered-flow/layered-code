@@ -427,9 +427,9 @@ func registerPnpmInstallTool(s *server.MCPServer) {
 // registerPnpmAddTool registers the pnpm_add tool
 func registerPnpmAddTool(s *server.MCPServer) {
 	tool := mcp.NewTool("pnpm_add",
-		mcp.WithDescription("Add a package to an app directory using pnpm (preferred) or npm"),
-		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to add package to (must exactly match an app name from lc_list_apps)")),
-		mcp.WithString("package_name", mcp.Required(), mcp.Description("Name of the package to add (e.g. 'express', 'react@18', '@types/node')")),
+		mcp.WithDescription("Add one or more packages to an app directory using pnpm (preferred) or npm"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to add packages to (must exactly match an app name from lc_list_apps)")),
+		mcp.WithObject("package_names", mcp.Required(), mcp.Description("Names of packages to add - pass as JSON array (e.g. ['express', 'cors', '@types/node'])")),
 	)
 
 	s.AddTool(tool, pnpm.PnpmAddMcp)
@@ -441,7 +441,7 @@ func registerPnpmPm2Tool(s *server.MCPServer) {
 		mcp.WithDescription("Manage Node.js apps with PM2. Smart defaults: 'start' auto-detects dev/start scripts, uses ecosystem.config.js if present. 'logs' command includes --nostream by default"),
 		mcp.WithString("command", mcp.Required(), mcp.Description("Command: 'start', 'stop', 'restart', 'delete', 'list', 'logs'")),
 		mcp.WithString("target", mcp.Description("App name for start/stop/restart/delete, or 'all' for stop/restart/delete. Not needed for 'list'")),
-		mcp.WithArray("flags", mcp.Description("Additional PM2 flags (e.g., ['--lines', '100'] for logs command)"), mcp.ArrayOf(mcp.StringSchema())),
+		mcp.WithObject("flags", mcp.Description("Additional PM2 flags - pass as JSON array (e.g., ['--lines', '100'] for logs command)")),
 	)
 
 	s.AddTool(tool, pnpm.PnpmPm2Mcp)

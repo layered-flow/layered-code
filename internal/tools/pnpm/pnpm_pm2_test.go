@@ -174,14 +174,19 @@ func TestPnpmPm2WithFlags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Call PnpmPm2 which will fail because PM2 is not installed in test env
-			_, err := PnpmPm2(tt.command, tt.target, tt.flags, false)
+			// Call PnpmPm2 which may succeed or fail depending on PM2 availability
+			result, err := PnpmPm2(tt.command, tt.target, tt.flags, false)
 			
-			// We expect an error, and the error should contain the command that was attempted
-			if err == nil {
-				t.Errorf("Expected error but got none")
-			} else if !strings.Contains(err.Error(), tt.expectedError) {
-				t.Errorf("Expected error to contain '%s', but got: %v", tt.expectedError, err)
+			if err != nil {
+				// If there's an error, it should contain the command that was attempted
+				if !strings.Contains(err.Error(), tt.expectedError) {
+					t.Errorf("Expected error to contain '%s', but got: %v", tt.expectedError, err)
+				}
+			} else {
+				// If successful, verify the command was built correctly
+				if !strings.Contains(result.Command, tt.expectedError) {
+					t.Errorf("Expected command to contain '%s', but got: %s", tt.expectedError, result.Command)
+				}
 			}
 		})
 	}
