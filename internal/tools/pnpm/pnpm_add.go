@@ -18,17 +18,17 @@ import (
 
 // Types
 type PnpmAddResult struct {
-	AppName        string `json:"app_name"`
-	AppPath        string `json:"app_path"`
-	PackageManager string `json:"package_manager"`
-	Package        string `json:"package"`
-	Message        string `json:"message"`
-	Output         string `json:"output,omitempty"`
-	ErrorOutput    string `json:"error_output,omitempty"`
+	AppName        string   `json:"app_name"`
+	AppPath        string   `json:"app_path"`
+	PackageManager string   `json:"package_manager"`
+	Packages       []string `json:"packages"`
+	Message        string   `json:"message"`
+	Output         string   `json:"output,omitempty"`
+	ErrorOutput    string   `json:"error_output,omitempty"`
 }
 
-// PnpmAdd adds a package to an app directory using pnpm or npm
-func PnpmAdd(appName string, packageName string, showOutput bool) (PnpmAddResult, error) {
+// PnpmAdd adds one or more packages to an app directory using pnpm or npm
+func PnpmAdd(appName string, packages []string, showOutput bool) (PnpmAddResult, error) {
 	// Validate app name
 	if appName == "" {
 		return PnpmAddResult{}, fmt.Errorf("app name is required")
@@ -38,9 +38,15 @@ func PnpmAdd(appName string, packageName string, showOutput bool) (PnpmAddResult
 		return PnpmAddResult{}, fmt.Errorf("invalid app name: %w", err)
 	}
 
-	// Validate package name
-	if packageName == "" {
-		return PnpmAddResult{}, fmt.Errorf("package name is required")
+	// Validate packages
+	if len(packages) == 0 {
+		return PnpmAddResult{}, fmt.Errorf("at least one package name is required")
+	}
+	
+	for _, pkg := range packages {
+		if pkg == "" {
+			return PnpmAddResult{}, fmt.Errorf("empty package name provided")
+		}
 	}
 
 	// Get apps directory
@@ -72,9 +78,11 @@ func PnpmAdd(appName string, packageName string, showOutput bool) (PnpmAddResult
 	// Build command
 	var cmd *exec.Cmd
 	if packageManager == "pnpm" {
-		cmd = exec.Command("pnpm", "add", packageName)
+		args := append([]string{"add"}, packages...)
+		cmd = exec.Command("pnpm", args...)
 	} else {
-		cmd = exec.Command("npm", "install", packageName)
+		args := append([]string{"install"}, packages...)
+		cmd = exec.Command("npm", args...)
 	}
 	cmd.Dir = appPath
 	
@@ -92,15 +100,20 @@ func PnpmAdd(appName string, packageName string, showOutput bool) (PnpmAddResult
 	}
 
 	if err := cmd.Run(); err != nil {
-		return PnpmAddResult{}, fmt.Errorf("failed to add package '%s': %w\nError output: %s", packageName, err, errBuf.String())
+		return PnpmAddResult{}, fmt.Errorf("failed to add packages: %w\nError output: %s", err, errBuf.String())
 	}
 
+	packageList := strings.Join(packages, ", ")
+	if len(packages) == 1 {
+		packageList = packages[0]
+	}
+	
 	return PnpmAddResult{
 		AppName:        appName,
 		AppPath:        appPath,
 		PackageManager: packageManager,
-		Package:        packageName,
-		Message:        fmt.Sprintf("Successfully added '%s' to '%s' using %s", packageName, appName, packageManager),
+		Packages:       packages,
+		Message:        fmt.Sprintf("Successfully added %s to '%s' using %s", packageList, appName, packageManager),
 		Output:         outBuf.String(),
 		ErrorOutput:    errBuf.String(),
 	}, nil
@@ -111,15 +124,15 @@ func PnpmAddCli() error {
 	args := os.Args[3:]
 
 	if len(args) < 2 {
-		return fmt.Errorf("usage: layered-code tool pnpm_add <app_name> <package_name>")
+		return fmt.Errorf("usage: layered-code tool pnpm_add <app_name> <package_name> [package_name...]")
 	}
 
 	appName := args[0]
-	packageName := strings.Join(args[1:], " ") // Join remaining args to support scoped packages
+	packages := args[1:] // All remaining args are package names
 	
-	result, err := PnpmAdd(appName, packageName, true) // showOutput = true for CLI
+	result, err := PnpmAdd(appName, packages, true) // showOutput = true for CLI
 	if err != nil {
-		return fmt.Errorf("failed to add package: %w", err)
+		return fmt.Errorf("failed to add packages: %w", err)
 	}
 
 	fmt.Printf("\n%s\n", result.Message)
@@ -131,15 +144,19 @@ func PnpmAddCli() error {
 // MCP
 func PnpmAddMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName     string `json:"app_name"`
-		PackageName string `json:"package_name"`
+		AppName      string   `json:"app_name"`
+		PackageNames []string `json:"package_names"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
 		return nil, err
 	}
 
-	result, err := PnpmAdd(args.AppName, args.PackageName, false) // showOutput = false for MCP
+	if len(args.PackageNames) == 0 {
+		return nil, fmt.Errorf("package_names must be provided")
+	}
+
+	result, err := PnpmAdd(args.AppName, args.PackageNames, false) // showOutput = false for MCP
 	if err != nil {
 		return nil, err
 	}

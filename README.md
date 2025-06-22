@@ -266,12 +266,16 @@ layered-code --help
 
   **Package Manager Tools:**
   - `tool pnpm_install` - Install dependencies using pnpm (preferred) or npm
-  - `tool pnpm_add` - Add a package using pnpm (preferred) or npm
+  - `tool pnpm_add` - Add one or more packages using pnpm (preferred) or npm
+    - Single package: `pnpm_add myapp express`
+    - Multiple packages: `pnpm_add myapp express cors @types/node`
   - `tool pnpm_pm2` - Manage Node.js processes with PM2
-    - Commands: `start <app>`, `stop <app|all>`, `restart <app|all>`, `delete <app|all>`, `list`, `logs [app]`
+    - Commands: `start <app>`, `stop <app|all>`, `restart <app|all>`, `delete <app|all>`, `list`, `logs [app] [flags]`
     - Auto-detects dev/start scripts from package.json
     - Uses ecosystem.config.js if present
     - Automatically installs PM2 if not available
+    - `logs` command includes `--nostream` by default (shows last 15 lines and exits)
+    - Additional flags can be passed, e.g., `logs myapp --lines 100` to show more lines
 
   **Git Tools:**
   - `tool git_status` - Show the working tree status of a git repository

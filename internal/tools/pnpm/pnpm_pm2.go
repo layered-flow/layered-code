@@ -33,7 +33,7 @@ type PackageJSON struct {
 }
 
 // PnpmPm2 executes PM2 commands with opinionated defaults for app management
-func PnpmPm2(command string, target string, showOutput bool) (PnpmPm2Result, error) {
+func PnpmPm2(command string, target string, flags []string, showOutput bool) (PnpmPm2Result, error) {
 	// Determine package manager
 	packageManager, err := DetectPackageManager()
 	if err != nil {
@@ -104,10 +104,15 @@ func PnpmPm2(command string, target string, showOutput bool) (PnpmPm2Result, err
 		pm2Command = fmt.Sprintf("%s list", pm2Prefix)
 		
 	case "logs":
+		// Add --nostream by default to make the command return
+		defaultFlags := []string{"--nostream"}
+		allFlags := append(defaultFlags, flags...)
+		flagsStr := strings.Join(allFlags, " ")
+		
 		if target != "" {
-			pm2Command = fmt.Sprintf("%s logs %s", pm2Prefix, target)
+			pm2Command = fmt.Sprintf("%s logs %s %s", pm2Prefix, target, flagsStr)
 		} else {
-			pm2Command = fmt.Sprintf("%s logs", pm2Prefix)
+			pm2Command = fmt.Sprintf("%s logs %s", pm2Prefix, flagsStr)
 		}
 		
 	default:
@@ -195,14 +200,15 @@ func PnpmPm2Cli() error {
 	args := os.Args[3:]
 	
 	if len(args) < 1 {
-		return fmt.Errorf("usage: layered-code tool pnpm_pm2 <command> [target]\n" +
+		return fmt.Errorf("usage: layered-code tool pnpm_pm2 <command> [target] [flags...]\n" +
 			"Commands:\n" +
 			"  start <app-name>    Start an app (uses ecosystem.config.js or package.json scripts)\n" +
 			"  stop <app-name|all> Stop a specific app or all apps\n" +
 			"  restart <app-name|all> Restart a specific app or all apps\n" +
 			"  delete <app-name|all>  Delete a specific app or all apps\n" +
 			"  list                Show all PM2 processes\n" +
-			"  logs [app-name]     Show logs for all apps or a specific app")
+			"  logs [app-name] [flags]  Show logs for all apps or a specific app\n" +
+			"                           (--nostream is added by default, use --lines N to show more lines)")
 	}
 	
 	command := args[0]
@@ -211,7 +217,13 @@ func PnpmPm2Cli() error {
 		target = args[1]
 	}
 	
-	result, err := PnpmPm2(command, target, true)
+	// Parse flags from remaining arguments
+	var flags []string
+	if len(args) > 2 {
+		flags = args[2:]
+	}
+	
+	result, err := PnpmPm2(command, target, flags, true)
 	if err != nil {
 		return fmt.Errorf("failed to execute pm2 command: %w", err)
 	}
@@ -228,8 +240,9 @@ func PnpmPm2Cli() error {
 // MCP
 func PnpmPm2Mcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		Command string `json:"command"`
-		Target  string `json:"target,omitempty"`
+		Command string   `json:"command"`
+		Target  string   `json:"target,omitempty"`
+		Flags   []string `json:"flags,omitempty"`
 	}
 	
 	if err := request.BindArguments(&args); err != nil {
@@ -240,7 +253,7 @@ func PnpmPm2Mcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallTool
 		return nil, fmt.Errorf("command is required")
 	}
 	
-	result, err := PnpmPm2(args.Command, args.Target, false)
+	result, err := PnpmPm2(args.Command, args.Target, args.Flags, false)
 	if err != nil {
 		return nil, err
 	}
