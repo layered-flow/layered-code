@@ -19,7 +19,7 @@ func PrintUsage() {
 	fmt.Println()
 	fmt.Println("  File Management Tools:")
 	fmt.Println("  tool lc_apps_list         List all available apps")
-	fmt.Println("  tool lc_list_files        List files and directories within an app")
+	fmt.Println("  tool lc_file_list         List files and directories within an app")
 	fmt.Println("  tool lc_search_text       Search for text patterns in files using ripgrep")
 	fmt.Println("  tool lc_read_file         Read the contents of a file within an app")
 	fmt.Println("  tool lc_write_file        Write or create a file within an app")
@@ -68,8 +68,8 @@ func RunTool() error {
 	// File management tools
 	case "lc_apps_list":
 		return lc.LcAppsListCli()
-	case "lc_list_files":
-		return lc.LcListFilesCli()
+	case "lc_file_list":
+		return lc.LcFileListCli()
 	case "lc_search_text":
 		return lc.LcSearchTextCli()
 	case "lc_read_file":

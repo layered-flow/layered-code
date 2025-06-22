@@ -16,7 +16,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-type LcListFilesResult struct {
+type LcFileListResult struct {
 	AppName string      `json:"app_name"`
 	AppPath string      `json:"app_path"`
 	Files   []FileEntry `json:"files"`
@@ -34,25 +34,25 @@ type FileEntry struct {
 var sizeCache = make(map[string]int64)
 var sizeCacheMutex sync.RWMutex
 
-func LcListFiles(appName string, pattern *string, includeLastModified, includeSize, includeChildCount bool) (LcListFilesResult, error) {
+func LcFileList(appName string, pattern *string, includeLastModified, includeSize, includeChildCount bool) (LcFileListResult, error) {
 	if appName == "" {
-		return LcListFilesResult{}, errors.New("app_name is required")
+		return LcFileListResult{}, errors.New("app_name is required")
 	}
 
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return LcListFilesResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcFileListResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 	appPath := filepath.Join(appsDir, appName)
 
 	if _, err := os.Stat(appPath); os.IsNotExist(err) {
-		return LcListFilesResult{}, fmt.Errorf("app '%s' not found in apps directory", appName)
+		return LcFileListResult{}, fmt.Errorf("app '%s' not found in apps directory", appName)
 	}
 
 	// Validate pattern if provided
 	if pattern != nil && *pattern != "" {
 		if strings.Contains(*pattern, "..") {
-			return LcListFilesResult{}, errors.New("invalid pattern: directory traversal is not allowed")
+			return LcFileListResult{}, errors.New("invalid pattern: directory traversal is not allowed")
 		}
 	}
 
@@ -146,10 +146,10 @@ func LcListFiles(appName string, pattern *string, includeLastModified, includeSi
 	})
 
 	if err != nil {
-		return LcListFilesResult{}, err
+		return LcFileListResult{}, err
 	}
 
-	return LcListFilesResult{
+	return LcFileListResult{
 		AppName: appName,
 		AppPath: appPath,
 		Files:   entries,
@@ -254,7 +254,7 @@ func formatSize(bytes int64) string {
 	}
 }
 
-func LcListFilesCli() error {
+func LcFileListCli() error {
 	args := os.Args[3:]
 
 	// Check for help flag
@@ -302,7 +302,7 @@ func LcListFilesCli() error {
 		return errors.New("--app-name is required")
 	}
 
-	result, err := LcListFiles(appName, pattern, includeLastModified, includeSize, includeChildCount)
+	result, err := LcFileList(appName, pattern, includeLastModified, includeSize, includeChildCount)
 	if err != nil {
 		return err
 	}
@@ -364,19 +364,19 @@ func printLcListFilesHelp() {
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  # List basic files")
-	fmt.Println("  layered-code tool lc_list_files --app-name myapp")
+	fmt.Println("  layered-code tool lc_file_list --app-name myapp")
 	fmt.Println()
 	fmt.Println("  # List files with all metadata")
-	fmt.Println("  layered-code tool lc_list_files --app-name myapp --include-size --include-last-modified --include-child-count")
+	fmt.Println("  layered-code tool lc_file_list --app-name myapp --include-size --include-last-modified --include-child-count")
 	fmt.Println()
 	fmt.Println("  # List files matching a pattern")
-	fmt.Println("  layered-code tool lc_list_files --app-name myapp --pattern '*.js'")
+	fmt.Println("  layered-code tool lc_file_list --app-name myapp --pattern '*.js'")
 	fmt.Println()
 	fmt.Println("  # List files in specific subdirectory")
-	fmt.Println("  layered-code tool lc_list_files --app-name myapp --pattern 'src/*.go'")
+	fmt.Println("  layered-code tool lc_file_list --app-name myapp --pattern 'src/*.go'")
 }
 
-func LcListFilesMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func LcFileListMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
 		AppName             string  `json:"app_name"`
 		Pattern             *string `json:"pattern"`
@@ -389,7 +389,7 @@ func LcListFilesMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.Call
 		return nil, err
 	}
 
-	result, err := LcListFiles(args.AppName, args.Pattern, args.IncludeLastModified, args.IncludeSize, args.IncludeChildCount)
+	result, err := LcFileList(args.AppName, args.Pattern, args.IncludeLastModified, args.IncludeSize, args.IncludeChildCount)
 	if err != nil {
 		return nil, err
 	}

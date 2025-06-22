@@ -100,9 +100,9 @@ func registerListAppsTool(s *server.MCPServer) {
 	s.AddTool(tool, lc.LcAppsListMcp)
 }
 
-// registerListFilesTool registers the lc_list_files tool
+// registerListFilesTool registers the lc_file_list tool
 func registerListFilesTool(s *server.MCPServer) {
-	tool := mcp.NewTool("lc_list_files",
+	tool := mcp.NewTool("lc_file_list",
 		mcp.WithDescription("List files and directories within an application (max depth: 10,000 levels)"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
 		mcp.WithString("pattern", mcp.Description("Glob pattern to filter files (e.g. '*.txt', 'src/*.js', '**/*.test.js')")),
@@ -111,7 +111,7 @@ func registerListFilesTool(s *server.MCPServer) {
 		mcp.WithBoolean("include_child_count", mcp.Description("Include count of immediate children for each entry")),
 	)
 
-	s.AddTool(tool, lc.LcListFilesMcp)
+	s.AddTool(tool, lc.LcFileListMcp)
 }
 
 // registerSearchTextTool registers the lc_search_text tool
