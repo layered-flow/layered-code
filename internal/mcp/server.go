@@ -59,7 +59,7 @@ func registerTools(s *server.MCPServer) {
 	registerSearchTextTool(s)
 	registerReadFileTool(s)
 	registerWriteFileTool(s)
-	registerEditFileTool(s)
+	registerFileEditTool(s)
 	registerMoveFileTool(s)
 	registerDeleteFileTool(s)
 	registerCopyFileTool(s)
@@ -154,9 +154,9 @@ func registerWriteFileTool(s *server.MCPServer) {
 	s.AddTool(tool, lc.LcFileWriteMcp)
 }
 
-// registerEditFileTool registers the lc_edit_file tool
-func registerEditFileTool(s *server.MCPServer) {
-	tool := mcp.NewTool("lc_edit_file",
+// registerFileEditTool registers the lc_file_edit tool
+func registerFileEditTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_file_edit",
 		mcp.WithDescription("Edit a file by performing find-and-replace operations"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
 		mcp.WithString("file_path", mcp.Required(), mcp.Description("Path to the file relative to the app directory")),
@@ -165,7 +165,7 @@ func registerEditFileTool(s *server.MCPServer) {
 		mcp.WithNumber("occurrences", mcp.Description("Number of occurrences to replace (0 = all, default: 0)")),
 	)
 
-	s.AddTool(tool, lc.LcEditFileMcp)
+	s.AddTool(tool, lc.LcFileEditMcp)
 }
 
 // registerMoveFileTool registers the lc_move_file tool
