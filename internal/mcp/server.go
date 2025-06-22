@@ -60,7 +60,7 @@ func registerTools(s *server.MCPServer) {
 	registerReadFileTool(s)
 	registerWriteFileTool(s)
 	registerFileEditTool(s)
-	registerMoveFileTool(s)
+	registerFileMoveTool(s)
 	registerDeleteFileTool(s)
 	registerCopyFileTool(s)
 	
@@ -168,16 +168,16 @@ func registerFileEditTool(s *server.MCPServer) {
 	s.AddTool(tool, lc.LcFileEditMcp)
 }
 
-// registerMoveFileTool registers the lc_move_file tool
-func registerMoveFileTool(s *server.MCPServer) {
-	tool := mcp.NewTool("lc_move_file",
+// registerFileMoveTool registers the lc_file_move tool
+func registerFileMoveTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_file_move",
 		mcp.WithDescription("Move or rename a file within an application directory"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
 		mcp.WithString("source_path", mcp.Required(), mcp.Description("Source file path relative to the app directory")),
 		mcp.WithString("dest_path", mcp.Required(), mcp.Description("Destination file path relative to the app directory")),
 	)
 
-	s.AddTool(tool, lc.LcMoveFileMcp)
+	s.AddTool(tool, lc.LcFileMoveMcp)
 }
 
 // registerDeleteFileTool registers the lc_delete_file tool

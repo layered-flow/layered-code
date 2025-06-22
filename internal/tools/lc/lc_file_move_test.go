@@ -9,8 +9,8 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// TestLcMoveFile tests the core LcMoveFile functionality
-func TestLcMoveFile(t *testing.T) {
+// TestLcFileMove tests the core LcFileMove functionality
+func TestLcFileMove(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -30,13 +30,13 @@ func TestLcMoveFile(t *testing.T) {
 		testFile := filepath.Join(appDir, "old-name.txt")
 		os.WriteFile(testFile, []byte("test content"), 0644)
 
-		params := LcMoveFileParams{
+		params := LcFileMoveParams{
 			AppName:    "testapp",
 			SourcePath: "old-name.txt",
 			DestPath:   "new-name.txt",
 		}
 
-		result, err := LcMoveFile(params)
+		result, err := LcFileMove(params)
 		if err != nil {
 			t.Fatalf("LcMoveFile() failed: %v", err)
 		}
@@ -69,13 +69,13 @@ func TestLcMoveFile(t *testing.T) {
 		os.WriteFile(testFile, []byte("test content"), 0644)
 		os.Mkdir(filepath.Join(appDir, "subdir"), 0755)
 
-		params := LcMoveFileParams{
+		params := LcFileMoveParams{
 			AppName:    "testapp",
 			SourcePath: "file.txt",
 			DestPath:   "subdir/file.txt",
 		}
 
-		result, err := LcMoveFile(params)
+		result, err := LcFileMove(params)
 		if err != nil {
 			t.Fatalf("LcMoveFile() failed: %v", err)
 		}
@@ -94,18 +94,18 @@ func TestLcMoveFile(t *testing.T) {
 	t.Run("input validation errors", func(t *testing.T) {
 		tests := []struct {
 			name   string
-			params LcMoveFileParams
+			params LcFileMoveParams
 		}{
-			{"empty app name", LcMoveFileParams{SourcePath: "file.txt", DestPath: "new.txt"}},
-			{"empty source", LcMoveFileParams{AppName: "testapp", DestPath: "new.txt"}},
-			{"empty dest", LcMoveFileParams{AppName: "testapp", SourcePath: "file.txt"}},
-			{"path traversal in source", LcMoveFileParams{AppName: "testapp", SourcePath: "../file.txt", DestPath: "new.txt"}},
-			{"path traversal in dest", LcMoveFileParams{AppName: "testapp", SourcePath: "file.txt", DestPath: "../new.txt"}},
+			{"empty app name", LcFileMoveParams{SourcePath: "file.txt", DestPath: "new.txt"}},
+			{"empty source", LcFileMoveParams{AppName: "testapp", DestPath: "new.txt"}},
+			{"empty dest", LcFileMoveParams{AppName: "testapp", SourcePath: "file.txt"}},
+			{"path traversal in source", LcFileMoveParams{AppName: "testapp", SourcePath: "../file.txt", DestPath: "new.txt"}},
+			{"path traversal in dest", LcFileMoveParams{AppName: "testapp", SourcePath: "file.txt", DestPath: "../new.txt"}},
 		}
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				_, err := LcMoveFile(tt.params)
+				_, err := LcFileMove(tt.params)
 				if err == nil {
 					t.Errorf("Expected error for %s", tt.name)
 				}
@@ -114,13 +114,13 @@ func TestLcMoveFile(t *testing.T) {
 	})
 
 	t.Run("source file not found", func(t *testing.T) {
-		params := LcMoveFileParams{
+		params := LcFileMoveParams{
 			AppName:    "testapp",
 			SourcePath: "nonexistent.txt",
 			DestPath:   "new.txt",
 		}
 
-		_, err := LcMoveFile(params)
+		_, err := LcFileMove(params)
 		if err == nil {
 			t.Error("Expected error for nonexistent source file")
 		}
@@ -131,13 +131,13 @@ func TestLcMoveFile(t *testing.T) {
 		os.WriteFile(filepath.Join(appDir, "source.txt"), []byte("source"), 0644)
 		os.WriteFile(filepath.Join(appDir, "dest.txt"), []byte("dest"), 0644)
 
-		params := LcMoveFileParams{
+		params := LcFileMoveParams{
 			AppName:    "testapp",
 			SourcePath: "source.txt",
 			DestPath:   "dest.txt",
 		}
 
-		_, err := LcMoveFile(params)
+		_, err := LcFileMove(params)
 		if err == nil {
 			t.Error("Expected error when destination exists")
 		}
@@ -147,13 +147,13 @@ func TestLcMoveFile(t *testing.T) {
 		// Create directory
 		os.Mkdir(filepath.Join(appDir, "testdir"), 0755)
 
-		params := LcMoveFileParams{
+		params := LcFileMoveParams{
 			AppName:    "testapp",
 			SourcePath: "testdir",
 			DestPath:   "newdir",
 		}
 
-		_, err := LcMoveFile(params)
+		_, err := LcFileMove(params)
 		if err == nil {
 			t.Error("Expected error when trying to move directory")
 		}
@@ -164,14 +164,14 @@ func TestLcMoveFile(t *testing.T) {
 		os.WriteFile(filepath.Join(appDir, "source.txt"), []byte("source content"), 0644)
 		os.WriteFile(filepath.Join(appDir, "existing.txt"), []byte("existing content"), 0644)
 
-		params := LcMoveFileParams{
+		params := LcFileMoveParams{
 			AppName:    "testapp",
 			SourcePath: "source.txt",
 			DestPath:   "existing.txt",
 			Overwrite:  true,
 		}
 
-		_, err := LcMoveFile(params)
+		_, err := LcFileMove(params)
 		if err != nil {
 			t.Fatalf("LcMoveFile() with overwrite failed: %v", err)
 		}
@@ -193,22 +193,22 @@ func TestLcMoveFile(t *testing.T) {
 		os.WriteFile(filepath.Join(appDir, "source2.txt"), []byte("source"), 0644)
 		os.WriteFile(filepath.Join(appDir, "dest2.txt"), []byte("dest"), 0644)
 
-		params := LcMoveFileParams{
+		params := LcFileMoveParams{
 			AppName:    "testapp",
 			SourcePath: "source2.txt",
 			DestPath:   "dest2.txt",
 			Overwrite:  false,
 		}
 
-		_, err := LcMoveFile(params)
+		_, err := LcFileMove(params)
 		if err == nil {
 			t.Error("Expected error when destination exists and overwrite is false")
 		}
 	})
 }
 
-// TestLcMoveFileCli tests the CLI interface
-func TestLcMoveFileCli(t *testing.T) {
+// TestLcFileMoveCli tests the CLI interface
+func TestLcFileMoveCli(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -228,7 +228,7 @@ func TestLcMoveFileCli(t *testing.T) {
 
 	t.Run("help flag", func(t *testing.T) {
 		os.Args = []string{"layered-code", "tool", "lc_move_file", "--help"}
-		err := LcMoveFileCli()
+		err := LcFileMoveCli()
 		if err != nil {
 			t.Errorf("Help flag should not return error: %v", err)
 		}
@@ -236,15 +236,15 @@ func TestLcMoveFileCli(t *testing.T) {
 
 	t.Run("missing arguments", func(t *testing.T) {
 		os.Args = []string{"layered-code", "tool", "lc_move_file", "--app-name", "testapp"}
-		err := LcMoveFileCli()
+		err := LcFileMoveCli()
 		if err == nil {
 			t.Error("Expected error for missing arguments")
 		}
 	})
 }
 
-// TestLcMoveFileMcp tests the MCP interface
-func TestLcMoveFileMcp(t *testing.T) {
+// TestLcFileMoveMcp tests the MCP interface
+func TestLcFileMoveMcp(t *testing.T) {
 	ctx := context.Background()
 	request := mcp.CallToolRequest{}
 	request.Params.Name = "lc_move_file"
@@ -254,7 +254,7 @@ func TestLcMoveFileMcp(t *testing.T) {
 		"dest_path":   "new.txt",
 	}
 
-	_, err := LcMoveFileMcp(ctx, request)
+	_, err := LcFileMoveMcp(ctx, request)
 	if err == nil {
 		t.Error("Expected error for non-existent app")
 	}
