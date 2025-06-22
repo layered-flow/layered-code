@@ -141,9 +141,9 @@ func registerReadFileTool(s *server.MCPServer) {
 	s.AddTool(tool, lc.LcFileReadMcp)
 }
 
-// registerWriteFileTool registers the lc_write_file tool
+// registerWriteFileTool registers the lc_file_write tool
 func registerWriteFileTool(s *server.MCPServer) {
-	tool := mcp.NewTool("lc_write_file",
+	tool := mcp.NewTool("lc_file_write",
 		mcp.WithDescription("Write or create a file within an application directory"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
 		mcp.WithString("file_path", mcp.Required(), mcp.Description("Path to the file relative to the app directory")),
@@ -151,7 +151,7 @@ func registerWriteFileTool(s *server.MCPServer) {
 		mcp.WithString("mode", mcp.Description("Write mode: 'create' (default, fails if file exists) or 'overwrite' (replaces existing file)")),
 	)
 
-	s.AddTool(tool, lc.LcWriteFileMcp)
+	s.AddTool(tool, lc.LcFileWriteMcp)
 }
 
 // registerEditFileTool registers the lc_edit_file tool

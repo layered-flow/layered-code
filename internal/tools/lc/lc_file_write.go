@@ -16,16 +16,16 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// LcWriteFileParams represents the parameters for writing a file
-type LcWriteFileParams struct {
+// LcFileWriteParams represents the parameters for writing a file
+type LcFileWriteParams struct {
 	AppName  string `json:"app_name"`
 	FilePath string `json:"file_path"`
 	Content  string `json:"content"`
 	Mode     string `json:"mode"` // "create" or "overwrite"
 }
 
-// LcWriteFileResult represents the result of writing a file
-type LcWriteFileResult struct {
+// LcFileWriteResult represents the result of writing a file
+type LcFileWriteResult struct {
 	AppName      string     `json:"app_name"`
 	FilePath     string     `json:"file_path"`
 	BytesWritten int        `json:"bytes_written"`
@@ -33,30 +33,30 @@ type LcWriteFileResult struct {
 	LastModified *time.Time `json:"last_modified,omitempty"`
 }
 
-// LcWriteFile writes content to a file within an app directory
-func LcWriteFile(params LcWriteFileParams) (LcWriteFileResult, error) {
+// LcFileWrite writes content to a file within an app directory
+func LcFileWrite(params LcFileWriteParams) (LcFileWriteResult, error) {
 	if params.AppName == "" {
-		return LcWriteFileResult{}, errors.New("app_name is required")
+		return LcFileWriteResult{}, errors.New("app_name is required")
 	}
 	if params.FilePath == "" {
-		return LcWriteFileResult{}, errors.New("file_path is required")
+		return LcFileWriteResult{}, errors.New("file_path is required")
 	}
 	if params.Mode == "" {
 		params.Mode = "create" // Default mode
 	}
 	if params.Mode != "create" && params.Mode != "overwrite" {
-		return LcWriteFileResult{}, fmt.Errorf("invalid mode: %s (must be 'create' or 'overwrite')", params.Mode)
+		return LcFileWriteResult{}, fmt.Errorf("invalid mode: %s (must be 'create' or 'overwrite')", params.Mode)
 	}
 
 	// Check file size limit
 	if len(params.Content) > int(constants.MaxFileSize) {
-		return LcWriteFileResult{}, fmt.Errorf("content exceeds maximum file size of %s", constants.MaxFileSizeInWords)
+		return LcFileWriteResult{}, fmt.Errorf("content exceeds maximum file size of %s", constants.MaxFileSizeInWords)
 	}
 
 	// Get and validate the apps directory
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return LcWriteFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcFileWriteResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Construct and validate the full file path
@@ -66,43 +66,43 @@ func LcWriteFile(params LcWriteFileParams) (LcWriteFileResult, error) {
 	// Ensure the file is within the app directory
 	appDir := filepath.Join(appsDir, params.AppName)
 	if !config.IsWithinDirectory(cleanPath, appDir) {
-		return LcWriteFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
+		return LcFileWriteResult{}, fmt.Errorf("file path attempts to access file outside app directory")
 	}
 
 	// Check if app directory exists
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
-		return LcWriteFileResult{}, fmt.Errorf("app directory does not exist: %s", params.AppName)
+		return LcFileWriteResult{}, fmt.Errorf("app directory does not exist: %s", params.AppName)
 	}
 
 	// Check if file exists
 	fileExists := false
 	if info, err := os.Stat(cleanPath); err == nil {
 		if info.IsDir() {
-			return LcWriteFileResult{}, fmt.Errorf("path is a directory, not a file")
+			return LcFileWriteResult{}, fmt.Errorf("path is a directory, not a file")
 		}
 		fileExists = true
 	}
 
 	// Handle create vs overwrite mode
 	if params.Mode == "create" && fileExists {
-		return LcWriteFileResult{}, fmt.Errorf("file already exists (use mode 'overwrite' to replace)")
+		return LcFileWriteResult{}, fmt.Errorf("file already exists (use mode 'overwrite' to replace)")
 	}
 
 	// Create parent directories if needed
 	dir := filepath.Dir(cleanPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return LcWriteFileResult{}, fmt.Errorf("failed to create parent directories: %w", err)
+		return LcFileWriteResult{}, fmt.Errorf("failed to create parent directories: %w", err)
 	}
 
 	// Write the file
 	if err := os.WriteFile(cleanPath, []byte(params.Content), 0644); err != nil {
-		return LcWriteFileResult{}, fmt.Errorf("failed to write file: %w", err)
+		return LcFileWriteResult{}, fmt.Errorf("failed to write file: %w", err)
 	}
 
 	// Get file info for the result
 	info, err := os.Stat(cleanPath)
 	if err != nil {
-		return LcWriteFileResult{}, fmt.Errorf("failed to stat written file: %w", err)
+		return LcFileWriteResult{}, fmt.Errorf("failed to stat written file: %w", err)
 	}
 
 	// Send WebSocket notification
@@ -114,7 +114,7 @@ func LcWriteFile(params LcWriteFileParams) (LcWriteFileResult, error) {
 	notifications.NotifyFileChange(notificationPath, action)
 
 	modTime := info.ModTime()
-	return LcWriteFileResult{
+	return LcFileWriteResult{
 		AppName:      params.AppName,
 		FilePath:     params.FilePath,
 		BytesWritten: len(params.Content),
@@ -124,7 +124,7 @@ func LcWriteFile(params LcWriteFileParams) (LcWriteFileResult, error) {
 }
 
 // CLI
-func LcWriteFileCli() error {
+func LcFileWriteCli() error {
 	args := os.Args[3:]
 
 	// Check for help flag
@@ -135,7 +135,7 @@ func LcWriteFileCli() error {
 		}
 	}
 
-	var params LcWriteFileParams
+	var params LcFileWriteParams
 	var contentFile string
 
 	for i := 0; i < len(args); i++ {
@@ -206,7 +206,7 @@ func LcWriteFileCli() error {
 		params.Content = string(content)
 	}
 
-	result, err := LcWriteFile(params)
+	result, err := LcFileWrite(params)
 	if err != nil {
 		return err
 	}
@@ -254,14 +254,14 @@ func printWriteFileHelp() {
 }
 
 // MCP
-func LcWriteFileMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	var params LcWriteFileParams
+func LcFileWriteMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	var params LcFileWriteParams
 
 	if err := request.BindArguments(&params); err != nil {
 		return nil, err
 	}
 
-	result, err := LcWriteFile(params)
+	result, err := LcFileWrite(params)
 	if err != nil {
 		return nil, err
 	}
