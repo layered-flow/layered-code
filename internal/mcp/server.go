@@ -130,15 +130,15 @@ func registerSearchTextTool(s *server.MCPServer) {
 	s.AddTool(tool, lc.LcTextSearchMcp)
 }
 
-// registerReadFileTool registers the lc_read_file tool
+// registerReadFileTool registers the lc_file_read tool
 func registerReadFileTool(s *server.MCPServer) {
-	tool := mcp.NewTool("lc_read_file",
+	tool := mcp.NewTool("lc_file_read",
 		mcp.WithDescription("Read the contents of a file within an application directory"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
 		mcp.WithString("file_path", mcp.Required(), mcp.Description("Path to the file relative to the app directory (must be a text file, cannot be a symlink or binary file, max size "+constants.MaxFileSizeInWords+")")),
 	)
 
-	s.AddTool(tool, lc.LcReadFileMcp)
+	s.AddTool(tool, lc.LcFileReadMcp)
 }
 
 // registerWriteFileTool registers the lc_write_file tool

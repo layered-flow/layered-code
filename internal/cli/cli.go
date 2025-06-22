@@ -21,7 +21,7 @@ func PrintUsage() {
 	fmt.Println("  tool lc_apps_list         List all available apps")
 	fmt.Println("  tool lc_file_list         List files and directories within an app")
 	fmt.Println("  tool lc_text_search       Search for text patterns in files using ripgrep")
-	fmt.Println("  tool lc_read_file         Read the contents of a file within an app")
+	fmt.Println("  tool lc_file_read         Read the contents of a file within an app")
 	fmt.Println("  tool lc_write_file        Write or create a file within an app")
 	fmt.Println("  tool lc_edit_file         Edit a file using find-and-replace")
 	fmt.Println("  tool lc_move_file         Move or rename a file within an app")
@@ -72,8 +72,8 @@ func RunTool() error {
 		return lc.LcFileListCli()
 	case "lc_text_search":
 		return lc.LcTextSearchCli()
-	case "lc_read_file":
-		return lc.LcReadFileCli()
+	case "lc_file_read":
+		return lc.LcFileReadCli()
 	case "lc_write_file":
 		return lc.LcWriteFileCli()
 	case "lc_edit_file":
