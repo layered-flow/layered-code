@@ -20,7 +20,10 @@ func TestRegisterFunctions(t *testing.T) {
 		{"registerSearchTextTool", registerSearchTextTool},
 		{"registerReadFileTool", registerReadFileTool},
 		{"registerWriteFileTool", registerWriteFileTool},
-		{"registerEditFileTool", registerEditFileTool},
+		{"registerFileEditTool", registerFileEditTool},
+		{"registerFileMoveTool", registerFileMoveTool},
+		{"registerFileDeleteTool", registerFileDeleteTool},
+		{"registerFileCopyTool", registerFileCopyTool},
 		{"registerViteCreateAppTool", registerViteCreateAppTool},
 		{"registerPnpmInstallTool", registerPnpmInstallTool},
 		{"registerPnpmAddTool", registerPnpmAddTool},
@@ -56,12 +59,12 @@ func TestRegisterFunctions(t *testing.T) {
 
 // TestToolCreation verifies tool creation with expected properties
 func TestToolCreation(t *testing.T) {
-	tool := mcp.NewTool("lc_list_apps",
+	tool := mcp.NewTool("lc_apps_list",
 		mcp.WithDescription("List all available applications"),
 	)
 
-	if tool.Name != "lc_list_apps" {
-		t.Errorf("Expected tool name 'lc_list_apps', got '%s'", tool.Name)
+	if tool.Name != "lc_apps_list" {
+		t.Errorf("Expected tool name 'lc_apps_list', got '%s'", tool.Name)
 	}
 
 	if tool.Description != "List all available applications" {

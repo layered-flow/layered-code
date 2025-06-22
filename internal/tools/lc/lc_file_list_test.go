@@ -33,9 +33,9 @@ func TestLcListFiles(t *testing.T) {
 	t.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
 
 	t.Run("basic listing", func(t *testing.T) {
-		result, err := LcListFiles("testapp", nil, false, false, false)
+		result, err := LcFileList("testapp", nil, false, false, false)
 		if err != nil {
-			t.Fatalf("LcListFiles() failed: %v", err)
+			t.Fatalf("LcFileList() failed: %v", err)
 		}
 		if result.AppName != "testapp" {
 			t.Errorf("AppName = %s; want testapp", result.AppName)
@@ -48,9 +48,9 @@ func TestLcListFiles(t *testing.T) {
 
 	t.Run("pattern matching", func(t *testing.T) {
 		pattern := "*.go"
-		result, err := LcListFiles("testapp", &pattern, false, false, false)
+		result, err := LcFileList("testapp", &pattern, false, false, false)
 		if err != nil {
-			t.Fatalf("LcListFiles() failed: %v", err)
+			t.Fatalf("LcFileList() failed: %v", err)
 		}
 		// Should find only main.go
 		fileCount := 0
@@ -65,10 +65,10 @@ func TestLcListFiles(t *testing.T) {
 	})
 
 	t.Run("error cases", func(t *testing.T) {
-		if _, err := LcListFiles("", nil, false, false, false); err == nil {
+		if _, err := LcFileList("", nil, false, false, false); err == nil {
 			t.Error("Expected error for empty app name")
 		}
-		if _, err := LcListFiles("nonexistent", nil, false, false, false); err == nil {
+		if _, err := LcFileList("nonexistent", nil, false, false, false); err == nil {
 			t.Error("Expected error for non-existent app")
 		}
 	})
@@ -82,7 +82,7 @@ func TestLcListFilesMcp(t *testing.T) {
 	request.Params.Name = "lc_list_files"
 	request.Params.Arguments = map[string]any{"app_name": "nonexistent"}
 
-	_, err := LcListFilesMcp(ctx, request)
+	_, err := LcFileListMcp(ctx, request)
 	if err == nil {
 		t.Error("Expected error for non-existent app")
 	}

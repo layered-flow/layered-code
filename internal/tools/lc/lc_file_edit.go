@@ -16,8 +16,8 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// LcEditFileParams represents the parameters for editing a file
-type LcEditFileParams struct {
+// LcFileEditParams represents the parameters for editing a file
+type LcFileEditParams struct {
 	AppName      string `json:"app_name"`
 	FilePath     string `json:"file_path"`
 	OldString    string `json:"old_string"`
@@ -25,33 +25,33 @@ type LcEditFileParams struct {
 	Occurrences  int    `json:"occurrences"`  // Number of occurrences to replace (0 = all)
 }
 
-// LcEditFileResult represents the result of editing a file
-type LcEditFileResult struct {
+// LcFileEditResult represents the result of editing a file
+type LcFileEditResult struct {
 	AppName        string     `json:"app_name"`
 	FilePath       string     `json:"file_path"`
 	Replacements   int        `json:"replacements"`
 	LastModified   *time.Time `json:"last_modified,omitempty"`
 }
 
-// LcEditFile performs find-and-replace operations on a file within an app directory
-func LcEditFile(params LcEditFileParams) (LcEditFileResult, error) {
+// LcFileEdit performs find-and-replace operations on a file within an app directory
+func LcFileEdit(params LcFileEditParams) (LcFileEditResult, error) {
 	if params.AppName == "" {
-		return LcEditFileResult{}, errors.New("app_name is required")
+		return LcFileEditResult{}, errors.New("app_name is required")
 	}
 	if params.FilePath == "" {
-		return LcEditFileResult{}, errors.New("file_path is required")
+		return LcFileEditResult{}, errors.New("file_path is required")
 	}
 	if params.OldString == "" {
-		return LcEditFileResult{}, errors.New("old_string is required")
+		return LcFileEditResult{}, errors.New("old_string is required")
 	}
 	if params.Occurrences < 0 {
-		return LcEditFileResult{}, errors.New("occurrences must be non-negative")
+		return LcFileEditResult{}, errors.New("occurrences must be non-negative")
 	}
 
 	// Get and validate the apps directory
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return LcEditFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcFileEditResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Construct and validate the full file path
@@ -61,18 +61,18 @@ func LcEditFile(params LcEditFileParams) (LcEditFileResult, error) {
 	// Ensure the file is within the app directory
 	appDir := filepath.Join(appsDir, params.AppName)
 	if !config.IsWithinDirectory(cleanPath, appDir) {
-		return LcEditFileResult{}, fmt.Errorf("file path attempts to access file outside app directory")
+		return LcFileEditResult{}, fmt.Errorf("file path attempts to access file outside app directory")
 	}
 
 	// Read the file
 	content, err := os.ReadFile(cleanPath)
 	if err != nil {
-		return LcEditFileResult{}, fmt.Errorf("failed to read file: %w", err)
+		return LcFileEditResult{}, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	// Check file size
 	if len(content) > int(constants.MaxFileSize) {
-		return LcEditFileResult{}, fmt.Errorf("file exceeds maximum size of %s", constants.MaxFileSizeInWords)
+		return LcFileEditResult{}, fmt.Errorf("file exceeds maximum size of %s", constants.MaxFileSizeInWords)
 	}
 
 	// Convert to string for editing
@@ -81,7 +81,7 @@ func LcEditFile(params LcEditFileParams) (LcEditFileResult, error) {
 	// Count occurrences
 	totalOccurrences := strings.Count(fileContent, params.OldString)
 	if totalOccurrences == 0 {
-		return LcEditFileResult{}, fmt.Errorf("old_string not found in file")
+		return LcFileEditResult{}, fmt.Errorf("old_string not found in file")
 	}
 
 	// Perform replacements
@@ -115,7 +115,7 @@ func LcEditFile(params LcEditFileParams) (LcEditFileResult, error) {
 
 	// Write the modified content back
 	if err := os.WriteFile(cleanPath, []byte(fileContent), 0644); err != nil {
-		return LcEditFileResult{}, fmt.Errorf("failed to write file: %w", err)
+		return LcFileEditResult{}, fmt.Errorf("failed to write file: %w", err)
 	}
 
 	// Send WebSocket notification
@@ -125,11 +125,11 @@ func LcEditFile(params LcEditFileParams) (LcEditFileResult, error) {
 	// Get file info for the result
 	info, err := os.Stat(cleanPath)
 	if err != nil {
-		return LcEditFileResult{}, fmt.Errorf("failed to stat edited file: %w", err)
+		return LcFileEditResult{}, fmt.Errorf("failed to stat edited file: %w", err)
 	}
 
 	modTime := info.ModTime()
-	return LcEditFileResult{
+	return LcFileEditResult{
 		AppName:      params.AppName,
 		FilePath:     params.FilePath,
 		Replacements: replacements,
@@ -138,7 +138,7 @@ func LcEditFile(params LcEditFileParams) (LcEditFileResult, error) {
 }
 
 // CLI
-func LcEditFileCli() error {
+func LcFileEditCli() error {
 	args := os.Args[3:]
 
 	// Check for help flag
@@ -149,7 +149,7 @@ func LcEditFileCli() error {
 		}
 	}
 
-	var params LcEditFileParams
+	var params LcFileEditParams
 
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -194,7 +194,7 @@ func LcEditFileCli() error {
 			}
 		default:
 			if strings.HasPrefix(args[i], "--") {
-				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_edit_file --help' for usage", args[i])
+				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_file_edit --help' for usage", args[i])
 			}
 		}
 	}
@@ -210,7 +210,7 @@ func LcEditFileCli() error {
 	}
 	// Note: new-string can be empty (for deletion)
 
-	result, err := LcEditFile(params)
+	result, err := LcFileEdit(params)
 	if err != nil {
 		return err
 	}
@@ -221,7 +221,7 @@ func LcEditFileCli() error {
 }
 
 func printEditFileHelp() {
-	fmt.Println("Usage: layered-code tool lc_edit_file [options]")
+	fmt.Println("Usage: layered-code tool lc_file_edit [options]")
 	fmt.Println()
 	fmt.Println("Edit a file by performing find-and-replace operations")
 	fmt.Println()
@@ -241,27 +241,27 @@ func printEditFileHelp() {
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  # Replace all occurrences")
-	fmt.Println("  layered-code tool lc_edit_file --app-name myapp --file-path config.json \\")
+	fmt.Println("  layered-code tool lc_file_edit --app-name myapp --file-path config.json \\")
 	fmt.Println("    --old-string 'localhost' --new-string '127.0.0.1'")
 	fmt.Println()
 	fmt.Println("  # Replace first 2 occurrences")
-	fmt.Println("  layered-code tool lc_edit_file --app-name myapp --file-path src/main.go \\")
+	fmt.Println("  layered-code tool lc_file_edit --app-name myapp --file-path src/main.go \\")
 	fmt.Println("    --old-string 'fmt.Println' --new-string 'log.Println' --occurrences 2")
 	fmt.Println()
 	fmt.Println("  # Delete text")
-	fmt.Println("  layered-code tool lc_edit_file --app-name myapp --file-path README.md \\")
+	fmt.Println("  layered-code tool lc_file_edit --app-name myapp --file-path README.md \\")
 	fmt.Println("    --old-string 'TODO: ' --new-string ''")
 }
 
 // MCP
-func LcEditFileMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	var params LcEditFileParams
+func LcFileEditMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	var params LcFileEditParams
 
 	if err := request.BindArguments(&params); err != nil {
 		return nil, err
 	}
 
-	result, err := LcEditFile(params)
+	result, err := LcFileEdit(params)
 	if err != nil {
 		return nil, err
 	}

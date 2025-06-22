@@ -18,15 +18,15 @@ func PrintUsage() {
 	fmt.Println("  mcp_server                Start the MCP server")
 	fmt.Println()
 	fmt.Println("  File Management Tools:")
-	fmt.Println("  tool lc_list_apps         List all available apps")
-	fmt.Println("  tool lc_list_files        List files and directories within an app")
-	fmt.Println("  tool lc_search_text       Search for text patterns in files using ripgrep")
-	fmt.Println("  tool lc_read_file         Read the contents of a file within an app")
-	fmt.Println("  tool lc_write_file        Write or create a file within an app")
-	fmt.Println("  tool lc_edit_file         Edit a file using find-and-replace")
-	fmt.Println("  tool lc_move_file         Move or rename a file within an app")
-	fmt.Println("  tool lc_delete_file       Delete a file within an app")
-	fmt.Println("  tool lc_copy_file         Copy a file within an app")
+	fmt.Println("  tool lc_apps_list         List all available apps")
+	fmt.Println("  tool lc_file_list         List files and directories within an app")
+	fmt.Println("  tool lc_text_search       Search for text patterns in files using ripgrep")
+	fmt.Println("  tool lc_file_read         Read the contents of a file within an app")
+	fmt.Println("  tool lc_file_write        Write or create a file within an app")
+	fmt.Println("  tool lc_file_edit         Edit a file using find-and-replace")
+	fmt.Println("  tool lc_file_move         Move or rename a file within an app")
+	fmt.Println("  tool lc_file_delete       Delete a file within an app")
+	fmt.Println("  tool lc_file_copy         Copy a file within an app")
 	fmt.Println()
 	fmt.Println("  Vite Tools:")
 	fmt.Println("  tool vite_create_app      Create a new Vite app with template")
@@ -66,24 +66,24 @@ func RunTool() error {
 	subcommand := os.Args[2]
 	switch subcommand {
 	// File management tools
-	case "lc_list_apps":
-		return lc.LcListAppsCli()
-	case "lc_list_files":
-		return lc.LcListFilesCli()
-	case "lc_search_text":
-		return lc.LcSearchTextCli()
-	case "lc_read_file":
-		return lc.LcReadFileCli()
-	case "lc_write_file":
-		return lc.LcWriteFileCli()
-	case "lc_edit_file":
-		return lc.LcEditFileCli()
-	case "lc_move_file":
-		return lc.LcMoveFileCli()
-	case "lc_delete_file":
-		return lc.LcDeleteFileCli()
-	case "lc_copy_file":
-		return lc.LcCopyFileCli()
+	case "lc_apps_list":
+		return lc.LcAppsListCli()
+	case "lc_file_list":
+		return lc.LcFileListCli()
+	case "lc_text_search":
+		return lc.LcTextSearchCli()
+	case "lc_file_read":
+		return lc.LcFileReadCli()
+	case "lc_file_write":
+		return lc.LcFileWriteCli()
+	case "lc_file_edit":
+		return lc.LcFileEditCli()
+	case "lc_file_move":
+		return lc.LcFileMoveCli()
+	case "lc_file_delete":
+		return lc.LcFileDeleteCli()
+	case "lc_file_copy":
+		return lc.LcFileCopyCli()
 
 	// Vite tools
 	case "vite_create_app":

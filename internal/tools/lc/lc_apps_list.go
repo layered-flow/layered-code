@@ -13,23 +13,23 @@ import (
 )
 
 // Types
-type LcListAppsResult struct {
+type LcAppsListResult struct {
 	Apps      []string `json:"apps"`
 	Directory string   `json:"directory"`
 }
 
-// LcListApps lists all applications (folders)
-func LcListApps() (LcListAppsResult, error) {
+// LcAppsList lists all applications (folders)
+func LcAppsList() (LcAppsListResult, error) {
 	// Ensure the apps directory exists and get its path
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return LcListAppsResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcAppsListResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Read directory entries
 	entries, err := os.ReadDir(appsDir)
 	if err != nil {
-		return LcListAppsResult{}, fmt.Errorf("failed to read apps directory: %w", err)
+		return LcAppsListResult{}, fmt.Errorf("failed to read apps directory: %w", err)
 	}
 
 	// Filter directories only
@@ -43,19 +43,19 @@ func LcListApps() (LcListAppsResult, error) {
 	// Sort apps alphabetically
 	sort.Strings(apps)
 
-	return LcListAppsResult{Apps: apps, Directory: appsDir}, nil
+	return LcAppsListResult{Apps: apps, Directory: appsDir}, nil
 }
 
 // CLI
-func LcListAppsCli() error {
+func LcAppsListCli() error {
 	args := os.Args[3:]
 
 	// Check for any arguments (list_apps doesn't take any)
 	if len(args) > 0 {
-		return fmt.Errorf("lc_list_apps does not accept any arguments, got: %v", args)
+		return fmt.Errorf("lc_apps_list does not accept any arguments, got: %v", args)
 	}
 
-	result, err := LcListApps()
+	result, err := LcAppsList()
 	if err != nil {
 		return fmt.Errorf("failed to list apps: %w", err)
 	}
@@ -73,8 +73,8 @@ func LcListAppsCli() error {
 }
 
 // MCP
-func LcListAppsMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	result, err := LcListApps()
+func LcAppsListMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	result, err := LcAppsList()
 	if err != nil {
 		return nil, err
 	}

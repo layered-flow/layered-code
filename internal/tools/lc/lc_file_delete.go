@@ -14,37 +14,37 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// LcDeleteFileParams represents the parameters for deleting a file
-type LcDeleteFileParams struct {
+// LcFileDeleteParams represents the parameters for deleting a file
+type LcFileDeleteParams struct {
 	AppName  string `json:"app_name"`
 	FilePath string `json:"file_path"`
 }
 
-// LcDeleteFileResult represents the result of a delete operation
-type LcDeleteFileResult struct {
+// LcFileDeleteResult represents the result of a delete operation
+type LcFileDeleteResult struct {
 	AppName  string `json:"app_name"`
 	FilePath string `json:"file_path"`
 	Deleted  bool   `json:"deleted"`
 }
 
-// LcDeleteFile deletes a file within an app directory
-func LcDeleteFile(params LcDeleteFileParams) (LcDeleteFileResult, error) {
+// LcFileDelete deletes a file within an app directory
+func LcFileDelete(params LcFileDeleteParams) (LcFileDeleteResult, error) {
 	if params.AppName == "" {
-		return LcDeleteFileResult{}, errors.New("app_name is required")
+		return LcFileDeleteResult{}, errors.New("app_name is required")
 	}
 	if params.FilePath == "" {
-		return LcDeleteFileResult{}, errors.New("file_path is required")
+		return LcFileDeleteResult{}, errors.New("file_path is required")
 	}
 
 	// Validate path doesn't contain directory traversal
 	if strings.Contains(params.FilePath, "..") {
-		return LcDeleteFileResult{}, errors.New("directory traversal is not allowed")
+		return LcFileDeleteResult{}, errors.New("directory traversal is not allowed")
 	}
 
 	// Get and validate the apps directory
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return LcDeleteFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcFileDeleteResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Construct full path
@@ -54,33 +54,33 @@ func LcDeleteFile(params LcDeleteFileParams) (LcDeleteFileResult, error) {
 	// Ensure path is within the app directory
 	cleanPath := filepath.Clean(fullPath)
 	if !config.IsWithinDirectory(cleanPath, appPath) {
-		return LcDeleteFileResult{}, errors.New("path must be within the app directory")
+		return LcFileDeleteResult{}, errors.New("path must be within the app directory")
 	}
 
 	// Check if file exists
 	fileInfo, err := os.Stat(cleanPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return LcDeleteFileResult{}, fmt.Errorf("file not found: %s", params.FilePath)
+			return LcFileDeleteResult{}, fmt.Errorf("file not found: %s", params.FilePath)
 		}
-		return LcDeleteFileResult{}, fmt.Errorf("error accessing file: %w", err)
+		return LcFileDeleteResult{}, fmt.Errorf("error accessing file: %w", err)
 	}
 
 	// Don't allow deleting directories
 	if fileInfo.IsDir() {
-		return LcDeleteFileResult{}, errors.New("deleting directories is not supported, only files can be deleted")
+		return LcFileDeleteResult{}, errors.New("deleting directories is not supported, only files can be deleted")
 	}
 
 	// Delete the file
 	if err := os.Remove(cleanPath); err != nil {
-		return LcDeleteFileResult{}, fmt.Errorf("failed to delete file: %w", err)
+		return LcFileDeleteResult{}, fmt.Errorf("failed to delete file: %w", err)
 	}
 
 	// Send notification
 	notificationPath := filepath.Join(params.AppName, params.FilePath)
 	notifications.NotifyFileChange(notificationPath, "deleted")
 
-	return LcDeleteFileResult{
+	return LcFileDeleteResult{
 		AppName:  params.AppName,
 		FilePath: params.FilePath,
 		Deleted:  true,
@@ -88,18 +88,18 @@ func LcDeleteFile(params LcDeleteFileParams) (LcDeleteFileResult, error) {
 }
 
 // CLI
-func LcDeleteFileCli() error {
+func LcFileDeleteCli() error {
 	args := os.Args[3:]
 
 	// Check for help flag
 	for _, arg := range args {
 		if arg == "--help" || arg == "-h" {
-			printLcDeleteFileHelp()
+			printLcFileDeleteHelp()
 			return nil
 		}
 	}
 
-	var params LcDeleteFileParams
+	var params LcFileDeleteParams
 	var force bool
 
 	for i := 0; i < len(args); i++ {
@@ -122,7 +122,7 @@ func LcDeleteFileCli() error {
 			force = true
 		default:
 			if strings.HasPrefix(args[i], "--") {
-				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_delete_file --help' for usage", args[i])
+				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_file_delete --help' for usage", args[i])
 			}
 		}
 	}
@@ -143,7 +143,7 @@ func LcDeleteFileCli() error {
 		}
 	}
 
-	result, err := LcDeleteFile(params)
+	result, err := LcFileDelete(params)
 	if err != nil {
 		return err
 	}
@@ -152,8 +152,8 @@ func LcDeleteFileCli() error {
 	return nil
 }
 
-func printLcDeleteFileHelp() {
-	fmt.Println("Usage: layered-code tool lc_delete_file [options]")
+func printLcFileDeleteHelp() {
+	fmt.Println("Usage: layered-code tool lc_file_delete [options]")
 	fmt.Println()
 	fmt.Println("Delete a file within an application directory")
 	fmt.Println()
@@ -171,21 +171,21 @@ func printLcDeleteFileHelp() {
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  # Delete a file with confirmation")
-	fmt.Println("  layered-code tool lc_delete_file --app-name myapp --file-path old-file.txt")
+	fmt.Println("  layered-code tool lc_file_delete --app-name myapp --file-path old-file.txt")
 	fmt.Println()
 	fmt.Println("  # Delete a file without confirmation")
-	fmt.Println("  layered-code tool lc_delete_file --app-name myapp --file-path temp.log --force")
+	fmt.Println("  layered-code tool lc_file_delete --app-name myapp --file-path temp.log --force")
 }
 
 // MCP
-func LcDeleteFileMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	var params LcDeleteFileParams
+func LcFileDeleteMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	var params LcFileDeleteParams
 
 	if err := request.BindArguments(&params); err != nil {
 		return nil, err
 	}
 
-	result, err := LcDeleteFile(params)
+	result, err := LcFileDelete(params)
 	if err != nil {
 		return nil, err
 	}

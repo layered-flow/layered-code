@@ -14,43 +14,43 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// LcMoveFileParams represents the parameters for moving/renaming a file
-type LcMoveFileParams struct {
+// LcFileMoveParams represents the parameters for moving/renaming a file
+type LcFileMoveParams struct {
 	AppName     string `json:"app_name"`
 	SourcePath  string `json:"source_path"`
 	DestPath    string `json:"dest_path"`
 	Overwrite   bool   `json:"overwrite,omitempty"`
 }
 
-// LcMoveFileResult represents the result of a move/rename operation
-type LcMoveFileResult struct {
+// LcFileMoveResult represents the result of a move/rename operation
+type LcFileMoveResult struct {
 	AppName     string `json:"app_name"`
 	SourcePath  string `json:"source_path"`
 	DestPath    string `json:"dest_path"`
 	IsRename    bool   `json:"is_rename"`
 }
 
-// LcMoveFile moves or renames a file within an app directory
-func LcMoveFile(params LcMoveFileParams) (LcMoveFileResult, error) {
+// LcFileMove moves or renames a file within an app directory
+func LcFileMove(params LcFileMoveParams) (LcFileMoveResult, error) {
 	if params.AppName == "" {
-		return LcMoveFileResult{}, errors.New("app_name is required")
+		return LcFileMoveResult{}, errors.New("app_name is required")
 	}
 	if params.SourcePath == "" {
-		return LcMoveFileResult{}, errors.New("source_path is required")
+		return LcFileMoveResult{}, errors.New("source_path is required")
 	}
 	if params.DestPath == "" {
-		return LcMoveFileResult{}, errors.New("dest_path is required")
+		return LcFileMoveResult{}, errors.New("dest_path is required")
 	}
 
 	// Validate paths don't contain directory traversal
 	if strings.Contains(params.SourcePath, "..") || strings.Contains(params.DestPath, "..") {
-		return LcMoveFileResult{}, errors.New("directory traversal is not allowed")
+		return LcFileMoveResult{}, errors.New("directory traversal is not allowed")
 	}
 
 	// Get and validate the apps directory
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return LcMoveFileResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return LcFileMoveResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Construct full paths
@@ -62,28 +62,28 @@ func LcMoveFile(params LcMoveFileParams) (LcMoveFileResult, error) {
 	cleanSourcePath := filepath.Clean(sourcePath)
 	cleanDestPath := filepath.Clean(destPath)
 	if !config.IsWithinDirectory(cleanSourcePath, appPath) || !config.IsWithinDirectory(cleanDestPath, appPath) {
-		return LcMoveFileResult{}, errors.New("paths must be within the app directory")
+		return LcFileMoveResult{}, errors.New("paths must be within the app directory")
 	}
 
 	// Check if source file exists
 	sourceInfo, err := os.Stat(cleanSourcePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return LcMoveFileResult{}, fmt.Errorf("source file not found: %s", params.SourcePath)
+			return LcFileMoveResult{}, fmt.Errorf("source file not found: %s", params.SourcePath)
 		}
-		return LcMoveFileResult{}, fmt.Errorf("error accessing source file: %w", err)
+		return LcFileMoveResult{}, fmt.Errorf("error accessing source file: %w", err)
 	}
 
 	// Don't allow moving directories (for now)
 	if sourceInfo.IsDir() {
-		return LcMoveFileResult{}, errors.New("moving directories is not supported")
+		return LcFileMoveResult{}, errors.New("moving directories is not supported")
 	}
 
 	// Check if destination exists
 	destExists := false
 	if _, err := os.Stat(cleanDestPath); err == nil {
 		if !params.Overwrite {
-			return LcMoveFileResult{}, fmt.Errorf("destination already exists: %s", params.DestPath)
+			return LcFileMoveResult{}, fmt.Errorf("destination already exists: %s", params.DestPath)
 		}
 		destExists = true
 	}
@@ -91,19 +91,19 @@ func LcMoveFile(params LcMoveFileParams) (LcMoveFileResult, error) {
 	// Create destination directory if needed
 	destDir := filepath.Dir(cleanDestPath)
 	if err := os.MkdirAll(destDir, 0755); err != nil {
-		return LcMoveFileResult{}, fmt.Errorf("failed to create destination directory: %w", err)
+		return LcFileMoveResult{}, fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
 	// If overwriting, remove the destination file first
 	if destExists {
 		if err := os.Remove(cleanDestPath); err != nil {
-			return LcMoveFileResult{}, fmt.Errorf("failed to remove existing destination file: %w", err)
+			return LcFileMoveResult{}, fmt.Errorf("failed to remove existing destination file: %w", err)
 		}
 	}
 
 	// Perform the move/rename
 	if err := os.Rename(cleanSourcePath, cleanDestPath); err != nil {
-		return LcMoveFileResult{}, fmt.Errorf("failed to move file: %w", err)
+		return LcFileMoveResult{}, fmt.Errorf("failed to move file: %w", err)
 	}
 
 	// Determine if this was a rename (same directory) or move
@@ -115,7 +115,7 @@ func LcMoveFile(params LcMoveFileParams) (LcMoveFileResult, error) {
 	notifications.NotifyFileChange(sourceNotificationPath, "deleted")
 	notifications.NotifyFileChange(destNotificationPath, "created")
 
-	return LcMoveFileResult{
+	return LcFileMoveResult{
 		AppName:    params.AppName,
 		SourcePath: params.SourcePath,
 		DestPath:   params.DestPath,
@@ -124,18 +124,18 @@ func LcMoveFile(params LcMoveFileParams) (LcMoveFileResult, error) {
 }
 
 // CLI
-func LcMoveFileCli() error {
+func LcFileMoveCli() error {
 	args := os.Args[3:]
 
 	// Check for help flag
 	for _, arg := range args {
 		if arg == "--help" || arg == "-h" {
-			printLcMoveFileHelp()
+			printLcFileMoveHelp()
 			return nil
 		}
 	}
 
-	var params LcMoveFileParams
+	var params LcFileMoveParams
 
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -164,12 +164,12 @@ func LcMoveFileCli() error {
 			params.Overwrite = true
 		default:
 			if strings.HasPrefix(args[i], "--") {
-				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_move_file --help' for usage", args[i])
+				return fmt.Errorf("unknown option: %s\nRun 'layered-code tool lc_file_move --help' for usage", args[i])
 			}
 		}
 	}
 
-	result, err := LcMoveFile(params)
+	result, err := LcFileMove(params)
 	if err != nil {
 		return err
 	}
@@ -182,8 +182,8 @@ func LcMoveFileCli() error {
 	return nil
 }
 
-func printLcMoveFileHelp() {
-	fmt.Println("Usage: layered-code tool lc_move_file [options]")
+func printLcFileMoveHelp() {
+	fmt.Println("Usage: layered-code tool lc_file_move [options]")
 	fmt.Println()
 	fmt.Println("Move or rename a file within an application directory")
 	fmt.Println()
@@ -206,24 +206,24 @@ func printLcMoveFileHelp() {
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println("  # Rename a file in the same directory")
-	fmt.Println("  layered-code tool lc_move_file --app-name myapp --source old.txt --dest new.txt")
+	fmt.Println("  layered-code tool lc_file_move --app-name myapp --source old.txt --dest new.txt")
 	fmt.Println()
 	fmt.Println("  # Move a file to a different directory")
-	fmt.Println("  layered-code tool lc_move_file --app-name myapp --from src/old.js --to archive/old.js")
+	fmt.Println("  layered-code tool lc_file_move --app-name myapp --from src/old.js --to archive/old.js")
 	fmt.Println()
 	fmt.Println("  # Move and overwrite existing file")
-	fmt.Println("  layered-code tool lc_move_file --app-name myapp --source temp.txt --dest final.txt --overwrite")
+	fmt.Println("  layered-code tool lc_file_move --app-name myapp --source temp.txt --dest final.txt --overwrite")
 }
 
 // MCP
-func LcMoveFileMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	var params LcMoveFileParams
+func LcFileMoveMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	var params LcFileMoveParams
 
 	if err := request.BindArguments(&params); err != nil {
 		return nil, err
 	}
 
-	result, err := LcMoveFile(params)
+	result, err := LcFileMove(params)
 	if err != nil {
 		return nil, err
 	}

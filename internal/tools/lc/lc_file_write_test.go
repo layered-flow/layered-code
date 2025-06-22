@@ -11,9 +11,9 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// TestLcWriteFile tests the core LcWriteFile functionality including successful writes
+// TestLcFileWrite tests the core LcFileWrite functionality including successful writes
 // and various error conditions
-func TestLcWriteFile(t *testing.T) {
+func TestLcFileWrite(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -36,15 +36,15 @@ func TestLcWriteFile(t *testing.T) {
 	t.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
 
 	t.Run("successful create", func(t *testing.T) {
-		params := LcWriteFileParams{
+		params := LcFileWriteParams{
 			AppName:  "testapp",
 			FilePath: "new.txt",
 			Content:  "new content",
 			Mode:     "create",
 		}
-		result, err := LcWriteFile(params)
+		result, err := LcFileWrite(params)
 		if err != nil {
-			t.Fatalf("WriteFile() failed: %v", err)
+			t.Fatalf("FileWrite() failed: %v", err)
 		}
 		if result.AppName != "testapp" {
 			t.Errorf("AppName = %s; want testapp", result.AppName)
@@ -67,15 +67,15 @@ func TestLcWriteFile(t *testing.T) {
 	})
 
 	t.Run("successful overwrite", func(t *testing.T) {
-		params := LcWriteFileParams{
+		params := LcFileWriteParams{
 			AppName:  "testapp",
 			FilePath: "existing.txt",
 			Content:  "updated content",
 			Mode:     "overwrite",
 		}
-		result, err := LcWriteFile(params)
+		result, err := LcFileWrite(params)
 		if err != nil {
-			t.Fatalf("WriteFile() failed: %v", err)
+			t.Fatalf("FileWrite() failed: %v", err)
 		}
 		if result.Created {
 			t.Error("Created = true; want false")
@@ -89,15 +89,15 @@ func TestLcWriteFile(t *testing.T) {
 	})
 
 	t.Run("create with subdirectories", func(t *testing.T) {
-		params := LcWriteFileParams{
+		params := LcFileWriteParams{
 			AppName:  "testapp",
 			FilePath: "deep/nested/file.txt",
 			Content:  "nested content",
 			Mode:     "create",
 		}
-		result, err := LcWriteFile(params)
+		result, err := LcFileWrite(params)
 		if err != nil {
-			t.Fatalf("WriteFile() failed: %v", err)
+			t.Fatalf("FileWrite() failed: %v", err)
 		}
 		if !result.Created {
 			t.Error("Created = false; want true")
@@ -112,85 +112,85 @@ func TestLcWriteFile(t *testing.T) {
 
 	t.Run("input validation errors", func(t *testing.T) {
 		tests := []struct {
-			params  LcWriteFileParams
+			params  LcFileWriteParams
 			wantErr string
 		}{
-			{LcWriteFileParams{FilePath: "test.txt", Content: "test"}, "app_name is required"},
-			{LcWriteFileParams{AppName: "testapp", Content: "test"}, "file_path is required"},
-			{LcWriteFileParams{AppName: "testapp", FilePath: "test.txt", Content: "test", Mode: "invalid"}, "invalid mode"},
-			{LcWriteFileParams{AppName: "nonexistent", FilePath: "test.txt", Content: "test"}, "app directory does not exist"},
+			{LcFileWriteParams{FilePath: "test.txt", Content: "test"}, "app_name is required"},
+			{LcFileWriteParams{AppName: "testapp", Content: "test"}, "file_path is required"},
+			{LcFileWriteParams{AppName: "testapp", FilePath: "test.txt", Content: "test", Mode: "invalid"}, "invalid mode"},
+			{LcFileWriteParams{AppName: "nonexistent", FilePath: "test.txt", Content: "test"}, "app directory does not exist"},
 		}
 		for _, tt := range tests {
-			_, err := LcWriteFile(tt.params)
+			_, err := LcFileWrite(tt.params)
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
-				t.Errorf("WriteFile(%+v) expected error containing %q, got: %v",
+				t.Errorf("FileWrite(%+v) expected error containing %q, got: %v",
 					tt.params, tt.wantErr, err)
 			}
 		}
 	})
 
 	t.Run("create mode with existing file", func(t *testing.T) {
-		params := LcWriteFileParams{
+		params := LcFileWriteParams{
 			AppName:  "testapp",
 			FilePath: "existing.txt",
 			Content:  "should fail",
 			Mode:     "create",
 		}
-		_, err := LcWriteFile(params)
+		_, err := LcFileWrite(params)
 		if err == nil || !strings.Contains(err.Error(), "file already exists") {
 			t.Errorf("Expected 'file already exists' error, got: %v", err)
 		}
 	})
 
 	t.Run("write to directory", func(t *testing.T) {
-		params := LcWriteFileParams{
+		params := LcFileWriteParams{
 			AppName:  "testapp",
 			FilePath: "testdir",
 			Content:  "should fail",
 			Mode:     "overwrite",
 		}
-		_, err := LcWriteFile(params)
+		_, err := LcFileWrite(params)
 		if err == nil || !strings.Contains(err.Error(), "path is a directory") {
 			t.Errorf("Expected 'path is a directory' error, got: %v", err)
 		}
 	})
 
 	t.Run("file size limit", func(t *testing.T) {
-		params := LcWriteFileParams{
+		params := LcFileWriteParams{
 			AppName:  "testapp",
 			FilePath: "huge.txt",
 			Content:  strings.Repeat("a", constants.MaxFileSize+1),
 			Mode:     "create",
 		}
-		_, err := LcWriteFile(params)
+		_, err := LcFileWrite(params)
 		if err == nil || !strings.Contains(err.Error(), "exceeds maximum file size") {
 			t.Errorf("Expected file size error, got: %v", err)
 		}
 	})
 
 	t.Run("path traversal attempt", func(t *testing.T) {
-		params := LcWriteFileParams{
+		params := LcFileWriteParams{
 			AppName:  "testapp",
 			FilePath: "../../../etc/passwd",
 			Content:  "malicious",
 			Mode:     "overwrite",
 		}
-		_, err := LcWriteFile(params)
+		_, err := LcFileWrite(params)
 		if err == nil || !strings.Contains(err.Error(), "outside app directory") {
 			t.Error("Expected error for path traversal attempt")
 		}
 	})
 
 	t.Run("default mode", func(t *testing.T) {
-		params := LcWriteFileParams{
+		params := LcFileWriteParams{
 			AppName:  "testapp",
 			FilePath: "default-mode.txt",
 			Content:  "test content",
 			// Mode not specified, should default to "create"
 		}
-		result, err := LcWriteFile(params)
+		result, err := LcFileWrite(params)
 		if err != nil {
-			t.Fatalf("WriteFile() failed: %v", err)
+			t.Fatalf("FileWrite() failed: %v", err)
 		}
 		if !result.Created {
 			t.Error("Created = false; want true")
@@ -198,8 +198,8 @@ func TestLcWriteFile(t *testing.T) {
 	})
 }
 
-// TestLcWriteFileCli tests the CLI interface
-func TestLcWriteFileCli(t *testing.T) {
+// TestLcFileWriteCli tests the CLI interface
+func TestLcFileWriteCli(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -239,9 +239,9 @@ func TestLcWriteFileCli(t *testing.T) {
 		}
 		for _, tt := range tests {
 			os.Args = tt.args
-			err := LcWriteFileCli()
+			err := LcFileWriteCli()
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
-				t.Errorf("WriteFileCli() with args %v expected error containing %q, got: %v",
+				t.Errorf("FileWriteCli() with args %v expected error containing %q, got: %v",
 					tt.args[3:], tt.wantErr, err)
 			}
 		}
@@ -250,7 +250,7 @@ func TestLcWriteFileCli(t *testing.T) {
 	t.Run("both content options", func(t *testing.T) {
 		os.Args = []string{"cmd", "tool", "write_file", "--app-name", "testapp", "--file-path", "test.txt",
 			"--content", "inline", "--content-file", contentFile}
-		err := LcWriteFileCli()
+		err := LcFileWriteCli()
 		if err == nil || !strings.Contains(err.Error(), "cannot use both --content and --content-file") {
 			t.Errorf("Expected error for using both content options, got: %v", err)
 		}
@@ -259,9 +259,9 @@ func TestLcWriteFileCli(t *testing.T) {
 	t.Run("help flag", func(t *testing.T) {
 		for _, helpFlag := range []string{"--help", "-h"} {
 			os.Args = []string{"cmd", "tool", "write_file", helpFlag}
-			err := LcWriteFileCli()
+			err := LcFileWriteCli()
 			if err != nil {
-				t.Errorf("WriteFileCli() with %s should not error, got: %v", helpFlag, err)
+				t.Errorf("FileWriteCli() with %s should not error, got: %v", helpFlag, err)
 			}
 		}
 	})
@@ -269,9 +269,9 @@ func TestLcWriteFileCli(t *testing.T) {
 	t.Run("successful with inline content", func(t *testing.T) {
 		os.Args = []string{"cmd", "tool", "write_file", "--app-name", "testapp",
 			"--file-path", "cli-test.txt", "--content", "test content"}
-		err := LcWriteFileCli()
+		err := LcFileWriteCli()
 		if err != nil {
-			t.Errorf("WriteFileCli() failed: %v", err)
+			t.Errorf("FileWriteCli() failed: %v", err)
 		}
 
 		// Verify file was created
@@ -284,9 +284,9 @@ func TestLcWriteFileCli(t *testing.T) {
 	t.Run("successful with content file", func(t *testing.T) {
 		os.Args = []string{"cmd", "tool", "write_file", "--app-name", "testapp",
 			"--file-path", "cli-file-test.txt", "--content-file", contentFile}
-		err := LcWriteFileCli()
+		err := LcFileWriteCli()
 		if err != nil {
-			t.Errorf("WriteFileCli() failed: %v", err)
+			t.Errorf("FileWriteCli() failed: %v", err)
 		}
 
 		// Verify file was created
@@ -300,14 +300,14 @@ func TestLcWriteFileCli(t *testing.T) {
 		// Create file first
 		os.Args = []string{"cmd", "tool", "write_file", "--app-name", "testapp",
 			"--file-path", "mode-test.txt", "--content", "initial"}
-		LcWriteFileCli()
+		LcFileWriteCli()
 
 		// Try to overwrite
 		os.Args = []string{"cmd", "tool", "write_file", "--app-name", "testapp",
 			"--file-path", "mode-test.txt", "--content", "updated", "--mode", "overwrite"}
-		err := LcWriteFileCli()
+		err := LcFileWriteCli()
 		if err != nil {
-			t.Errorf("WriteFileCli() with overwrite failed: %v", err)
+			t.Errorf("FileWriteCli() with overwrite failed: %v", err)
 		}
 
 		// Verify content was updated
@@ -318,8 +318,8 @@ func TestLcWriteFileCli(t *testing.T) {
 	})
 }
 
-// TestLcWriteFileMcp tests the MCP interface wrapper
-func TestLcWriteFileMcp(t *testing.T) {
+// TestLcFileWriteMcp tests the MCP interface wrapper
+func TestLcFileWriteMcp(t *testing.T) {
 	ctx := context.Background()
 	request := mcp.CallToolRequest{}
 	request.Params.Name = "write_file"
@@ -330,7 +330,7 @@ func TestLcWriteFileMcp(t *testing.T) {
 		"mode":      "create",
 	}
 
-	_, err := LcWriteFileMcp(ctx, request)
+	_, err := LcFileWriteMcp(ctx, request)
 	if err == nil {
 		t.Error("Expected error for non-existent app")
 	}

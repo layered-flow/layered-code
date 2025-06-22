@@ -10,8 +10,8 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// TestLcCopyFile tests the core LcCopyFile functionality
-func TestLcCopyFile(t *testing.T) {
+// TestLcFileCopy tests the core LcFileCopy functionality
+func TestLcFileCopy(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -31,13 +31,13 @@ func TestLcCopyFile(t *testing.T) {
 		sourceFile := filepath.Join(appDir, "source.txt")
 		os.WriteFile(sourceFile, []byte("test content"), 0644)
 
-		params := LcCopyFileParams{
+		params := LcFileCopyParams{
 			AppName:    "testapp",
 			SourcePath: "source.txt",
 			DestPath:   "copy.txt",
 		}
 
-		result, err := LcCopyFile(params)
+		result, err := LcFileCopy(params)
 		if err != nil {
 			t.Fatalf("LcCopyFile() failed: %v", err)
 		}
@@ -68,13 +68,13 @@ func TestLcCopyFile(t *testing.T) {
 		sourceFile := filepath.Join(appDir, "file.txt")
 		os.WriteFile(sourceFile, []byte("test"), 0644)
 
-		params := LcCopyFileParams{
+		params := LcFileCopyParams{
 			AppName:    "testapp",
 			SourcePath: "file.txt",
 			DestPath:   "subdir/file.txt",
 		}
 
-		_, err := LcCopyFile(params)
+		_, err := LcFileCopy(params)
 		if err != nil {
 			t.Fatalf("LcCopyFile() failed: %v", err)
 		}
@@ -98,14 +98,14 @@ func TestLcCopyFile(t *testing.T) {
 		os.WriteFile(sourceFile, []byte("new content"), 0644)
 		os.WriteFile(destFile, []byte("old content"), 0644)
 
-		params := LcCopyFileParams{
+		params := LcFileCopyParams{
 			AppName:    "testapp",
 			SourcePath: "source2.txt",
 			DestPath:   "dest2.txt",
 			Overwrite:  true,
 		}
 
-		_, err := LcCopyFile(params)
+		_, err := LcFileCopy(params)
 		if err != nil {
 			t.Fatalf("LcCopyFile() with overwrite failed: %v", err)
 		}
@@ -120,18 +120,18 @@ func TestLcCopyFile(t *testing.T) {
 	t.Run("input validation errors", func(t *testing.T) {
 		tests := []struct {
 			name   string
-			params LcCopyFileParams
+			params LcFileCopyParams
 		}{
-			{"empty app name", LcCopyFileParams{SourcePath: "file.txt", DestPath: "copy.txt"}},
-			{"empty source", LcCopyFileParams{AppName: "testapp", DestPath: "copy.txt"}},
-			{"empty dest", LcCopyFileParams{AppName: "testapp", SourcePath: "file.txt"}},
-			{"path traversal in source", LcCopyFileParams{AppName: "testapp", SourcePath: "../file.txt", DestPath: "copy.txt"}},
-			{"path traversal in dest", LcCopyFileParams{AppName: "testapp", SourcePath: "file.txt", DestPath: "../copy.txt"}},
+			{"empty app name", LcFileCopyParams{SourcePath: "file.txt", DestPath: "copy.txt"}},
+			{"empty source", LcFileCopyParams{AppName: "testapp", DestPath: "copy.txt"}},
+			{"empty dest", LcFileCopyParams{AppName: "testapp", SourcePath: "file.txt"}},
+			{"path traversal in source", LcFileCopyParams{AppName: "testapp", SourcePath: "../file.txt", DestPath: "copy.txt"}},
+			{"path traversal in dest", LcFileCopyParams{AppName: "testapp", SourcePath: "file.txt", DestPath: "../copy.txt"}},
 		}
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				_, err := LcCopyFile(tt.params)
+				_, err := LcFileCopy(tt.params)
 				if err == nil {
 					t.Errorf("Expected error for %s", tt.name)
 				}
@@ -140,13 +140,13 @@ func TestLcCopyFile(t *testing.T) {
 	})
 
 	t.Run("source file not found", func(t *testing.T) {
-		params := LcCopyFileParams{
+		params := LcFileCopyParams{
 			AppName:    "testapp",
 			SourcePath: "nonexistent.txt",
 			DestPath:   "copy.txt",
 		}
 
-		_, err := LcCopyFile(params)
+		_, err := LcFileCopy(params)
 		if err == nil {
 			t.Error("Expected error for nonexistent source file")
 		}
@@ -157,14 +157,14 @@ func TestLcCopyFile(t *testing.T) {
 		os.WriteFile(filepath.Join(appDir, "src.txt"), []byte("source"), 0644)
 		os.WriteFile(filepath.Join(appDir, "dst.txt"), []byte("dest"), 0644)
 
-		params := LcCopyFileParams{
+		params := LcFileCopyParams{
 			AppName:    "testapp",
 			SourcePath: "src.txt",
 			DestPath:   "dst.txt",
 			Overwrite:  false,
 		}
 
-		_, err := LcCopyFile(params)
+		_, err := LcFileCopy(params)
 		if err == nil {
 			t.Error("Expected error when destination exists without overwrite")
 		}
@@ -174,13 +174,13 @@ func TestLcCopyFile(t *testing.T) {
 		// Create directory
 		os.Mkdir(filepath.Join(appDir, "testdir2"), 0755)
 
-		params := LcCopyFileParams{
+		params := LcFileCopyParams{
 			AppName:    "testapp",
 			SourcePath: "testdir2",
 			DestPath:   "copydir",
 		}
 
-		_, err := LcCopyFile(params)
+		_, err := LcFileCopy(params)
 		if err == nil {
 			t.Error("Expected error when trying to copy directory")
 		}
@@ -190,13 +190,13 @@ func TestLcCopyFile(t *testing.T) {
 		// Create file
 		os.WriteFile(filepath.Join(appDir, "same.txt"), []byte("test"), 0644)
 
-		params := LcCopyFileParams{
+		params := LcFileCopyParams{
 			AppName:    "testapp",
 			SourcePath: "same.txt",
 			DestPath:   "same.txt",
 		}
 
-		_, err := LcCopyFile(params)
+		_, err := LcFileCopy(params)
 		if err == nil {
 			t.Error("Expected error when copying file to itself")
 		}
@@ -208,21 +208,21 @@ func TestLcCopyFile(t *testing.T) {
 		data := strings.Repeat("x", 10*1024*1024+1) // 10MB + 1 byte
 		os.WriteFile(largeFile, []byte(data), 0644)
 
-		params := LcCopyFileParams{
+		params := LcFileCopyParams{
 			AppName:    "testapp",
 			SourcePath: "large.txt",
 			DestPath:   "large-copy.txt",
 		}
 
-		_, err := LcCopyFile(params)
+		_, err := LcFileCopy(params)
 		if err == nil {
 			t.Error("Expected error for file exceeding size limit")
 		}
 	})
 }
 
-// TestLcCopyFileCli tests the CLI interface
-func TestLcCopyFileCli(t *testing.T) {
+// TestLcFileCopyCli tests the CLI interface
+func TestLcFileCopyCli(t *testing.T) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		t.Fatalf("Failed to get home directory: %v", err)
@@ -242,7 +242,7 @@ func TestLcCopyFileCli(t *testing.T) {
 
 	t.Run("help flag", func(t *testing.T) {
 		os.Args = []string{"layered-code", "tool", "lc_copy_file", "--help"}
-		err := LcCopyFileCli()
+		err := LcFileCopyCli()
 		if err != nil {
 			t.Errorf("Help flag should not return error: %v", err)
 		}
@@ -250,7 +250,7 @@ func TestLcCopyFileCli(t *testing.T) {
 
 	t.Run("missing arguments", func(t *testing.T) {
 		os.Args = []string{"layered-code", "tool", "lc_copy_file", "--app-name", "testapp"}
-		err := LcCopyFileCli()
+		err := LcFileCopyCli()
 		if err == nil {
 			t.Error("Expected error for missing arguments")
 		}
@@ -266,7 +266,7 @@ func TestLcCopyFileCli(t *testing.T) {
 			"--source", "cli-source.txt",
 			"--dest", "cli-dest.txt"}
 
-		err := LcCopyFileCli()
+		err := LcFileCopyCli()
 		if err != nil {
 			t.Errorf("Copy failed: %v", err)
 		}
@@ -279,8 +279,8 @@ func TestLcCopyFileCli(t *testing.T) {
 	})
 }
 
-// TestLcCopyFileMcp tests the MCP interface
-func TestLcCopyFileMcp(t *testing.T) {
+// TestLcFileCopyMcp tests the MCP interface
+func TestLcFileCopyMcp(t *testing.T) {
 	ctx := context.Background()
 	request := mcp.CallToolRequest{}
 	request.Params.Name = "lc_copy_file"
@@ -290,7 +290,7 @@ func TestLcCopyFileMcp(t *testing.T) {
 		"dest_path":   "copy.txt",
 	}
 
-	_, err := LcCopyFileMcp(ctx, request)
+	_, err := LcFileCopyMcp(ctx, request)
 	if err == nil {
 		t.Error("Expected error for non-existent app")
 	}

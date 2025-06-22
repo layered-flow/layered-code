@@ -36,7 +36,7 @@ func TestLcReadFile(t *testing.T) {
 	t.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
 
 	t.Run("successful read", func(t *testing.T) {
-		result, err := LcReadFile("testapp", "main.go")
+		result, err := LcFileRead("testapp", "main.go")
 		if err != nil {
 			t.Fatalf("ReadFile() failed: %v", err)
 		}
@@ -60,7 +60,7 @@ func TestLcReadFile(t *testing.T) {
 			{"testapp", "nonexistent.go", "no such file"},
 		}
 		for _, tt := range tests {
-			_, err := LcReadFile(tt.appName, tt.filePath)
+			_, err := LcFileRead(tt.appName, tt.filePath)
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 				t.Errorf("ReadFile(%q, %q) expected error containing %q, got: %v",
 					tt.appName, tt.filePath, tt.wantErr, err)
@@ -78,7 +78,7 @@ func TestLcReadFile(t *testing.T) {
 			{"symlink.go", ErrSymlink},
 		}
 		for _, tt := range tests {
-			_, err := LcReadFile("testapp", tt.filePath)
+			_, err := LcFileRead("testapp", tt.filePath)
 			if err != tt.wantErr {
 				t.Errorf("ReadFile(testapp, %q) = %v; want %v", tt.filePath, err, tt.wantErr)
 			}
@@ -86,7 +86,7 @@ func TestLcReadFile(t *testing.T) {
 	})
 
 	t.Run("path traversal attempt", func(t *testing.T) {
-		_, err := LcReadFile("testapp", "../../../etc/passwd")
+		_, err := LcFileRead("testapp", "../../../etc/passwd")
 		if err == nil || !strings.Contains(err.Error(), "outside app directory") {
 			t.Error("Expected error for path traversal attempt")
 		}
@@ -127,7 +127,7 @@ func TestLcReadFileCli(t *testing.T) {
 		}
 		for _, tt := range tests {
 			os.Args = tt.args
-			err := LcReadFileCli()
+			err := LcFileReadCli()
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 				t.Errorf("ReadFileCli() with args %v expected error containing %q, got: %v",
 					tt.args[3:], tt.wantErr, err)
@@ -138,7 +138,7 @@ func TestLcReadFileCli(t *testing.T) {
 	t.Run("help flag", func(t *testing.T) {
 		for _, helpFlag := range []string{"--help", "-h"} {
 			os.Args = []string{"cmd", "tool", "read_file", helpFlag}
-			err := LcReadFileCli()
+			err := LcFileReadCli()
 			if err != nil {
 				t.Errorf("ReadFileCli() with %s should not error, got: %v", helpFlag, err)
 			}
@@ -147,7 +147,7 @@ func TestLcReadFileCli(t *testing.T) {
 
 	t.Run("successful execution", func(t *testing.T) {
 		os.Args = []string{"cmd", "tool", "read_file", "--app-name", "testapp", "--file-path", "test.go"}
-		err := LcReadFileCli()
+		err := LcFileReadCli()
 		if err != nil {
 			t.Errorf("ReadFileCli() failed: %v", err)
 		}
@@ -164,7 +164,7 @@ func TestLcReadFileMcp(t *testing.T) {
 		"file_path": "test.go",
 	}
 
-	_, err := LcReadFileMcp(ctx, request)
+	_, err := LcFileReadMcp(ctx, request)
 	if err == nil {
 		t.Error("Expected error for non-existent app")
 	}
