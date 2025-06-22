@@ -253,7 +253,7 @@ layered-code --help
   **File Management Tools:**
   - `tool lc_apps_list` - List all available applications in the ~/LayeredApps directory
   - `tool lc_file_list` - List files and directories within an application with optional metadata (max depth: 10,000 levels)
-  - `tool lc_search_text` - Search for text patterns in files within an application directory using ripgrep
+  - `tool lc_text_search` - Search for text patterns in files within an application directory using ripgrep
   - `tool lc_read_file` - Read the contents of a file within an application directory
   - `tool lc_write_file` - Write or create a file within an application directory
   - `tool lc_edit_file` - Edit a file by performing find-and-replace operations

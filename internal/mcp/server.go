@@ -114,9 +114,9 @@ func registerListFilesTool(s *server.MCPServer) {
 	s.AddTool(tool, lc.LcFileListMcp)
 }
 
-// registerSearchTextTool registers the lc_search_text tool
+// registerSearchTextTool registers the lc_text_search tool
 func registerSearchTextTool(s *server.MCPServer) {
-	tool := mcp.NewTool("lc_search_text",
+	tool := mcp.NewTool("lc_text_search",
 		mcp.WithDescription("Search for text patterns in files within an application directory using ripgrep"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
 		mcp.WithString("pattern", mcp.Required(), mcp.Description("Search pattern (supports regular expressions)")),
@@ -127,7 +127,7 @@ func registerSearchTextTool(s *server.MCPServer) {
 		mcp.WithBoolean("include_hidden", mcp.Description("Include hidden files and directories in search")),
 	)
 
-	s.AddTool(tool, lc.LcSearchTextMcp)
+	s.AddTool(tool, lc.LcTextSearchMcp)
 }
 
 // registerReadFileTool registers the lc_read_file tool
