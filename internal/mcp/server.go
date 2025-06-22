@@ -53,6 +53,10 @@ func StartServer(name, version string) error {
 
 // registerTools registers all available tools with the MCP server
 func registerTools(s *server.MCPServer) {
+	// IMPORTANT: Prompt tools - LLMs should read 'general_principles' first
+	registerPromptListTool(s)
+	registerPromptReadTool(s)
+	
 	// File management tools
 	registerListAppsTool(s)
 	registerListFilesTool(s)
@@ -445,4 +449,23 @@ func registerPnpmPm2Tool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, pnpm.PnpmPm2Mcp)
+}
+
+// registerPromptListTool registers the lc_prompt_list tool
+func registerPromptListTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_prompt_list",
+		mcp.WithDescription("🚨 CRITICAL: List available prompts. You MUST read 'general_principles' at the start of EVERY conversation to understand how to interact with users safely and collaboratively."),
+	)
+
+	s.AddTool(tool, lc.PromptListMcp)
+}
+
+// registerPromptReadTool registers the lc_prompt_read tool
+func registerPromptReadTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_prompt_read",
+		mcp.WithDescription("🚨 CRITICAL: Read prompt content. You MUST call this with 'general_principles' at the START of EVERY new conversation or task. This prompt contains essential guidance on collaborative coding assistance, safety practices, and proper interaction style. ALWAYS read it BEFORE any other actions."),
+		mcp.WithString("prompt_name", mcp.Required(), mcp.Description("ID or name of the prompt to read. START EVERY CONVERSATION by reading 'general_principles'")),
+	)
+
+	s.AddTool(tool, lc.PromptReadMcp)
 }

@@ -53,6 +53,10 @@ func PrintUsage() {
 	fmt.Println("  tool git_revert           Create revert commits")
 	fmt.Println("  tool git_checkout         Switch branches or restore files")
 	fmt.Println()
+	fmt.Println("  Prompt Tools:")
+	fmt.Println("  tool lc_prompt_list       List all available prompts with IDs")
+	fmt.Println("  tool lc_prompt_read       Read a prompt by ID or name")
+	fmt.Println()
 	fmt.Println("  help, -h, --help          Show this help message")
 	fmt.Println("  version, -v, --version    Show version information")
 }
@@ -128,6 +132,12 @@ func RunTool() error {
 		return git.GitRevertCli()
 	case "git_checkout":
 		return git.GitCheckoutCli()
+	
+	// Prompt tools
+	case "lc_prompt_list":
+		return lc.PromptListCli()
+	case "lc_prompt_read":
+		return lc.PromptReadCli()
 
 	default:
 		return fmt.Errorf("unknown tool: %s\nRun 'layered-code help' to see all available tools", subcommand)
