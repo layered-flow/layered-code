@@ -10,7 +10,7 @@
 
 ## 🔍 What is Layered Code?
 
-**Layered Code** transforms web development into a seamless conversation-to-deployment workflow. You chat with your preferred AI assistant through applications like Claude Desktop or Cursor, describing what you want to build in natural language. The AI creates and modifies your code in real-time, while the Chrome extension automatically refreshes your browser to show changes instantly. When you're satisfied with the results, just ask the AI to commit your changes to a git repository and deploy directly to production servers — all without memorizing complex commands or navigating intricate development tools.
+**Layered Code** transforms web development into a seamless conversation-to-deployment workflow. You chat with your preferred AI assistant through MCP-compatible tools like Claude Desktop, describing what you want to build in natural language. The AI creates and modifies your code in real-time, while modern development frameworks like Vite and Next.js provide instant hot module replacement to show changes automatically. When you're satisfied with the results, just ask the AI to commit your changes to a git repository and deploy directly to production servers — all without memorizing complex commands or navigating intricate development tools.
 
 [![YouTube Video](/docs/images/youtube.png)](https://www.youtube.com/watch?v=r8OIV-QjIIQ)
 *Watch a quick overview of Layered Code in action*
@@ -35,7 +35,7 @@ The AI, equipped with Layered Code's MCP tools, can:
 The AI seamlessly:
 - Updates the HTML to include a contact section
 - Enhances the CSS with smooth hover animations
-- Your Chrome extension automatically refreshes to show the changes
+- Your development server automatically refreshes to show the changes
 
 > **User:** "Perfect! Now commit these changes and deploy to production."
 
@@ -160,34 +160,6 @@ Add the following to your `claude_desktop_config.json` (under Settings → Devel
 5. **Restart Claude Desktop** completely (Windows may require you to "end task" on any Claude background tasks)
 6. **Verify**: Check for "layered-code" in Claude's tools menu
 
-### 🌐 Chrome Extension for Live Preview
-
-The Layered Code Chrome extension enables real-time previewing of changes made through MCP. When you edit files through Claude Desktop, the extension automatically refreshes your browser to show the changes instantly.
-
-**Installation Options:**
-
-#### Option 1: Chrome Web Store (Recommended)
-Install directly from the Chrome Web Store:
-[https://chrome.layeredcode.ai/](https://chrome.layeredcode.ai/)
-
-#### Option 2: Developer Mode
-1. **Open Chrome Extensions Page**:
-   - Navigate to `chrome://extensions/`
-   - Enable "Developer mode" in the top right corner
-
-2. **Load the Extension**:
-   - Click "Load unpacked"
-   - Navigate to the `chrome-extension` folder in your layered-code directory
-   - Select the folder and click "Select"
-
-3. **Verify Installation**:
-   - You should see "Layered Code Live Preview" in your extensions list
-   - The extension icon will appear in your Chrome toolbar
-
-**Usage:**
-- Open your HTML file directly in Chrome (e.g., `file:///Users/yourname/LayeredApps/myproject/index.html`)
-- The extension will automatically detect file changes made through MCP via a websocket
-- Your browser will refresh instantly when changes are saved
 
 ### 🔧 Optional: Custom Apps Directory
 
