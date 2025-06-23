@@ -54,7 +54,8 @@ func TestNextjsAppCreateValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Run the function - it will fail early on validation
-			_, err := NextjsAppCreate(tt.appName, "", false)
+			opts := NextjsAppCreateOptions{}
+			_, err := NextjsAppCreate(tt.appName, "", opts, false)
 
 			// Check error expectations
 			if (err != nil) != tt.wantErr {
@@ -127,7 +128,8 @@ func TestNextjsAppCreateTemplateValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Run the function - it will fail early on validation
-			_, err := NextjsAppCreate(tt.appName, tt.template, false)
+			opts := NextjsAppCreateOptions{}
+			_, err := NextjsAppCreate(tt.appName, tt.template, opts, false)
 
 			// For valid cases, we expect it to fail later (no package manager available in test)
 			if !tt.wantErr && err != nil {
