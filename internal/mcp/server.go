@@ -416,7 +416,7 @@ func registerGitShowTool(s *server.MCPServer) {
 func registerViteAppCreateTool(s *server.MCPServer) {
 	tool := mcp.NewTool("vite_app_create",
 		mcp.WithDescription("Create a new Vite app in the apps directory with specified template (dependencies not installed - use pnpm_install)"),
-		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to create (must be unique, cannot contain special characters or '..')")),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to create (must be unique, lowercase only, can contain letters, numbers, dashes, and underscores)")),
 		mcp.WithString("template", mcp.Description("Vite template to use (default: react-ts). Options: vanilla, vanilla-ts, vue, vue-ts, react, react-ts, react-swc, react-swc-ts, preact, preact-ts, lit, lit-ts, svelte, svelte-ts, solid, solid-ts, qwik, qwik-ts")),
 	)
 
@@ -427,7 +427,7 @@ func registerViteAppCreateTool(s *server.MCPServer) {
 func registerNextjsAppCreateTool(s *server.MCPServer) {
 	tool := mcp.NewTool("nextjs_app_create",
 		mcp.WithDescription("Create a new Next.js app in the apps directory with specified template (dependencies not installed - use pnpm_install)"),
-		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to create (must be unique, cannot contain special characters or '..')")),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to create (must be unique, lowercase only, can contain letters, numbers, dashes, and underscores)")),
 		mcp.WithString("template", mcp.Description("Next.js template to use (default: typescript). Options: typescript, javascript, tailwind, app, app-tw")),
 		mcp.WithBoolean("use_src_dir", mcp.Description("Use src directory structure (default: true)")),
 		mcp.WithString("import_alias", mcp.Description("Import alias to use (default: @/*)")),
