@@ -6,6 +6,7 @@ import (
 
 	"github.com/layered-flow/layered-code/internal/tools/git"
 	"github.com/layered-flow/layered-code/internal/tools/lc"
+	"github.com/layered-flow/layered-code/internal/tools/nextjs"
 	"github.com/layered-flow/layered-code/internal/tools/pnpm"
 	"github.com/layered-flow/layered-code/internal/tools/vite"
 )
@@ -30,6 +31,9 @@ func PrintUsage() {
 	fmt.Println()
 	fmt.Println("  Vite Tools:")
 	fmt.Println("  tool vite_app_create      Create a new Vite app with template")
+	fmt.Println()
+	fmt.Println("  Next.js Tools:")
+	fmt.Println("  tool nextjs_app_create    Create a new Next.js app with template")
 	fmt.Println()
 	fmt.Println("  Package Manager Tools:")
 	fmt.Println("  tool pnpm_install         Install dependencies using pnpm (preferred) or npm")
@@ -92,6 +96,10 @@ func RunTool() error {
 	// Vite tools
 	case "vite_app_create":
 		return vite.ViteAppCreateCli()
+
+	// Next.js tools
+	case "nextjs_app_create":
+		return nextjs.NextjsAppCreateCli()
 
 	// Package Manager tools
 	case "pnpm_install":

@@ -264,6 +264,9 @@ layered-code --help
   **Vite Tools:**
   - `tool vite_app_create` - Create a new Vite app with various templates (React, Vue, Svelte, etc.)
 
+  **Next.js Tools:**
+  - `tool nextjs_app_create` - Create a new Next.js app with TypeScript (default), JavaScript, Tailwind, or App Router templates
+
   **Package Manager Tools:**
   - `tool pnpm_install` - Install dependencies using pnpm (preferred) or npm
   - `tool pnpm_add` - Add one or more packages using pnpm (preferred) or npm
