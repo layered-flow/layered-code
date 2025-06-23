@@ -53,6 +53,11 @@ func StartServer(name, version string) error {
 
 // registerTools registers all available tools with the MCP server
 func registerTools(s *server.MCPServer) {
+	// 🚨🚨🚨 CRITICAL: Prompt tools MUST be called first in every conversation 🚨🚨🚨
+	// LLMs MUST read General Principles (ID: 1) before any other actions
+	registerPromptListTool(s)
+	registerPromptReadTool(s)
+	
 	// File management tools
 	registerListAppsTool(s)
 	registerListFilesTool(s)
@@ -445,4 +450,23 @@ func registerPnpmPm2Tool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, pnpm.PnpmPm2Mcp)
+}
+
+// registerPromptListTool registers the lc_prompt_list tool
+func registerPromptListTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_prompt_list",
+		mcp.WithDescription("🚨🚨🚨 CRITICAL MANDATORY FIRST ACTION 🚨🚨🚨 List available prompts. BEFORE doing ANYTHING else, you MUST IMMEDIATELY read prompt ID '1' (General Principles) to understand how to interact with users. This is REQUIRED for ALL conversations. DO NOT skip this step."),
+	)
+
+	s.AddTool(tool, lc.PromptListMcp)
+}
+
+// registerPromptReadTool registers the lc_prompt_read tool
+func registerPromptReadTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_prompt_read",
+		mcp.WithDescription("Read prompt content by numeric ID. Please start each conversation by reading prompt ID '1' (General Principles), which contains important guidance for working with users effectively."),
+		mcp.WithString("prompt_id", mcp.Required(), mcp.Description("The numeric ID of the prompt. Start with '1' to read the General Principles. Supports optional version with format 'id:version'.")),
+	)
+
+	s.AddTool(tool, lc.PromptReadMcp)
 }
