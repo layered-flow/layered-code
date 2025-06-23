@@ -429,6 +429,9 @@ func registerNextjsAppCreateTool(s *server.MCPServer) {
 		mcp.WithDescription("Create a new Next.js app in the apps directory with specified template (dependencies not installed - use pnpm_install)"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to create (must be unique, cannot contain special characters or '..')")),
 		mcp.WithString("template", mcp.Description("Next.js template to use (default: typescript). Options: typescript, javascript, tailwind, app, app-tw")),
+		mcp.WithBoolean("use_src_dir", mcp.Description("Use src directory structure (default: true)")),
+		mcp.WithString("import_alias", mcp.Description("Import alias to use (default: @/*)")),
+		mcp.WithBoolean("use_turbopack", mcp.Description("Use Turbopack (default: true)")),
 	)
 
 	s.AddTool(tool, nextjs.NextjsAppCreateMcp)

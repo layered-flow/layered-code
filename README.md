@@ -266,6 +266,8 @@ layered-code --help
 
   **Next.js Tools:**
   - `tool nextjs_app_create` - Create a new Next.js app with TypeScript (default), JavaScript, Tailwind, or App Router templates
+    - CLI flags: `--src-dir` (use src directory, default: true), `--import-alias` (default: @/*), `--turbopack` (default: true)
+    - Example: `tool nextjs_app_create myapp typescript --src-dir --import-alias="~/"`
 
   **Package Manager Tools:**
   - `tool pnpm_install` - Install dependencies using pnpm (preferred) or npm

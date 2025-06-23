@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -16,6 +17,12 @@ import (
 )
 
 // Types
+type NextjsAppCreateOptions struct {
+	UseSrcDir    *bool   `json:"use_src_dir,omitempty"`
+	ImportAlias  *string `json:"import_alias,omitempty"`
+	UseTurbopack *bool   `json:"use_turbopack,omitempty"`
+}
+
 type NextjsAppCreateResult struct {
 	AppName     string `json:"app_name"`
 	AppPath     string `json:"app_path"`
@@ -26,7 +33,7 @@ type NextjsAppCreateResult struct {
 }
 
 // NextjsAppCreate creates a new Next.js app in the apps directory with the specified template
-func NextjsAppCreate(appName string, template string, showOutput bool) (NextjsAppCreateResult, error) {
+func NextjsAppCreate(appName string, template string, options NextjsAppCreateOptions, showOutput bool) (NextjsAppCreateResult, error) {
 	// Validate app name
 	if err := helpers.ValidateAppName(appName); err != nil {
 		return NextjsAppCreateResult{}, err
@@ -85,15 +92,43 @@ func NextjsAppCreate(appName string, template string, showOutput bool) (NextjsAp
 	// Add template-specific flags
 	switch template {
 	case "typescript":
-		args = append(args, "--typescript", "--no-tailwind", "--app", "--eslint", "--no-src-dir", "--import-alias", "@/*", "--turbopack")
+		args = append(args, "--typescript", "--no-tailwind", "--app", "--eslint")
 	case "javascript":
-		args = append(args, "--js", "--no-tailwind", "--app", "--eslint", "--no-src-dir", "--import-alias", "@/*", "--turbopack")
+		args = append(args, "--js", "--no-tailwind", "--app", "--eslint")
 	case "tailwind":
-		args = append(args, "--typescript", "--tailwind", "--app", "--eslint", "--no-src-dir", "--import-alias", "@/*", "--turbopack")
+		args = append(args, "--typescript", "--tailwind", "--app", "--eslint")
 	case "app":
-		args = append(args, "--typescript", "--no-tailwind", "--app", "--eslint", "--no-src-dir", "--import-alias", "@/*", "--turbopack")
+		args = append(args, "--typescript", "--no-tailwind", "--app", "--eslint")
 	case "app-tw":
-		args = append(args, "--typescript", "--tailwind", "--app", "--eslint", "--no-src-dir", "--import-alias", "@/*", "--turbopack")
+		args = append(args, "--typescript", "--tailwind", "--app", "--eslint")
+	}
+
+	// Handle src directory option
+	if options.UseSrcDir != nil {
+		if *options.UseSrcDir {
+			args = append(args, "--src-dir")
+		} else {
+			args = append(args, "--no-src-dir")
+		}
+	} else {
+		// Default: use src directory
+		args = append(args, "--src-dir")
+	}
+
+	// Handle import alias option
+	if options.ImportAlias != nil {
+		args = append(args, "--import-alias", *options.ImportAlias)
+	} else {
+		// Default: @/*
+		args = append(args, "--import-alias", "@/*")
+	}
+
+	// Handle turbopack option
+	if options.UseTurbopack != nil && *options.UseTurbopack {
+		args = append(args, "--turbopack")
+	} else if options.UseTurbopack == nil {
+		// Default: use turbopack
+		args = append(args, "--turbopack")
 	}
 
 	// Use package manager preferences
@@ -145,10 +180,44 @@ func NextjsAppCreate(appName string, template string, showOutput bool) (NextjsAp
 
 // CLI
 func NextjsAppCreateCli() error {
-	args := os.Args[3:]
-
+	// Create a new flag set for this command
+	fs := flag.NewFlagSet("nextjs_app_create", flag.ContinueOnError)
+	
+	// Define flags
+	var (
+		useSrcDir    = fs.Bool("src-dir", true, "Use src directory structure")
+		importAlias  = fs.String("import-alias", "@/*", "Import alias to use")
+		useTurbopack = fs.Bool("turbopack", true, "Use Turbopack")
+		help         = fs.Bool("help", false, "Show help")
+	)
+	
+	// Custom usage
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: layered-code tool nextjs_app_create [flags] <app_name> [template]\n\n")
+		fmt.Fprintf(os.Stderr, "Arguments:\n")
+		fmt.Fprintf(os.Stderr, "  app_name    Name of the Next.js app to create\n")
+		fmt.Fprintf(os.Stderr, "  template    Template to use (default: typescript)\n")
+		fmt.Fprintf(os.Stderr, "              Options: typescript, javascript, tailwind, app, app-tw\n\n")
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		fs.PrintDefaults()
+	}
+	
+	// Parse flags from os.Args[3:]
+	if err := fs.Parse(os.Args[3:]); err != nil {
+		return err
+	}
+	
+	if *help {
+		fs.Usage()
+		return nil
+	}
+	
+	// Get remaining args after flag parsing
+	args := fs.Args()
+	
 	if len(args) < 1 || len(args) > 2 {
-		return fmt.Errorf("usage: layered-code tool nextjs_app_create <app_name> [template]")
+		fs.Usage()
+		return fmt.Errorf("invalid number of arguments")
 	}
 
 	appName := args[0]
@@ -156,7 +225,15 @@ func NextjsAppCreateCli() error {
 	if len(args) == 2 {
 		template = args[1]
 	}
-	result, err := NextjsAppCreate(appName, template, true) // showOutput = true for CLI
+
+	// Create options from flags
+	options := NextjsAppCreateOptions{
+		UseSrcDir:    useSrcDir,
+		ImportAlias:  importAlias,
+		UseTurbopack: useTurbopack,
+	}
+	
+	result, err := NextjsAppCreate(appName, template, options, true) // showOutput = true for CLI
 	if err != nil {
 		return fmt.Errorf("failed to create Next.js app: %w", err)
 	}
@@ -174,15 +251,24 @@ func NextjsAppCreateCli() error {
 // MCP
 func NextjsAppCreateMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		AppName  string `json:"app_name"`
-		Template string `json:"template,omitempty"`
+		AppName      string  `json:"app_name"`
+		Template     string  `json:"template,omitempty"`
+		UseSrcDir    *bool   `json:"use_src_dir,omitempty"`
+		ImportAlias  *string `json:"import_alias,omitempty"`
+		UseTurbopack *bool   `json:"use_turbopack,omitempty"`
 	}
 
 	if err := request.BindArguments(&args); err != nil {
 		return nil, err
 	}
 
-	result, err := NextjsAppCreate(args.AppName, args.Template, false) // showOutput = false for MCP
+	options := NextjsAppCreateOptions{
+		UseSrcDir:    args.UseSrcDir,
+		ImportAlias:  args.ImportAlias,
+		UseTurbopack: args.UseTurbopack,
+	}
+
+	result, err := NextjsAppCreate(args.AppName, args.Template, options, false) // showOutput = false for MCP
 	if err != nil {
 		return nil, err
 	}
