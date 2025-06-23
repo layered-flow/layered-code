@@ -24,6 +24,9 @@ func TestPromptList(t *testing.T) {
 			if prompt.ID != 1 {
 				t.Errorf("Expected ID 1, got %d", prompt.ID)
 			}
+			if prompt.Version != 2 {
+				t.Errorf("Expected Version 2 (highest version), got %d", prompt.Version)
+			}
 			if prompt.Description == "" {
 				t.Error("General Principles prompt has empty description")
 			}
@@ -42,5 +45,63 @@ func TestPromptList(t *testing.T) {
 	// Verify count matches number of prompts
 	if result.Count != len(result.Prompts) {
 		t.Errorf("Count (%d) does not match number of prompts (%d)", result.Count, len(result.Prompts))
+	}
+}
+
+func TestPromptListWithMultipleVersions(t *testing.T) {
+	// Save original promptsMap
+	originalMap := promptsMap
+	defer func() { promptsMap = originalMap }()
+	
+	// Create test data with multiple versions
+	promptsMap = map[PromptKey]Prompt{
+		{ID: 1, Version: 1}: {
+			ID:          1,
+			Version:     1,
+			Name:        "Test Prompt",
+			Description: "Version 1",
+			Content:     "Content v1",
+		},
+		{ID: 1, Version: 2}: {
+			ID:          1,
+			Version:     2,
+			Name:        "Test Prompt",
+			Description: "Version 2",
+			Content:     "Content v2",
+		},
+		{ID: 1, Version: 3}: {
+			ID:          1,
+			Version:     3,
+			Name:        "Test Prompt",
+			Description: "Version 3",
+			Content:     "Content v3",
+		},
+		{ID: 2, Version: 1}: {
+			ID:          2,
+			Version:     1,
+			Name:        "Another Prompt",
+			Description: "Only version",
+			Content:     "Content",
+		},
+	}
+	
+	result, err := PromptList()
+	if err != nil {
+		t.Fatalf("PromptList() returned error: %v", err)
+	}
+	
+	// Should only return 2 prompts (highest version of each)
+	if result.Count != 2 {
+		t.Errorf("Expected 2 prompts, got %d", result.Count)
+	}
+	
+	// Check that we got the highest versions
+	for _, prompt := range result.Prompts {
+		if prompt.ID == 1 && prompt.Version != 3 {
+			t.Errorf("Expected version 3 for prompt ID 1, got %d", prompt.Version)
+		}
+		if prompt.ID == 2 && prompt.Version != 1 {
+			t.Errorf("Expected version 1 for prompt ID 2, got %d", prompt.Version)
+		}
 	}
 }

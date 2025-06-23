@@ -10,41 +10,92 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
-// PromptRead returns the full content of a specific prompt by ID or name
+// PromptRead returns the full content of a specific prompt by ID
+// If no version is specified, returns the highest version
 func PromptRead(identifier string) (PromptReadResult, error) {
-	// First try to parse as numeric ID
+	// Check if identifier contains version (format: "id:version")
+	parts := strings.Split(identifier, ":")
+	requestedVersion := -1 // -1 means latest version
+	
+	if len(parts) == 2 {
+		var v int
+		if _, err := fmt.Sscanf(parts[1], "%d", &v); err == nil {
+			requestedVersion = v
+			identifier = parts[0]
+		}
+	}
+	
+	// Parse as numeric ID
 	var promptID int
-	if _, err := fmt.Sscanf(identifier, "%d", &promptID); err == nil {
-		if prompt, exists := promptsMap[promptID]; exists {
-			return PromptReadResult{
-				Name:        prompt.Name,
-				Description: prompt.Description,
-				Content:     prompt.Content,
-			}, nil
+	if _, err := fmt.Sscanf(identifier, "%d", &promptID); err != nil {
+		return PromptReadResult{}, fmt.Errorf("invalid prompt ID '%s': must be numeric", identifier)
+	}
+	
+	// Find the prompt with matching ID and version
+	var foundPrompt *Prompt
+	highestVersion := 0
+	
+	for key, prompt := range promptsMap {
+		if key.ID == promptID {
+			if requestedVersion == -1 {
+				// Get highest version
+				if key.Version > highestVersion {
+					highestVersion = key.Version
+					foundPrompt = &prompt
+				}
+			} else if key.Version == requestedVersion {
+				// Get specific version
+				foundPrompt = &prompt
+				break
+			}
 		}
 	}
 	
-	// Search by name (case-insensitive)
-	lowerIdentifier := strings.ToLower(identifier)
-	for _, prompt := range promptsMap {
-		if strings.ToLower(prompt.Name) == lowerIdentifier {
-			return PromptReadResult{
-				Name:        prompt.Name,
-				Description: prompt.Description,
-				Content:     prompt.Content,
-			}, nil
-		}
+	if foundPrompt != nil {
+		return PromptReadResult{
+			Name:        foundPrompt.Name,
+			Description: foundPrompt.Description,
+			Content:     foundPrompt.Content,
+		}, nil
 	}
 	
-	return PromptReadResult{}, fmt.Errorf("prompt '%s' not found", identifier)
+	if requestedVersion != -1 {
+		return PromptReadResult{}, fmt.Errorf("prompt ID %d version %d not found", promptID, requestedVersion)
+	}
+	return PromptReadResult{}, fmt.Errorf("prompt ID %d not found", promptID)
 }
 
 // PromptReadCli handles the CLI command for reading a specific prompt
 func PromptReadCli() error {
 	args := os.Args[3:]
 	
+	// Check for help flag
+	for _, arg := range args {
+		if arg == "--help" || arg == "-h" {
+			fmt.Println("Usage: layered-code tool lc_prompt_read <prompt_id>[:<version>]")
+			fmt.Println()
+			fmt.Println("Read the content of a specific prompt by numeric ID")
+			fmt.Println()
+			fmt.Println("Arguments:")
+			fmt.Println("  prompt_id    The numeric ID of the prompt")
+			fmt.Println("  version      Optional version number (defaults to latest)")
+			fmt.Println()
+			fmt.Println("Version Syntax:")
+			fmt.Println("  - Use 'id:version' to read a specific version")
+			fmt.Println("  - Omit version to get the latest version")
+			fmt.Println()
+			fmt.Println("Examples:")
+			fmt.Println("  # Read latest version by ID")
+			fmt.Println("  layered-code tool lc_prompt_read 1")
+			fmt.Println()
+			fmt.Println("  # Read specific version by ID")
+			fmt.Println("  layered-code tool lc_prompt_read 1:1")
+			return nil
+		}
+	}
+	
 	if len(args) < 1 {
-		return fmt.Errorf("usage: layered-code tool lc_prompt_read <prompt_id_or_name>")
+		return fmt.Errorf("usage: layered-code tool lc_prompt_read <prompt_id>[:<version>]")
 	}
 	
 	promptName := strings.Join(args, " ")
@@ -66,18 +117,18 @@ func PromptReadCli() error {
 // PromptReadMcp handles the MCP request for reading a specific prompt
 func PromptReadMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
-		PromptName string `json:"prompt_name"`
+		PromptID string `json:"prompt_id"`
 	}
 	
 	if err := request.BindArguments(&args); err != nil {
 		return nil, err
 	}
 	
-	if args.PromptName == "" {
-		return nil, fmt.Errorf("prompt_name is required")
+	if args.PromptID == "" {
+		return nil, fmt.Errorf("prompt_id is required")
 	}
 	
-	result, err := PromptRead(args.PromptName)
+	result, err := PromptRead(args.PromptID)
 	if err != nil {
 		return nil, err
 	}

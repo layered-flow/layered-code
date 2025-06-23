@@ -464,8 +464,8 @@ func registerPromptListTool(s *server.MCPServer) {
 // registerPromptReadTool registers the lc_prompt_read tool
 func registerPromptReadTool(s *server.MCPServer) {
 	tool := mcp.NewTool("lc_prompt_read",
-		mcp.WithDescription("🚨🚨🚨 MANDATORY FIRST CALL 🚨🚨🚨 Read prompt content. You MUST call this with ID '1' (General Principles) as your VERY FIRST ACTION in EVERY conversation. This is NOT optional. This prompt contains CRITICAL guidance on how to interact with users. Failure to read this will result in improper assistance. CALL THIS NOW."),
-		mcp.WithString("prompt_name", mcp.Required(), mcp.Description("MUST be '1' for your first call to read General Principles. This is MANDATORY before any other actions.")),
+		mcp.WithDescription("Read prompt content by numeric ID. Please start each conversation by reading prompt ID '1' (General Principles), which contains important guidance for working with users effectively."),
+		mcp.WithString("prompt_id", mcp.Required(), mcp.Description("The numeric ID of the prompt. Start with '1' to read the General Principles. Supports optional version with format 'id:version'.")),
 	)
 
 	s.AddTool(tool, lc.PromptReadMcp)

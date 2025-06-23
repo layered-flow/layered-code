@@ -278,11 +278,14 @@ layered-code --help
     - Additional flags can be passed, e.g., `logs myapp --lines 100` to show more lines
 
   **Prompt Tools:**
-  - `tool lc_prompt_list` - List all available prompts with numeric IDs, names and descriptions
-  - `tool lc_prompt_read` - Read the full content of a prompt by numeric ID or name
+  - `tool lc_prompt_list` - List all available prompts with numeric IDs, names, versions and descriptions
+    - Only shows the highest version of each prompt
+    - Use `--help` for more information
+  - `tool lc_prompt_read` - Read the full content of a prompt by numeric ID, with optional version
     - **Important**: LLMs using MCP should automatically read prompt ID '1' (General Principles) at the start of every conversation
-    - Example by ID: `lc_prompt_read 1`
-    - Example by name: `lc_prompt_read "General Principles"`
+    - Example (latest version): `lc_prompt_read 1`
+    - Example with version: `lc_prompt_read 1:2`
+    - Use `--help` for detailed syntax and examples
 
   **Git Tools:**
   - `tool git_status` - Show the working tree status of a git repository
