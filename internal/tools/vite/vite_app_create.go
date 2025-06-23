@@ -16,7 +16,7 @@ import (
 )
 
 // Types
-type ViteCreateAppResult struct {
+type ViteAppCreateResult struct {
 	AppName     string `json:"app_name"`
 	AppPath     string `json:"app_path"`
 	Template    string `json:"template"`
@@ -25,11 +25,11 @@ type ViteCreateAppResult struct {
 	ErrorOutput string `json:"error_output,omitempty"`
 }
 
-// ViteCreateApp creates a new Vite app in the apps directory with the specified template
-func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreateAppResult, error) {
+// ViteAppCreate creates a new Vite app in the apps directory with the specified template
+func ViteAppCreate(appName string, template string, showOutput bool) (ViteAppCreateResult, error) {
 	// Validate app name
 	if err := helpers.ValidateAppName(appName); err != nil {
-		return ViteCreateAppResult{}, err
+		return ViteAppCreateResult{}, err
 	}
 
 	// Validate template
@@ -51,14 +51,14 @@ func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreate
 	}
 
 	if !validTemplates[template] {
-		return ViteCreateAppResult{}, fmt.Errorf("invalid template '%s'. Valid templates are: vanilla, vanilla-ts, vue, vue-ts, react, react-ts, react-swc, react-swc-ts, preact, preact-ts, lit, lit-ts, svelte, svelte-ts, solid, solid-ts, qwik, qwik-ts", template)
+		return ViteAppCreateResult{}, fmt.Errorf("invalid template '%s'. Valid templates are: vanilla, vanilla-ts, vue, vue-ts, react, react-ts, react-swc, react-swc-ts, preact, preact-ts, lit, lit-ts, svelte, svelte-ts, solid, solid-ts, qwik, qwik-ts", template)
 	}
 
 
 	// Ensure apps directory exists
 	appsDir, err := config.EnsureAppsDirectory()
 	if err != nil {
-		return ViteCreateAppResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
+		return ViteAppCreateResult{}, fmt.Errorf("failed to ensure apps directory: %w", err)
 	}
 
 	// Create full app path
@@ -66,7 +66,7 @@ func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreate
 
 	// Check if app already exists
 	if _, err := os.Stat(appPath); err == nil {
-		return ViteCreateAppResult{}, fmt.Errorf("app '%s' already exists", appName)
+		return ViteAppCreateResult{}, fmt.Errorf("app '%s' already exists", appName)
 	}
 
 	// Determine package manager
@@ -74,13 +74,13 @@ func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreate
 	if _, err := exec.LookPath("pnpm"); err == nil {
 		packageManager = "pnpm"
 	} else if _, err := exec.LookPath("npm"); err != nil {
-		return ViteCreateAppResult{}, fmt.Errorf("neither pnpm nor npm is available. Please install Node.js and npm or pnpm")
+		return ViteAppCreateResult{}, fmt.Errorf("neither pnpm nor npm is available. Please install Node.js and npm or pnpm")
 	}
 
 	// Create the Vite app
 	var cmd *exec.Cmd
 	if packageManager == "pnpm" {
-		cmd = exec.Command("pnpm", "create", "vite", appName, "--template", template, "--", "--yes")
+		cmd = exec.Command("pnpm", "create", "vite", appName, "--template", template)
 	} else {
 		cmd = exec.Command("npm", "create", "vite@latest", appName, "--", "--template", template)
 	}
@@ -103,10 +103,10 @@ func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreate
 	if err := cmd.Run(); err != nil {
 		// Clean up if creation failed
 		os.RemoveAll(appPath)
-		return ViteCreateAppResult{}, fmt.Errorf("failed to create Vite app: %w\nError output: %s", err, errBuf.String())
+		return ViteAppCreateResult{}, fmt.Errorf("failed to create Vite app: %w\nError output: %s", err, errBuf.String())
 	}
 
-	return ViteCreateAppResult{
+	return ViteAppCreateResult{
 		AppName:     appName,
 		AppPath:     appPath,
 		Template:    template,
@@ -117,11 +117,11 @@ func ViteCreateApp(appName string, template string, showOutput bool) (ViteCreate
 }
 
 // CLI
-func ViteCreateAppCli() error {
+func ViteAppCreateCli() error {
 	args := os.Args[3:]
 
 	if len(args) < 1 || len(args) > 2 {
-		return fmt.Errorf("usage: layered-code tool vite_create_app <app_name> [template]")
+		return fmt.Errorf("usage: layered-code tool vite_app_create <app_name> [template]")
 	}
 
 	appName := args[0]
@@ -129,7 +129,7 @@ func ViteCreateAppCli() error {
 	if len(args) == 2 {
 		template = args[1]
 	}
-	result, err := ViteCreateApp(appName, template, true) // showOutput = true for CLI
+	result, err := ViteAppCreate(appName, template, true) // showOutput = true for CLI
 	if err != nil {
 		return fmt.Errorf("failed to create Vite app: %w", err)
 	}
@@ -145,7 +145,7 @@ func ViteCreateAppCli() error {
 }
 
 // MCP
-func ViteCreateAppMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+func ViteAppCreateMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	var args struct {
 		AppName  string `json:"app_name"`
 		Template string `json:"template,omitempty"`
@@ -155,7 +155,7 @@ func ViteCreateAppMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.Ca
 		return nil, err
 	}
 
-	result, err := ViteCreateApp(args.AppName, args.Template, false) // showOutput = false for MCP
+	result, err := ViteAppCreate(args.AppName, args.Template, false) // showOutput = false for MCP
 	if err != nil {
 		return nil, err
 	}

@@ -70,7 +70,7 @@ func registerTools(s *server.MCPServer) {
 	registerFileCopyTool(s)
 	
 	// Vite tools
-	registerViteCreateAppTool(s)
+	registerViteAppCreateTool(s)
 	
 	// Package Manager tools
 	registerPnpmInstallTool(s)
@@ -408,15 +408,15 @@ func registerGitShowTool(s *server.MCPServer) {
 	s.AddTool(tool, git.GitShowMcp)
 }
 
-// registerViteCreateAppTool registers the vite_create_app tool
-func registerViteCreateAppTool(s *server.MCPServer) {
-	tool := mcp.NewTool("vite_create_app",
+// registerViteAppCreateTool registers the vite_app_create tool
+func registerViteAppCreateTool(s *server.MCPServer) {
+	tool := mcp.NewTool("vite_app_create",
 		mcp.WithDescription("Create a new Vite app in the apps directory with specified template (dependencies not installed - use pnpm_install)"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to create (must be unique, cannot contain special characters or '..')")),
 		mcp.WithString("template", mcp.Description("Vite template to use (default: react-ts). Options: vanilla, vanilla-ts, vue, vue-ts, react, react-ts, react-swc, react-swc-ts, preact, preact-ts, lit, lit-ts, svelte, svelte-ts, solid, solid-ts, qwik, qwik-ts")),
 	)
 
-	s.AddTool(tool, vite.ViteCreateAppMcp)
+	s.AddTool(tool, vite.ViteAppCreateMcp)
 }
 
 // registerPnpmInstallTool registers the pnpm_install tool
