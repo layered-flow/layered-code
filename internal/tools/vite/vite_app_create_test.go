@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestViteCreateAppValidation(t *testing.T) {
+func TestViteAppCreateValidation(t *testing.T) {
 	// Test cases for validation only
 	tests := []struct {
 		name      string
@@ -54,24 +54,24 @@ func TestViteCreateAppValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Run the function - it will fail early on validation
-			_, err := ViteCreateApp(tt.appName, "", false)
+			_, err := ViteAppCreate(tt.appName, "", false)
 
 			// Check error expectations
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ViteCreateApp() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ViteAppCreate() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if tt.wantErr && err != nil && tt.errMsg != "" {
 				if !strings.Contains(err.Error(), tt.errMsg) {
-					t.Errorf("ViteCreateApp() error = %v, want error containing %v", err.Error(), tt.errMsg)
+					t.Errorf("ViteAppCreate() error = %v, want error containing %v", err.Error(), tt.errMsg)
 				}
 			}
 		})
 	}
 }
 
-func TestViteCreateAppTemplateValidation(t *testing.T) {
+func TestViteAppCreateTemplateValidation(t *testing.T) {
 	tests := []struct {
 		name     string
 		appName  string
@@ -103,27 +103,27 @@ func TestViteCreateAppTemplateValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Run the function - it will fail early on validation
-			_, err := ViteCreateApp(tt.appName, tt.template, false)
+			_, err := ViteAppCreate(tt.appName, tt.template, false)
 
 			// For valid cases, we expect it to fail later (no package manager available in test)
 			if !tt.wantErr && err != nil {
 				// Check if it's failing for the right reason (package manager not found)
 				if !strings.Contains(err.Error(), "neither pnpm nor npm is available") &&
 				   !strings.Contains(err.Error(), "app") {
-					t.Errorf("ViteCreateApp() unexpected error = %v", err)
+					t.Errorf("ViteAppCreate() unexpected error = %v", err)
 				}
 				return
 			}
 
 			// Check error expectations for invalid cases
 			if tt.wantErr && err == nil {
-				t.Errorf("ViteCreateApp() expected error but got none")
+				t.Errorf("ViteAppCreate() expected error but got none")
 				return
 			}
 
 			if tt.wantErr && err != nil && tt.errMsg != "" {
 				if !strings.Contains(err.Error(), tt.errMsg) {
-					t.Errorf("ViteCreateApp() error = %v, want error containing %v", err.Error(), tt.errMsg)
+					t.Errorf("ViteAppCreate() error = %v, want error containing %v", err.Error(), tt.errMsg)
 				}
 			}
 		})

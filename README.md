@@ -262,7 +262,7 @@ layered-code --help
   - `tool lc_file_copy` - Copy a file within an application directory
 
   **Vite Tools:**
-  - `tool vite_create_app` - Create a new Vite app with various templates (React, Vue, Svelte, etc.)
+  - `tool vite_app_create` - Create a new Vite app with various templates (React, Vue, Svelte, etc.)
 
   **Package Manager Tools:**
   - `tool pnpm_install` - Install dependencies using pnpm (preferred) or npm

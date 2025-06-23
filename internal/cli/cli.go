@@ -29,7 +29,7 @@ func PrintUsage() {
 	fmt.Println("  tool lc_file_copy         Copy a file within an app")
 	fmt.Println()
 	fmt.Println("  Vite Tools:")
-	fmt.Println("  tool vite_create_app      Create a new Vite app with template")
+	fmt.Println("  tool vite_app_create      Create a new Vite app with template")
 	fmt.Println()
 	fmt.Println("  Package Manager Tools:")
 	fmt.Println("  tool pnpm_install         Install dependencies using pnpm (preferred) or npm")
@@ -90,8 +90,8 @@ func RunTool() error {
 		return lc.LcFileCopyCli()
 
 	// Vite tools
-	case "vite_create_app":
-		return vite.ViteCreateAppCli()
+	case "vite_app_create":
+		return vite.ViteAppCreateCli()
 
 	// Package Manager tools
 	case "pnpm_install":
