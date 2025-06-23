@@ -8,6 +8,7 @@ import (
 	"github.com/layered-flow/layered-code/internal/notifications"
 	"github.com/layered-flow/layered-code/internal/tools/git"
 	"github.com/layered-flow/layered-code/internal/tools/lc"
+	"github.com/layered-flow/layered-code/internal/tools/nextjs"
 	"github.com/layered-flow/layered-code/internal/tools/pnpm"
 	"github.com/layered-flow/layered-code/internal/tools/vite"
 	"github.com/layered-flow/layered-code/internal/websocket"
@@ -71,6 +72,9 @@ func registerTools(s *server.MCPServer) {
 	
 	// Vite tools
 	registerViteAppCreateTool(s)
+	
+	// Next.js tools
+	registerNextjsAppCreateTool(s)
 	
 	// Package Manager tools
 	registerPnpmInstallTool(s)
@@ -417,6 +421,20 @@ func registerViteAppCreateTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, vite.ViteAppCreateMcp)
+}
+
+// registerNextjsAppCreateTool registers the nextjs_app_create tool
+func registerNextjsAppCreateTool(s *server.MCPServer) {
+	tool := mcp.NewTool("nextjs_app_create",
+		mcp.WithDescription("Create a new Next.js app in the apps directory with specified template (dependencies not installed - use pnpm_install)"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app to create (must be unique, cannot contain special characters or '..')")),
+		mcp.WithString("template", mcp.Description("Next.js template to use (default: typescript). Options: typescript, javascript, tailwind, app, app-tw")),
+		mcp.WithBoolean("use_src_dir", mcp.Description("Use src directory structure (default: true)")),
+		mcp.WithString("import_alias", mcp.Description("Import alias to use (default: @/*)")),
+		mcp.WithBoolean("use_turbopack", mcp.Description("Use Turbopack (default: true)")),
+	)
+
+	s.AddTool(tool, nextjs.NextjsAppCreateMcp)
 }
 
 // registerPnpmInstallTool registers the pnpm_install tool
