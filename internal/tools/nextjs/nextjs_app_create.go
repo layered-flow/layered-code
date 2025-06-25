@@ -195,7 +195,7 @@ func NextjsAppCreateCli() error {
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: layered-code tool nextjs_app_create [flags] <app_name> [template]\n\n")
 		fmt.Fprintf(os.Stderr, "Arguments:\n")
-		fmt.Fprintf(os.Stderr, "  app_name    Name of the Next.js app to create\n")
+		fmt.Fprintf(os.Stderr, "  app_name    Name of the Next.js app to create (lowercase, letters/numbers/dash/underscore only)\n")
 		fmt.Fprintf(os.Stderr, "  template    Template to use (default: typescript)\n")
 		fmt.Fprintf(os.Stderr, "              Options: typescript, javascript, tailwind, app, app-tw\n\n")
 		fmt.Fprintf(os.Stderr, "Flags:\n")

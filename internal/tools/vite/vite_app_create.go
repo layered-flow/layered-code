@@ -121,7 +121,7 @@ func ViteAppCreateCli() error {
 	args := os.Args[3:]
 
 	if len(args) < 1 || len(args) > 2 {
-		return fmt.Errorf("usage: layered-code tool vite_app_create <app_name> [template]")
+		return fmt.Errorf("usage: layered-code tool vite_app_create <app_name> [template]\nNote: app_name must be lowercase, can contain letters, numbers, dashes, and underscores")
 	}
 
 	appName := args[0]
