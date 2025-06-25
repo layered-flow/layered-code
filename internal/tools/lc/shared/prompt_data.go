@@ -1,4 +1,4 @@
-package lc
+package shared
 
 import (
 	_ "embed"
@@ -27,7 +27,8 @@ type PromptReadResult struct {
 }
 
 // Embedded prompt files
-//go:embed data/general_principles.md
+//
+//go:embed prompts/1_general_principles.md
 var generalPrinciplesPrompt string
 
 // PromptKey represents a composite key for prompt ID and version
@@ -36,20 +37,13 @@ type PromptKey struct {
 	Version int
 }
 
-// promptsMap stores all available prompts with composite keys (ID, Version)
-var promptsMap = map[PromptKey]Prompt{
+// PromptsMap stores all available prompts with composite keys (ID, Version)
+var PromptsMap = map[PromptKey]Prompt{
 	{ID: 1, Version: 1}: {
 		ID:          1,
 		Version:     1,
 		Name:        "General Principles",
 		Description: "Collaborative coding assistant principles for adaptive, safe, and empowering development",
 		Content:     generalPrinciplesPrompt,
-	},
-	{ID: 1, Version: 2}: {
-		ID:          1,
-		Version:     2,
-		Name:        "General Principles",
-		Description: "Enhanced collaborative coding assistant principles with improved safety and user empowerment",
-		Content:     generalPrinciplesPrompt + "\n\n## Version 2 Updates\n- Enhanced safety protocols\n- Improved user empowerment features",
 	},
 }

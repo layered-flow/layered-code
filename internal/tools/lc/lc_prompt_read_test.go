@@ -3,6 +3,8 @@ package lc
 import (
 	"strings"
 	"testing"
+
+	"github.com/layered-flow/layered-code/internal/tools/lc/shared"
 )
 
 func TestPromptRead(t *testing.T) {
@@ -76,7 +78,7 @@ func TestPromptRead(t *testing.T) {
 
 func TestPromptsMapIntegrity(t *testing.T) {
 	// Verify all prompts in the map have valid data
-	for key, prompt := range promptsMap {
+	for key, prompt := range shared.PromptsMap {
 		if prompt.ID == 0 {
 			t.Errorf("Prompt with key %+v has empty ID", key)
 		}
@@ -150,11 +152,11 @@ func TestPromptReadWithVersion(t *testing.T) {
 
 func TestPromptReadVersionEdgeCases(t *testing.T) {
 	// Save original promptsMap
-	originalMap := promptsMap
-	defer func() { promptsMap = originalMap }()
+	originalMap := shared.PromptsMap
+	defer func() { shared.PromptsMap = originalMap }()
 	
 	// Create test data with multiple versions
-	promptsMap = map[PromptKey]Prompt{
+	shared.PromptsMap = map[shared.PromptKey]shared.Prompt{
 		{ID: 1, Version: 1}: {
 			ID:          1,
 			Version:     1,

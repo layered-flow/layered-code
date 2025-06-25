@@ -7,15 +7,16 @@ import (
 	"os"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/layered-flow/layered-code/internal/tools/lc/shared"
 )
 
 // PromptList returns a list of all available prompts with their names and descriptions
 // Only the highest version of each prompt ID is shown
-func PromptList() (PromptListResult, error) {
+func PromptList() (shared.PromptListResult, error) {
 	// Create a map to track the highest version for each prompt ID
-	highestVersions := make(map[int]Prompt)
+	highestVersions := make(map[int]shared.Prompt)
 	
-	for _, prompt := range promptsMap {
+	for _, prompt := range shared.PromptsMap {
 		existing, exists := highestVersions[prompt.ID]
 		if !exists || prompt.Version > existing.Version {
 			highestVersions[prompt.ID] = prompt
@@ -23,10 +24,10 @@ func PromptList() (PromptListResult, error) {
 	}
 	
 	// Convert map to slice
-	prompts := make([]Prompt, 0, len(highestVersions))
+	prompts := make([]shared.Prompt, 0, len(highestVersions))
 	for _, prompt := range highestVersions {
 		// Create a copy without content for listing
-		prompts = append(prompts, Prompt{
+		prompts = append(prompts, shared.Prompt{
 			ID:          prompt.ID,
 			Version:     prompt.Version,
 			Name:        prompt.Name,
@@ -34,7 +35,7 @@ func PromptList() (PromptListResult, error) {
 		})
 	}
 	
-	return PromptListResult{
+	return shared.PromptListResult{
 		Prompts: prompts,
 		Count:   len(prompts),
 	}, nil

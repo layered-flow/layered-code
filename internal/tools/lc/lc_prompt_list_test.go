@@ -2,6 +2,8 @@ package lc
 
 import (
 	"testing"
+
+	"github.com/layered-flow/layered-code/internal/tools/lc/shared"
 )
 
 func TestPromptList(t *testing.T) {
@@ -50,11 +52,11 @@ func TestPromptList(t *testing.T) {
 
 func TestPromptListWithMultipleVersions(t *testing.T) {
 	// Save original promptsMap
-	originalMap := promptsMap
-	defer func() { promptsMap = originalMap }()
+	originalMap := shared.PromptsMap
+	defer func() { shared.PromptsMap = originalMap }()
 	
 	// Create test data with multiple versions
-	promptsMap = map[PromptKey]Prompt{
+	shared.PromptsMap = map[shared.PromptKey]shared.Prompt{
 		{ID: 1, Version: 1}: {
 			ID:          1,
 			Version:     1,

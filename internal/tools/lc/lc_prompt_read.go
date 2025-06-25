@@ -8,11 +8,12 @@ import (
 	"strings"
 
 	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/layered-flow/layered-code/internal/tools/lc/shared"
 )
 
 // PromptRead returns the full content of a specific prompt by ID
 // If no version is specified, returns the highest version
-func PromptRead(identifier string) (PromptReadResult, error) {
+func PromptRead(identifier string) (shared.PromptReadResult, error) {
 	// Check if identifier contains version (format: "id:version")
 	parts := strings.Split(identifier, ":")
 	requestedVersion := -1 // -1 means latest version
@@ -28,14 +29,14 @@ func PromptRead(identifier string) (PromptReadResult, error) {
 	// Parse as numeric ID
 	var promptID int
 	if _, err := fmt.Sscanf(identifier, "%d", &promptID); err != nil {
-		return PromptReadResult{}, fmt.Errorf("invalid prompt ID '%s': must be numeric", identifier)
+		return shared.PromptReadResult{}, fmt.Errorf("invalid prompt ID '%s': must be numeric", identifier)
 	}
 	
 	// Find the prompt with matching ID and version
-	var foundPrompt *Prompt
+	var foundPrompt *shared.Prompt
 	highestVersion := 0
 	
-	for key, prompt := range promptsMap {
+	for key, prompt := range shared.PromptsMap {
 		if key.ID == promptID {
 			if requestedVersion == -1 {
 				// Get highest version
@@ -52,7 +53,7 @@ func PromptRead(identifier string) (PromptReadResult, error) {
 	}
 	
 	if foundPrompt != nil {
-		return PromptReadResult{
+		return shared.PromptReadResult{
 			Name:        foundPrompt.Name,
 			Description: foundPrompt.Description,
 			Content:     foundPrompt.Content,
@@ -60,9 +61,9 @@ func PromptRead(identifier string) (PromptReadResult, error) {
 	}
 	
 	if requestedVersion != -1 {
-		return PromptReadResult{}, fmt.Errorf("prompt ID %d version %d not found", promptID, requestedVersion)
+		return shared.PromptReadResult{}, fmt.Errorf("prompt ID %d version %d not found", promptID, requestedVersion)
 	}
-	return PromptReadResult{}, fmt.Errorf("prompt ID %d not found", promptID)
+	return shared.PromptReadResult{}, fmt.Errorf("prompt ID %d not found", promptID)
 }
 
 // PromptReadCli handles the CLI command for reading a specific prompt
