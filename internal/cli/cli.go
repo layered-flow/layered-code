@@ -28,6 +28,7 @@ func PrintUsage() {
 	fmt.Println("  tool lc_file_move         Move or rename a file within an app")
 	fmt.Println("  tool lc_file_delete       Delete a file within an app")
 	fmt.Println("  tool lc_file_copy         Copy a file within an app")
+	fmt.Println("  tool lc_folder_delete     Delete a folder and all its contents within an app")
 	fmt.Println()
 	fmt.Println("  Vite Tools:")
 	fmt.Println("  tool vite_app_create      Create a new Vite app with template")
@@ -92,6 +93,8 @@ func RunTool() error {
 		return lc.LcFileDeleteCli()
 	case "lc_file_copy":
 		return lc.LcFileCopyCli()
+	case "lc_folder_delete":
+		return lc.LcFolderDeleteCli()
 
 	// Vite tools
 	case "vite_app_create":
@@ -140,7 +143,7 @@ func RunTool() error {
 		return git.GitRevertCli()
 	case "git_checkout":
 		return git.GitCheckoutCli()
-	
+
 	// Prompt tools
 	case "lc_prompt_list":
 		return lc.PromptListCli()
