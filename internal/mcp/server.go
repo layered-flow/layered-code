@@ -58,7 +58,7 @@ func registerTools(s *server.MCPServer) {
 	// LLMs MUST read General Principles (ID: 1) before any other actions
 	registerPromptListTool(s)
 	registerPromptReadTool(s)
-	
+
 	// File management tools
 	registerListAppsTool(s)
 	registerListFilesTool(s)
@@ -69,18 +69,19 @@ func registerTools(s *server.MCPServer) {
 	registerFileMoveTool(s)
 	registerFileDeleteTool(s)
 	registerFileCopyTool(s)
-	
+	registerFolderDeleteTool(s)
+
 	// Vite tools
 	registerViteAppCreateTool(s)
-	
+
 	// Next.js tools
 	registerNextjsAppCreateTool(s)
-	
+
 	// Package Manager tools
 	registerPnpmInstallTool(s)
 	registerPnpmAddTool(s)
 	registerPnpmPm2Tool(s)
-	
+
 	// Git tools
 	registerGitStatusTool(s)
 	registerGitDiffTool(s)
@@ -211,6 +212,17 @@ func registerFileCopyTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, lc.LcFileCopyMcp)
+}
+
+// registerFolderDeleteTool registers the lc_folder_delete tool
+func registerFolderDeleteTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_folder_delete",
+		mcp.WithDescription("⚠️ DESTRUCTIVE OPERATION ⚠️ Delete a folder and ALL its contents within an application directory. This action cannot be undone. Please confirm with the user before calling this tool."),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
+		mcp.WithString("folder_path", mcp.Required(), mcp.Description("Path to the folder relative to the app directory")),
+	)
+
+	s.AddTool(tool, lc.LcFolderDeleteMcp)
 }
 
 // registerGitStatusTool registers the git_status tool
