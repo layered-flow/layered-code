@@ -26,8 +26,8 @@ func TestPromptList(t *testing.T) {
 			if prompt.ID != 1 {
 				t.Errorf("Expected ID 1, got %d", prompt.ID)
 			}
-			if prompt.Version != 2 {
-				t.Errorf("Expected Version 2 (highest version), got %d", prompt.Version)
+			if prompt.Version != 1 {
+				t.Errorf("Expected Version 1, got %d", prompt.Version)
 			}
 			if prompt.Description == "" {
 				t.Error("General Principles prompt has empty description")
