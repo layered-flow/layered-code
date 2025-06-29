@@ -2,6 +2,8 @@ package lc
 
 import (
 	"testing"
+
+	"github.com/layered-flow/layered-code/internal/tools/lc/shared"
 )
 
 func TestPromptList(t *testing.T) {
@@ -24,8 +26,8 @@ func TestPromptList(t *testing.T) {
 			if prompt.ID != 1 {
 				t.Errorf("Expected ID 1, got %d", prompt.ID)
 			}
-			if prompt.Version != 2 {
-				t.Errorf("Expected Version 2 (highest version), got %d", prompt.Version)
+			if prompt.Version != 1 {
+				t.Errorf("Expected Version 1, got %d", prompt.Version)
 			}
 			if prompt.Description == "" {
 				t.Error("General Principles prompt has empty description")
@@ -50,11 +52,11 @@ func TestPromptList(t *testing.T) {
 
 func TestPromptListWithMultipleVersions(t *testing.T) {
 	// Save original promptsMap
-	originalMap := promptsMap
-	defer func() { promptsMap = originalMap }()
+	originalMap := shared.PromptsMap
+	defer func() { shared.PromptsMap = originalMap }()
 	
 	// Create test data with multiple versions
-	promptsMap = map[PromptKey]Prompt{
+	shared.PromptsMap = map[shared.PromptKey]shared.Prompt{
 		{ID: 1, Version: 1}: {
 			ID:          1,
 			Version:     1,
