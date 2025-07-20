@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/layered-flow/layered-code/internal/tools/git"
+	"github.com/layered-flow/layered-code/internal/tools/js"
 	"github.com/layered-flow/layered-code/internal/tools/lc"
 	"github.com/layered-flow/layered-code/internal/tools/nextjs"
 	"github.com/layered-flow/layered-code/internal/tools/pnpm"
@@ -42,6 +43,9 @@ func PrintUsage() {
 	fmt.Println("  tool pnpm_add             Add a package using pnpm (preferred) or npm")
 	fmt.Println("  tool pnpm_view            View package info from npm registry (name, version, description, dependencies, homepage)")
 	fmt.Println("  tool pnpm_pm2             Manage Node.js processes with PM2 (auto-detects scripts)")
+	fmt.Println()
+	fmt.Println("  JavaScript/TypeScript Tools:")
+	fmt.Println("  tool js_lint              Run ESLint analysis on JavaScript/TypeScript files and return results in JSON format")
 	fmt.Println()
 	fmt.Println("  Git Tools:")
 	fmt.Println("  tool git_status           Show the working tree status")
@@ -117,6 +121,10 @@ func RunTool() error {
 		return pnpm.PnpmViewCli()
 	case "pnpm_pm2":
 		return pnpm.PnpmPm2Cli()
+
+	// JavaScript/TypeScript tools
+	case "js_lint":
+		return js.JsLintCli()
 
 	// Git tools
 	case "git_status":
