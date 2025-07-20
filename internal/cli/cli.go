@@ -40,6 +40,7 @@ func PrintUsage() {
 	fmt.Println("  Package Manager Tools:")
 	fmt.Println("  tool pnpm_install         Install dependencies using pnpm (preferred) or npm")
 	fmt.Println("  tool pnpm_add             Add a package using pnpm (preferred) or npm")
+	fmt.Println("  tool pnpm_view            View package info from npm registry (name, version, description, dependencies, homepage)")
 	fmt.Println("  tool pnpm_pm2             Manage Node.js processes with PM2 (auto-detects scripts)")
 	fmt.Println()
 	fmt.Println("  Git Tools:")
@@ -112,6 +113,8 @@ func RunTool() error {
 		return pnpm.PnpmInstallCli()
 	case "pnpm_add":
 		return pnpm.PnpmAddCli()
+	case "pnpm_view":
+		return pnpm.PnpmViewCli()
 	case "pnpm_pm2":
 		return pnpm.PnpmPm2Cli()
 

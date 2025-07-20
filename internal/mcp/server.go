@@ -81,6 +81,7 @@ func registerTools(s *server.MCPServer) {
 	// Package Manager tools
 	registerPnpmInstallTool(s)
 	registerPnpmAddTool(s)
+	registerPnpmViewTool(s)
 	registerPnpmPm2Tool(s)
 
 	// Git tools
@@ -480,6 +481,16 @@ func registerPnpmAddTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, pnpm.PnpmAddMcp)
+}
+
+// registerPnpmViewTool registers the pnpm_view tool
+func registerPnpmViewTool(s *server.MCPServer) {
+	tool := mcp.NewTool("pnpm_view",
+		mcp.WithDescription("View package information from npm registry including name, version, description, license, repository, keywords, maintainers, and all dependency types"),
+		mcp.WithString("package_name", mcp.Required(), mcp.Description("Name of the package to view, optionally with version (e.g. 'express', 'express@4.18.0', '@types/node', 'react@beta')")),
+	)
+
+	s.AddTool(tool, pnpm.PnpmViewMcp)
 }
 
 // registerPnpmPm2Tool registers the pnpm_pm2 tool
