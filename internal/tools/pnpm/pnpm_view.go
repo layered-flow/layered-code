@@ -13,13 +13,19 @@ import (
 )
 
 // Types
+type Repository struct {
+	Type      string `json:"type,omitempty"`
+	URL       string `json:"url,omitempty"`
+	Directory string `json:"directory,omitempty"`
+}
+
 type PnpmViewResult struct {
 	Name             string            `json:"name"`
 	Version          string            `json:"version"`
 	Description      string            `json:"description"`
 	Homepage         string            `json:"homepage"`
 	License          string            `json:"license,omitempty"`
-	Repository       interface{}       `json:"repository,omitempty"`
+	Repository       *Repository       `json:"repository,omitempty"`
 	Keywords         []string          `json:"keywords,omitempty"`
 	Maintainers      []interface{}     `json:"maintainers,omitempty"`
 	Dependencies     map[string]string `json:"dependencies,omitempty"`
@@ -135,13 +141,35 @@ func PnpmView(packageName string) (PnpmViewResult, error) {
 		}
 	}
 
+	// Extract repository info (npm can return string or object)
+	var repository *Repository
+	switch v := npmData.Repository.(type) {
+	case string:
+		repository = &Repository{URL: v}
+	case map[string]interface{}:
+		repository = &Repository{}
+		if typeVal, ok := v["type"].(string); ok {
+			repository.Type = typeVal
+		}
+		if urlVal, ok := v["url"].(string); ok {
+			repository.URL = urlVal
+		}
+		if dirVal, ok := v["directory"].(string); ok {
+			repository.Directory = dirVal
+		}
+		// Only set repository if we got at least one field
+		if repository.Type == "" && repository.URL == "" && repository.Directory == "" {
+			repository = nil
+		}
+	}
+
 	return PnpmViewResult{
 		Name:             npmData.Name,
 		Version:          npmData.Version,
 		Description:      npmData.Description,
 		Homepage:         npmData.Homepage,
 		License:          licenseStr,
-		Repository:       npmData.Repository,
+		Repository:       repository,
 		Keywords:         npmData.Keywords,
 		Maintainers:      npmData.Maintainers,
 		Dependencies:     npmData.Dependencies,
@@ -178,15 +206,8 @@ func PnpmViewCli() error {
 	}
 	
 	// Display repository
-	if result.Repository != nil {
-		switch repo := result.Repository.(type) {
-		case string:
-			fmt.Printf("Repository: %s\n", repo)
-		case map[string]interface{}:
-			if url, ok := repo["url"].(string); ok {
-				fmt.Printf("Repository: %s\n", url)
-			}
-		}
+	if result.Repository != nil && result.Repository.URL != "" {
+		fmt.Printf("Repository: %s\n", result.Repository.URL)
 	}
 	
 	// Display keywords

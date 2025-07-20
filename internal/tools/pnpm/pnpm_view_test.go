@@ -105,9 +105,10 @@ func TestPnpmViewResult(t *testing.T) {
 		Description: "A test package",
 		Homepage:    "https://example.com",
 		License:     "MIT",
-		Repository: map[string]interface{}{
-			"type": "git",
-			"url":  "https://github.com/user/repo.git",
+		Repository: &Repository{
+			Type:      "git",
+			URL:       "git+https://git.example.com/user/repo.git",
+			Directory: "packages/test",
 		},
 		Keywords: []string{"test", "package"},
 		Dependencies: map[string]string{
@@ -121,6 +122,19 @@ func TestPnpmViewResult(t *testing.T) {
 	}
 	if result.Version != "1.0.0" {
 		t.Errorf("Expected Version to be '1.0.0', got '%s'", result.Version)
+	}
+	if result.Repository == nil {
+		t.Errorf("Expected Repository to be set")
+	} else {
+		if result.Repository.Type != "git" {
+			t.Errorf("Expected Repository.Type to be 'git', got '%s'", result.Repository.Type)
+		}
+		if result.Repository.URL != "git+https://git.example.com/user/repo.git" {
+			t.Errorf("Expected Repository.URL, got '%s'", result.Repository.URL)
+		}
+		if result.Repository.Directory != "packages/test" {
+			t.Errorf("Expected Repository.Directory to be 'packages/test', got '%s'", result.Repository.Directory)
+		}
 	}
 	if len(result.Keywords) != 2 {
 		t.Errorf("Expected 2 keywords, got %d", len(result.Keywords))

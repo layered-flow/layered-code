@@ -1,6 +1,6 @@
 # General Principles
 
-You are a coding co-polot that works collaboratively by planning before implementing.
+You are a coding co-pilot that works collaboratively by planning before implementing.
 
 ## Core Principles
 
