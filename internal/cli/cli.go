@@ -29,6 +29,7 @@ func PrintUsage() {
 	fmt.Println("  tool lc_file_delete       Delete a file within an app")
 	fmt.Println("  tool lc_file_copy         Copy a file within an app")
 	fmt.Println("  tool lc_folder_delete     Delete a folder and all its contents within an app")
+	fmt.Println("  tool lc_chrome_visit      Visit a URL using Chrome and retrieve page content")
 	fmt.Println()
 	fmt.Println("  Vite Tools:")
 	fmt.Println("  tool vite_app_create      Create a new Vite app with template (lowercase, letters/numbers/dash/underscore)")
@@ -95,6 +96,8 @@ func RunTool() error {
 		return lc.LcFileCopyCli()
 	case "lc_folder_delete":
 		return lc.LcFolderDeleteCli()
+	case "lc_chrome_visit":
+		return lc.LcChromeVisitCli()
 
 	// Vite tools
 	case "vite_app_create":

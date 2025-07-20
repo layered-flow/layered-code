@@ -70,6 +70,7 @@ func registerTools(s *server.MCPServer) {
 	registerFileDeleteTool(s)
 	registerFileCopyTool(s)
 	registerFolderDeleteTool(s)
+	registerChromeVisitTool(s)
 
 	// Vite tools
 	registerViteAppCreateTool(s)
@@ -223,6 +224,17 @@ func registerFolderDeleteTool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, lc.LcFolderDeleteMcp)
+}
+
+// registerChromeVisitTool registers the lc_chrome_visit tool
+func registerChromeVisitTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_chrome_visit",
+		mcp.WithDescription("Visit a URL using Chrome browser and retrieve the page content after JavaScript loads"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
+		mcp.WithString("url", mcp.Required(), mcp.Description("The URL to visit")),
+	)
+
+	s.AddTool(tool, lc.LcChromeVisitMcp)
 }
 
 // registerGitStatusTool registers the git_status tool

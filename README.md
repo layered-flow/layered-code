@@ -233,6 +233,7 @@ layered-code --help
   - `tool lc_file_delete` - Delete a file within an application directory
   - `tool lc_file_copy` - Copy a file within an application directory
   - `tool lc_folder_delete` - Delete a folder and all its contents within an application directory (destructive operation)
+  - `tool lc_chrome_visit` - Visit a URL using Chrome browser and retrieve the page content after JavaScript loads
 
   **Vite Tools:**
   - `tool vite_app_create` - Create a new Vite app with various templates (React, Vue, Svelte, etc.)
