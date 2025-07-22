@@ -86,7 +86,7 @@ func registerTools(s *server.MCPServer) {
 	registerPnpmPm2Tool(s)
 
 	// JavaScript/TypeScript tools
-	registerJsLintTool(s)
+	registerLcJsLintTool(s)
 
 	// Git tools
 	registerGitStatusTool(s)
@@ -509,16 +509,16 @@ func registerPnpmPm2Tool(s *server.MCPServer) {
 	s.AddTool(tool, pnpm.PnpmPm2Mcp)
 }
 
-// registerJsLintTool registers the js_lint tool
-func registerJsLintTool(s *server.MCPServer) {
-	tool := mcp.NewTool("js_lint",
+// registerLcJsLintTool registers the lc_js_lint tool
+func registerLcJsLintTool(s *server.MCPServer) {
+	tool := mcp.NewTool("lc_js_lint",
 		mcp.WithDescription("Run ESLint analysis on JavaScript/TypeScript files and return results in JSON format"),
 		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory (must exactly match an app name from lc_apps_list)")),
-		mcp.WithObject("files", mcp.Required(), mcp.Description("File path(s) or glob pattern(s) to lint (relative to app directory). Can be a string for single file/pattern (e.g. 'src/index.ts' or 'src/**/*.{js,ts}') or an array for multiple patterns (e.g. ['src/components/*.tsx', 'src/utils/*.js'])")),
+		mcp.WithObject("files", mcp.Required(), mcp.Description("File path(s) or glob pattern(s) to lint (relative to app directory) - pass as JSON array (e.g. ['src/index.ts', 'src/**/*.{js,ts}'])")),
 		mcp.WithString("config", mcp.Description("Optional path to ESLint config file (relative to app directory). If not specified, ESLint will use default config discovery")),
 	)
 
-	s.AddTool(tool, js.JsLintMcp)
+	s.AddTool(tool, js.LcJsLintMcp)
 }
 
 // registerPromptListTool registers the lc_prompt_list tool

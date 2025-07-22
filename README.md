@@ -256,6 +256,16 @@ layered-code --help
     - `logs` command includes `--nostream` by default (shows last 15 lines and exits)
     - Additional flags can be passed, e.g., `logs myapp --lines 100` to show more lines
 
+  **JavaScript/TypeScript Tools:**
+  - `tool lc_js_lint` - Run ESLint analysis on JavaScript/TypeScript files
+    - Runs ESLint in specified app directory and returns results in JSON format
+    - Usage: `lc_js_lint <app_name> <file1> [file2...] [config_file]`
+    - Examples:
+      - Single file: `lc_js_lint myapp src/index.js`
+      - Multiple files: `lc_js_lint myapp src/index.js src/app.js`
+      - With glob patterns: `lc_js_lint myapp "src/**/*.js" "tests/**/*.js"`
+      - With config: `lc_js_lint myapp src/index.js .eslintrc.json`
+
   **Prompt Tools:**
   - `tool lc_prompt_list` - List all available prompts with numeric IDs, names, versions and descriptions
     - Only shows the highest version of each prompt

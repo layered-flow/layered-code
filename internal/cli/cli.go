@@ -45,7 +45,7 @@ func PrintUsage() {
 	fmt.Println("  tool pnpm_pm2             Manage Node.js processes with PM2 (auto-detects scripts)")
 	fmt.Println()
 	fmt.Println("  JavaScript/TypeScript Tools:")
-	fmt.Println("  tool js_lint              Run ESLint analysis on JavaScript/TypeScript files and return results in JSON format")
+	fmt.Println("  tool lc_js_lint           Run ESLint analysis on JavaScript/TypeScript files (usage: lc_js_lint <app_name> <file1> [file2...] [config_file])")
 	fmt.Println()
 	fmt.Println("  Git Tools:")
 	fmt.Println("  tool git_status           Show the working tree status")
@@ -123,8 +123,8 @@ func RunTool() error {
 		return pnpm.PnpmPm2Cli()
 
 	// JavaScript/TypeScript tools
-	case "js_lint":
-		return js.JsLintCli()
+	case "lc_js_lint":
+		return js.LcJsLintCli()
 
 	// Git tools
 	case "git_status":

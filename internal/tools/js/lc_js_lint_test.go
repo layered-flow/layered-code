@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestJsLint(t *testing.T) {
+func TestLcJsLint(t *testing.T) {
 	// Create a temporary test directory
 	tempDir := t.TempDir()
 	appsDir := filepath.Join(tempDir, "apps")
@@ -44,13 +44,13 @@ func TestJsLint(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Run("single file as string", func(t *testing.T) {
-		params := JsLintParams{
+	t.Run("single file", func(t *testing.T) {
+		params := LcJsLintParams{
 			AppName: "testapp",
-			Files:   "test.js",
+			Files:   []string{"test.js"},
 		}
 
-		result, err := JsLint(params)
+		result, err := LcJsLint(params)
 		if err != nil {
 			t.Errorf("Expected no error, got: %v", err)
 		}
@@ -71,12 +71,12 @@ func TestJsLint(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		params := JsLintParams{
+		params := LcJsLintParams{
 			AppName: "testapp",
-			Files:   []interface{}{"test.js", "test2.js"},
+			Files:   []string{"test.js", "test2.js"},
 		}
 
-		result, err := JsLint(params)
+		result, err := LcJsLint(params)
 		if err != nil {
 			t.Errorf("Expected no error, got: %v", err)
 		}
@@ -91,12 +91,12 @@ func TestJsLint(t *testing.T) {
 	})
 
 	t.Run("glob pattern", func(t *testing.T) {
-		params := JsLintParams{
+		params := LcJsLintParams{
 			AppName: "testapp",
-			Files:   "*.js",
+			Files:   []string{"*.js"},
 		}
 
-		result, err := JsLint(params)
+		result, err := LcJsLint(params)
 		if err != nil {
 			t.Errorf("Expected no error, got: %v", err)
 		}
@@ -110,28 +110,13 @@ func TestJsLint(t *testing.T) {
 		}
 	})
 
-	t.Run("empty files string", func(t *testing.T) {
-		params := JsLintParams{
-			AppName: "testapp",
-			Files:   "",
-		}
-
-		_, err := JsLint(params)
-		if err == nil {
-			t.Error("Expected error for empty files string")
-		}
-		if !strings.Contains(err.Error(), "files parameter cannot be empty") {
-			t.Errorf("Expected 'files parameter cannot be empty' error, got: %v", err)
-		}
-	})
-
 	t.Run("empty files array", func(t *testing.T) {
-		params := JsLintParams{
+		params := LcJsLintParams{
 			AppName: "testapp",
-			Files:   []interface{}{},
+			Files:   []string{},
 		}
 
-		_, err := JsLint(params)
+		_, err := LcJsLint(params)
 		if err == nil {
 			t.Error("Expected error for empty files array")
 		}
@@ -140,28 +125,43 @@ func TestJsLint(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid files type", func(t *testing.T) {
-		params := JsLintParams{
+	t.Run("empty string in files array", func(t *testing.T) {
+		params := LcJsLintParams{
 			AppName: "testapp",
-			Files:   123, // Invalid type
+			Files:   []string{"test.js", ""},
 		}
 
-		_, err := JsLint(params)
+		_, err := LcJsLint(params)
 		if err == nil {
-			t.Error("Expected error for invalid files type")
+			t.Error("Expected error for empty string in files array")
 		}
-		if !strings.Contains(err.Error(), "files parameter must be a string or array of strings") {
-			t.Errorf("Expected type error, got: %v", err)
+		if !strings.Contains(err.Error(), "file patterns cannot be empty") {
+			t.Errorf("Expected 'file patterns cannot be empty' error, got: %v", err)
+		}
+	})
+
+	t.Run("path traversal in files", func(t *testing.T) {
+		params := LcJsLintParams{
+			AppName: "testapp",
+			Files:   []string{"../../../etc/passwd"},
+		}
+
+		_, err := LcJsLint(params)
+		if err == nil {
+			t.Error("Expected error for path traversal")
+		}
+		if !strings.Contains(err.Error(), "file pattern cannot contain '..':") {
+			t.Errorf("Expected path traversal error, got: %v", err)
 		}
 	})
 
 	t.Run("non-existent app directory", func(t *testing.T) {
-		params := JsLintParams{
+		params := LcJsLintParams{
 			AppName: "nonexistent",
-			Files:   "test.js",
+			Files:   []string{"test.js"},
 		}
 
-		result, err := JsLint(params)
+		result, err := LcJsLint(params)
 		if err != nil {
 			t.Errorf("Expected graceful error handling, got error: %v", err)
 		}
@@ -180,12 +180,12 @@ func TestJsLint(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		params := JsLintParams{
+		params := LcJsLintParams{
 			AppName: "testapp",
-			Files:   []interface{}{"test.js", "file with space.js"},
+			Files:   []string{"test.js", "file with space.js"},
 		}
 
-		result, err := JsLint(params)
+		result, err := LcJsLint(params)
 		if err != nil {
 			t.Errorf("Expected no error, got: %v", err)
 		}
