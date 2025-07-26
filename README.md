@@ -257,14 +257,22 @@ layered-code --help
     - Additional flags can be passed, e.g., `logs myapp --lines 100` to show more lines
 
   **JavaScript/TypeScript Tools:**
-  - `tool lc_js_lint` - Run ESLint analysis on JavaScript/TypeScript files
+  - `tool lc_js_lint` - Run ESLint analysis on JavaScript/TypeScript files with optional auto-fix
     - Runs ESLint in specified app directory and returns results in JSON format
-    - Usage: `lc_js_lint <app_name> [--config=<config_file>] <files...>`
+    - Usage: `lc_js_lint <app_name> [--fix] [--config=<config_file>] <files...>`
+    - Options:
+      - `--fix`: Automatically fix problems that can be fixed
+      - `--config=<file>`: Use specific ESLint config file
+      - `--help`, `-h`: Show help message
+    - Important notes:
+      - Files must be relative paths (no absolute paths or `..` allowed)
+      - Config file must be relative to the app directory
+      - Only `--config` and `--fix` options are allowed for security
     - Examples:
       - Single file: `lc_js_lint myapp src/index.js`
-      - Multiple files: `lc_js_lint myapp src/index.js src/app.js`
+      - Lint and fix: `lc_js_lint myapp --fix src/index.js src/app.js`
       - With glob patterns: `lc_js_lint myapp "src/**/*.js" "tests/**/*.js"`
-      - With config: `lc_js_lint myapp --config=.eslintrc.json src/index.js`
+      - Fix with config: `lc_js_lint myapp --fix --config=.eslintrc.json src/index.js`
 
   **Prompt Tools:**
   - `tool lc_prompt_list` - List all available prompts with numeric IDs, names, versions and descriptions

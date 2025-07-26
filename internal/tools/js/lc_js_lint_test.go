@@ -8,11 +8,20 @@ import (
 )
 
 func TestLcJsLint(t *testing.T) {
-	// Create a temporary test directory
-	tempDir := t.TempDir()
+	// Create a temporary test directory within home directory for security validation
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tempDir := filepath.Join(homeDir, ".layered-test-"+t.Name())
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+	
 	appsDir := filepath.Join(tempDir, "apps")
-	os.Setenv("LAYERED_CODE_HOME", tempDir)
-	defer os.Unsetenv("LAYERED_CODE_HOME")
+	os.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
+	defer os.Unsetenv("LAYERED_APPS_DIRECTORY")
 
 	// Create apps directory
 	if err := os.MkdirAll(appsDir, 0755); err != nil {
@@ -155,6 +164,21 @@ func TestLcJsLint(t *testing.T) {
 		}
 	})
 
+	t.Run("path traversal in config", func(t *testing.T) {
+		params := LcJsLintParams{
+			AppName: "testapp",
+			Files:   []string{"test.js"},
+			Config:  "../../../etc/passwd",
+		}
+
+		_, err := LcJsLint(params)
+		if err == nil {
+			t.Error("Expected error for config path traversal")
+		} else if !strings.Contains(err.Error(), "config path cannot contain '..'") {
+			t.Errorf("Expected config path traversal error, got: %v", err)
+		}
+	})
+
 	t.Run("non-existent app directory", func(t *testing.T) {
 		params := LcJsLintParams{
 			AppName: "nonexistent",
@@ -194,6 +218,164 @@ func TestLcJsLint(t *testing.T) {
 		if result.Command != "" && strings.Contains(result.Command, "file with space.js") {
 			// Command should handle spaces properly
 			t.Logf("Command: %s", result.Command)
+		}
+	})
+}
+
+func TestLcJsLintCli(t *testing.T) {
+	// Create a temporary test directory within home directory for security validation
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tempDir := filepath.Join(homeDir, ".layered-test-cli-"+t.Name())
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+	
+	appsDir := filepath.Join(tempDir, "apps")
+	os.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
+	defer os.Unsetenv("LAYERED_APPS_DIRECTORY")
+
+	// Create apps directory
+	if err := os.MkdirAll(appsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create test app
+	testApp := filepath.Join(appsDir, "testapp")
+	if err := os.MkdirAll(testApp, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a simple JS file
+	jsFile := filepath.Join(testApp, "test.js")
+	jsContent := `function hello() {
+    console.log("hello");
+}`
+	if err := os.WriteFile(jsFile, []byte(jsContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Save original os.Args
+	origArgs := os.Args
+	defer func() { os.Args = origArgs }()
+
+	t.Run("CLI with --fix flag should be allowed", func(t *testing.T) {
+		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "--fix", "test.js"}
+		
+		// This should not error at CLI parsing level
+		err := LcJsLintCli()
+		// The actual ESLint execution might fail if ESLint is not installed, but --fix should be accepted
+		if err != nil && strings.Contains(err.Error(), "invalid option: --fix") {
+			t.Errorf("Should not get 'invalid option: --fix' error, got: %v", err)
+		}
+	})
+
+	t.Run("CLI with --no-eslintrc flag should be rejected", func(t *testing.T) {
+		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "test.js", "--no-eslintrc"}
+		
+		err := LcJsLintCli()
+		if err == nil {
+			t.Error("Expected error for --no-eslintrc flag")
+		}
+		if !strings.Contains(err.Error(), "invalid option: --no-eslintrc") {
+			t.Errorf("Expected 'invalid option: --no-eslintrc' error, got: %v", err)
+		}
+	})
+
+	t.Run("CLI with invalid flag after valid ones", func(t *testing.T) {
+		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "--fix", "test.js", "--quiet"}
+		
+		err := LcJsLintCli()
+		if err == nil {
+			t.Error("Expected error for --quiet flag")
+		}
+		if !strings.Contains(err.Error(), "invalid option: --quiet") {
+			t.Errorf("Expected 'invalid option: --quiet' error, got: %v", err)
+		}
+	})
+
+	t.Run("CLI with valid --config flag", func(t *testing.T) {
+		// Create a config file
+		configFile := filepath.Join(testApp, ".eslintrc.json")
+		configContent := `{
+  "rules": {
+    "semi": ["error", "always"]
+  }
+}`
+		if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
+			t.Fatal(err)
+		}
+
+		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "--config=.eslintrc.json", "test.js"}
+		
+		// This should not error at CLI parsing level
+		err := LcJsLintCli()
+		// The actual ESLint execution might fail if ESLint is not installed, but CLI parsing should succeed
+		if err != nil && strings.Contains(err.Error(), "invalid option") {
+			t.Errorf("Should not get 'invalid option' error for valid --config flag, got: %v", err)
+		}
+	})
+
+	t.Run("CLI with file starting with --", func(t *testing.T) {
+		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "--test.js"}
+		
+		err := LcJsLintCli()
+		if err == nil {
+			t.Error("Expected error for file starting with --")
+		}
+		if !strings.Contains(err.Error(), "invalid option: --test.js") {
+			t.Errorf("Expected 'invalid option: --test.js' error, got: %v", err)
+		}
+	})
+
+	t.Run("CLI with glob patterns", func(t *testing.T) {
+		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "src/**/*.js", "tests/**/*.js"}
+		
+		// This should not error at CLI parsing level
+		err := LcJsLintCli()
+		// The actual ESLint execution might fail if ESLint is not installed, but CLI parsing should succeed
+		if err != nil && strings.Contains(err.Error(), "invalid option") {
+			t.Errorf("Should not get 'invalid option' error for glob patterns, got: %v", err)
+		}
+	})
+
+	t.Run("CLI with config containing path traversal", func(t *testing.T) {
+		// Debug: log the exact arguments
+		testArgs := []string{"layered-code", "tool", "lc_js_lint", "testapp", "--config=../../etc/passwd", "test.js"}
+		t.Logf("Setting os.Args to: %v", testArgs)
+		os.Args = testArgs
+		
+		err := LcJsLintCli()
+		if err == nil {
+			t.Fatal("Expected error for config with path traversal, but got nil")
+		}
+		if !strings.Contains(err.Error(), "config path cannot contain '..'") {
+			t.Errorf("Expected 'config path cannot contain ..' error, but got: %v", err)
+		}
+	})
+
+	t.Run("CLI with both --fix and --config flags", func(t *testing.T) {
+		// Create a config file
+		configFile := filepath.Join(testApp, ".eslintrc.json")
+		configContent := `{
+  "rules": {
+    "semi": ["error", "always"]
+  }
+}`
+		if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
+			t.Fatal(err)
+		}
+
+		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "--fix", "--config=.eslintrc.json", "test.js"}
+		
+		// This should not error at CLI parsing level
+		err := LcJsLintCli()
+		// The actual ESLint execution might fail if ESLint is not installed, but CLI parsing should succeed
+		if err != nil && strings.Contains(err.Error(), "invalid option") {
+			t.Errorf("Should not get 'invalid option' error for valid flags, got: %v", err)
 		}
 	})
 }

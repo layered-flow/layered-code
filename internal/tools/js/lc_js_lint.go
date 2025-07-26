@@ -26,6 +26,7 @@ type LcJsLintParams struct {
 	AppName string   `json:"app_name"`
 	Files   []string `json:"files"`
 	Config  string   `json:"config,omitempty"`
+	Fix     bool     `json:"fix,omitempty"`
 }
 
 type LcJsLintResult struct {
@@ -91,6 +92,11 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 		args = append(args, "--config", configPath)
 	}
 
+	// Add fix flag if specified
+	if params.Fix {
+		args = append(args, "--fix")
+	}
+
 	// Add files to lint
 	args = append(args, params.Files...)
 
@@ -105,6 +111,7 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			exitCode = exitErr.ExitCode()
 			// ESLint returns exit code 1 when there are linting errors, which is expected
+			// We still need to handle this case and return the results
 			if exitCode != 1 {
 				// Build properly escaped command string
 				escapedArgs := make([]string, len(args))
@@ -120,6 +127,7 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 					ErrorOutput: string(output),
 				}, nil
 			}
+			// Exit code 1 means linting errors were found, continue processing
 		} else {
 			// Check if eslint is not found
 			if strings.Contains(err.Error(), "executable file not found") || strings.Contains(err.Error(), "command not found") {
@@ -168,8 +176,16 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 func LcJsLintCli() error {
 	args := os.Args[3:]
 
+	// Check for help flag
+	for _, arg := range args {
+		if arg == "--help" || arg == "-h" {
+			printJsLintHelp()
+			return nil
+		}
+	}
+
 	if len(args) < 1 {
-		return fmt.Errorf("usage: layered-code tool lc_js_lint <app_name> [--config=<config_file>] <files...>")
+		return fmt.Errorf("usage: layered-code tool lc_js_lint <app_name> [--fix] [--config=<config_file>] <files...>")
 	}
 
 	params := LcJsLintParams{
@@ -182,7 +198,13 @@ func LcJsLintCli() error {
 		arg := args[i]
 		if strings.HasPrefix(arg, "--config=") {
 			params.Config = strings.TrimPrefix(arg, "--config=")
+		} else if arg == "--fix" {
+			params.Fix = true
 		} else {
+			// Reject any other arguments starting with -- to prevent ESLint flag injection
+			if strings.HasPrefix(arg, "--") {
+				return fmt.Errorf("invalid option: %s (only --config and --fix are allowed)", arg)
+			}
 			fileArgs = append(fileArgs, arg)
 		}
 	}
@@ -219,12 +241,53 @@ func LcJsLintCli() error {
 
 	// Print summary
 	if result.Success {
-		fmt.Println("\n✓ No linting errors found")
+		if params.Fix {
+			fmt.Println("\n✓ No linting errors found (files were automatically fixed)")
+		} else {
+			fmt.Println("\n✓ No linting errors found")
+		}
 	} else {
-		fmt.Printf("\n✗ ESLint found issues (exit code: %d)\n", result.ExitCode)
+		if params.Fix {
+			fmt.Printf("\n✗ ESLint found issues that could not be automatically fixed (exit code: %d)\n", result.ExitCode)
+		} else {
+			fmt.Printf("\n✗ ESLint found issues (exit code: %d)\n", result.ExitCode)
+		}
 	}
 
 	return nil
+}
+
+func printJsLintHelp() {
+	fmt.Println("Usage: layered-code tool lc_js_lint <app_name> [options] <files...>")
+	fmt.Println()
+	fmt.Println("Run ESLint analysis on JavaScript/TypeScript files")
+	fmt.Println()
+	fmt.Println("Arguments:")
+	fmt.Println("  app_name    Name of the app directory")
+	fmt.Println("  files       Files or glob patterns to lint")
+	fmt.Println()
+	fmt.Println("Options:")
+	fmt.Println("  --fix                  Automatically fix problems")
+	fmt.Println("  --config=<file>        Use specific ESLint config file")
+	fmt.Println("  --help, -h             Show this help message")
+	fmt.Println()
+	fmt.Println("Examples:")
+	fmt.Println("  # Lint a single file")
+	fmt.Println("  layered-code tool lc_js_lint myapp src/index.js")
+	fmt.Println()
+	fmt.Println("  # Lint and fix multiple files")
+	fmt.Println("  layered-code tool lc_js_lint myapp --fix src/index.js src/app.js")
+	fmt.Println()
+	fmt.Println("  # Lint with custom config")
+	fmt.Println("  layered-code tool lc_js_lint myapp --config=.eslintrc.json src/**/*.js")
+	fmt.Println()
+	fmt.Println("  # Lint and fix with glob patterns")
+	fmt.Println("  layered-code tool lc_js_lint myapp --fix \"src/**/*.js\" \"tests/**/*.js\"")
+	fmt.Println()
+	fmt.Println("Notes:")
+	fmt.Println("  - Files must be relative paths (no absolute paths or '..' allowed)")
+	fmt.Println("  - Config file must be relative to the app directory")
+	fmt.Println("  - Only --config and --fix options are allowed for security")
 }
 
 // MCP
