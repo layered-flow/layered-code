@@ -55,6 +55,10 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 		if pattern == "" {
 			return LcJsLintResult{}, fmt.Errorf("file patterns cannot be empty")
 		}
+		// Validate against absolute paths
+		if filepath.IsAbs(pattern) {
+			return LcJsLintResult{}, fmt.Errorf("absolute paths are not allowed: %s", pattern)
+		}
 		// Validate against path traversal
 		if strings.Contains(pattern, "..") {
 			return LcJsLintResult{}, fmt.Errorf("file pattern cannot contain '..': %s", pattern)
@@ -84,6 +88,10 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 
 	// Add config file if specified
 	if params.Config != "" {
+		// Validate against absolute paths
+		if filepath.IsAbs(params.Config) {
+			return LcJsLintResult{}, fmt.Errorf("config path cannot be absolute: %s", params.Config)
+		}
 		// Validate that config path doesn't contain directory traversal
 		if strings.Contains(params.Config, "..") {
 			return LcJsLintResult{}, fmt.Errorf("config path cannot contain '..'")

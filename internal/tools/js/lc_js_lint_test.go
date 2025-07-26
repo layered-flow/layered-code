@@ -1,10 +1,14 @@
 package js
 
 import (
+	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/mark3labs/mcp-go/mcp"
 )
 
 func TestLcJsLint(t *testing.T) {
@@ -164,6 +168,21 @@ func TestLcJsLint(t *testing.T) {
 		}
 	})
 
+	t.Run("absolute path in files", func(t *testing.T) {
+		params := LcJsLintParams{
+			AppName: "testapp",
+			Files:   []string{"/etc/passwd"},
+		}
+
+		_, err := LcJsLint(params)
+		if err == nil {
+			t.Error("Expected error for absolute path")
+		}
+		if !strings.Contains(err.Error(), "absolute paths are not allowed:") {
+			t.Errorf("Expected absolute path error, got: %v", err)
+		}
+	})
+
 	t.Run("path traversal in config", func(t *testing.T) {
 		params := LcJsLintParams{
 			AppName: "testapp",
@@ -176,6 +195,21 @@ func TestLcJsLint(t *testing.T) {
 			t.Error("Expected error for config path traversal")
 		} else if !strings.Contains(err.Error(), "config path cannot contain '..'") {
 			t.Errorf("Expected config path traversal error, got: %v", err)
+		}
+	})
+
+	t.Run("absolute path in config", func(t *testing.T) {
+		params := LcJsLintParams{
+			AppName: "testapp",
+			Files:   []string{"test.js"},
+			Config:  "/etc/passwd",
+		}
+
+		_, err := LcJsLint(params)
+		if err == nil {
+			t.Error("Expected error for absolute config path")
+		} else if !strings.Contains(err.Error(), "config path cannot be absolute:") {
+			t.Errorf("Expected absolute config path error, got: %v", err)
 		}
 	})
 
@@ -218,6 +252,24 @@ func TestLcJsLint(t *testing.T) {
 		if result.Command != "" && strings.Contains(result.Command, "file with space.js") {
 			// Command should handle spaces properly
 			t.Logf("Command: %s", result.Command)
+		}
+	})
+
+	t.Run("with fix flag", func(t *testing.T) {
+		params := LcJsLintParams{
+			AppName: "testapp",
+			Files:   []string{"test.js"},
+			Fix:     true,
+		}
+
+		result, err := LcJsLint(params)
+		if err != nil {
+			t.Errorf("Expected no error, got: %v", err)
+		}
+
+		// Check that the command includes --fix
+		if result.Command != "" && !strings.Contains(result.Command, "--fix") {
+			t.Errorf("Expected command to contain --fix flag, got: %s", result.Command)
 		}
 	})
 }
@@ -331,6 +383,30 @@ func TestLcJsLintCli(t *testing.T) {
 		}
 	})
 
+	t.Run("CLI with absolute path file", func(t *testing.T) {
+		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "/etc/passwd"}
+		
+		err := LcJsLintCli()
+		if err == nil {
+			t.Error("Expected error for absolute path")
+		}
+		if !strings.Contains(err.Error(), "absolute paths are not allowed:") {
+			t.Errorf("Expected 'absolute paths are not allowed' error, got: %v", err)
+		}
+	})
+
+	t.Run("CLI with absolute config path", func(t *testing.T) {
+		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "--config=/etc/eslintrc", "test.js"}
+		
+		err := LcJsLintCli()
+		if err == nil {
+			t.Error("Expected error for absolute config path")
+		}
+		if !strings.Contains(err.Error(), "config path cannot be absolute:") {
+			t.Errorf("Expected 'config path cannot be absolute' error, got: %v", err)
+		}
+	})
+
 	t.Run("CLI with glob patterns", func(t *testing.T) {
 		os.Args = []string{"layered-code", "tool", "lc_js_lint", "testapp", "src/**/*.js", "tests/**/*.js"}
 		
@@ -376,6 +452,113 @@ func TestLcJsLintCli(t *testing.T) {
 		// The actual ESLint execution might fail if ESLint is not installed, but CLI parsing should succeed
 		if err != nil && strings.Contains(err.Error(), "invalid option") {
 			t.Errorf("Should not get 'invalid option' error for valid flags, got: %v", err)
+		}
+	})
+}
+
+func TestLcJsLintMcp(t *testing.T) {
+	// Import required packages for MCP testing
+	ctx := context.Background()
+	
+	// Create a temporary test directory within home directory for security validation
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tempDir := filepath.Join(homeDir, ".layered-test-mcp-"+t.Name())
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+	
+	appsDir := filepath.Join(tempDir, "apps")
+	os.Setenv("LAYERED_APPS_DIRECTORY", appsDir)
+	defer os.Unsetenv("LAYERED_APPS_DIRECTORY")
+
+	// Create apps directory
+	if err := os.MkdirAll(appsDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create test app
+	testApp := filepath.Join(appsDir, "testapp")
+	if err := os.MkdirAll(testApp, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a simple JS file
+	jsFile := filepath.Join(testApp, "test.js")
+	jsContent := `function hello() {
+    console.log("hello");
+}`
+	if err := os.WriteFile(jsFile, []byte(jsContent), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("MCP with fix flag", func(t *testing.T) {
+		// Create a mock MCP request
+		request := mcp.CallToolRequest{}
+		request.Params.Arguments = map[string]interface{}{
+			"app_name": "testapp",
+			"files":    []string{"test.js"},
+			"fix":      true,
+		}
+
+		result, err := LcJsLintMcp(ctx, request)
+		if err != nil {
+			t.Errorf("Expected no error, got: %v", err)
+		}
+
+		// Check that result contains JSON data
+		if result == nil || len(result.Content) == 0 {
+			t.Error("Expected result with content")
+		} else {
+			// Verify it's valid JSON
+			var jsonResult LcJsLintResult
+			textContent := result.Content[0].(mcp.TextContent).Text
+			if err := json.Unmarshal([]byte(textContent), &jsonResult); err != nil {
+				t.Errorf("Expected valid JSON result, got error: %v", err)
+			}
+			// Check that command includes --fix
+			if !strings.Contains(jsonResult.Command, "--fix") {
+				t.Errorf("Expected command to contain --fix flag, got: %s", jsonResult.Command)
+			}
+		}
+	})
+
+	t.Run("MCP with config", func(t *testing.T) {
+		// Create a config file
+		configFile := filepath.Join(testApp, ".eslintrc.json")
+		configContent := `{
+  "rules": {
+    "semi": ["error", "always"]
+  }
+}`
+		if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
+			t.Fatal(err)
+		}
+
+		request := mcp.CallToolRequest{}
+		request.Params.Arguments = map[string]interface{}{
+			"app_name": "testapp",
+			"files":    []string{"test.js"},
+			"config":   ".eslintrc.json",
+		}
+
+		result, err := LcJsLintMcp(ctx, request)
+		if err != nil {
+			t.Errorf("Expected no error, got: %v", err)
+		}
+
+		if result != nil && len(result.Content) > 0 {
+			var jsonResult LcJsLintResult
+			textContent := result.Content[0].(mcp.TextContent).Text
+			if err := json.Unmarshal([]byte(textContent), &jsonResult); err == nil {
+				// Check that command includes config
+				if !strings.Contains(jsonResult.Command, "--config") {
+					t.Errorf("Expected command to contain --config flag, got: %s", jsonResult.Command)
+				}
+			}
 		}
 	})
 }
