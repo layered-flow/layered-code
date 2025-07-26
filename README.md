@@ -259,12 +259,12 @@ layered-code --help
   **JavaScript/TypeScript Tools:**
   - `tool lc_js_lint` - Run ESLint analysis on JavaScript/TypeScript files
     - Runs ESLint in specified app directory and returns results in JSON format
-    - Usage: `lc_js_lint <app_name> <file1> [file2...] [config_file]`
+    - Usage: `lc_js_lint <app_name> [--config=<config_file>] <files...>`
     - Examples:
       - Single file: `lc_js_lint myapp src/index.js`
       - Multiple files: `lc_js_lint myapp src/index.js src/app.js`
       - With glob patterns: `lc_js_lint myapp "src/**/*.js" "tests/**/*.js"`
-      - With config: `lc_js_lint myapp src/index.js .eslintrc.json`
+      - With config: `lc_js_lint myapp --config=.eslintrc.json src/index.js`
 
   **Prompt Tools:**
   - `tool lc_prompt_list` - List all available prompts with numeric IDs, names, versions and descriptions

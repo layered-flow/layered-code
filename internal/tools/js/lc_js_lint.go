@@ -15,6 +15,12 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 )
 
+// shellEscape quotes a string for safe shell usage
+func shellEscape(s string) string {
+	// Use Go's built-in quoting which handles special characters properly
+	return fmt.Sprintf("%q", s)
+}
+
 // Types
 type LcJsLintParams struct {
 	AppName string   `json:"app_name"`
@@ -42,7 +48,7 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 	if len(params.Files) == 0 {
 		return LcJsLintResult{}, fmt.Errorf("files parameter cannot be empty")
 	}
-	
+
 	// Validate each file pattern
 	for _, pattern := range params.Files {
 		if pattern == "" {
@@ -100,11 +106,16 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 			exitCode = exitErr.ExitCode()
 			// ESLint returns exit code 1 when there are linting errors, which is expected
 			if exitCode != 1 {
+				// Build properly escaped command string
+				escapedArgs := make([]string, len(args))
+				for i, arg := range args {
+					escapedArgs[i] = shellEscape(arg)
+				}
 				return LcJsLintResult{
 					Success:     false,
 					ExitCode:    exitCode,
 					Output:      string(output),
-					Command:     fmt.Sprintf("cd %s && npx eslint %s", appDir, strings.Join(args, " ")),
+					Command:     fmt.Sprintf("cd %s && npx eslint %s", shellEscape(appDir), strings.Join(escapedArgs, " ")),
 					Message:     fmt.Sprintf("ESLint command failed with exit code %d", exitCode),
 					ErrorOutput: string(output),
 				}, nil
@@ -112,24 +123,38 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 		} else {
 			// Check if eslint is not found
 			if strings.Contains(err.Error(), "executable file not found") || strings.Contains(err.Error(), "command not found") {
+				// Build properly escaped command string
+				escapedArgs := make([]string, len(args))
+				for i, arg := range args {
+					escapedArgs[i] = shellEscape(arg)
+				}
 				return LcJsLintResult{
 					Success:     false,
-					Command:     fmt.Sprintf("cd %s && npx eslint %s", appDir, strings.Join(args, " ")),
-					Message:     "ESLint not found. Please ensure the project has ESLint installed",
+					Command:     fmt.Sprintf("cd %s && npx eslint %s", shellEscape(appDir), strings.Join(escapedArgs, " ")),
+					Message:     "ESLint not found. Please install ESLint in your project: npm install --save-dev eslint",
 					ErrorOutput: err.Error(),
 				}, nil
 			}
+			// Build properly escaped command string
+			escapedArgs := make([]string, len(args))
+			for i, arg := range args {
+				escapedArgs[i] = shellEscape(arg)
+			}
 			return LcJsLintResult{
 				Success:     false,
-				Command:     fmt.Sprintf("cd %s && npx eslint %s", appDir, strings.Join(args, " ")),
+				Command:     fmt.Sprintf("cd %s && npx eslint %s", shellEscape(appDir), strings.Join(escapedArgs, " ")),
 				Message:     "Failed to run ESLint",
 				ErrorOutput: err.Error(),
 			}, nil
 		}
 	}
 
-	// Build command string for display
-	commandStr := fmt.Sprintf("cd %s && npx eslint %s", appDir, strings.Join(args, " "))
+	// Build command string for display with proper escaping
+	escapedArgs := make([]string, len(args))
+	for i, arg := range args {
+		escapedArgs[i] = shellEscape(arg)
+	}
+	commandStr := fmt.Sprintf("cd %s && npx eslint %s", shellEscape(appDir), strings.Join(escapedArgs, " "))
 
 	return LcJsLintResult{
 		Success:  exitCode == 0,
@@ -143,23 +168,30 @@ func LcJsLint(params LcJsLintParams) (LcJsLintResult, error) {
 func LcJsLintCli() error {
 	args := os.Args[3:]
 
-	if len(args) < 2 {
-		return fmt.Errorf("usage: layered-code tool lc_js_lint <app_name> <files> [config_file]")
+	if len(args) < 1 {
+		return fmt.Errorf("usage: layered-code tool lc_js_lint <app_name> [--config=<config_file>] <files...>")
 	}
 
 	params := LcJsLintParams{
 		AppName: args[0],
-		Files:   args[1:], // Get all file arguments
 	}
-	
-	// Handle config file if it's the last argument and starts with a dot or contains slash
-	if len(args) > 2 {
-		lastArg := args[len(args)-1]
-		if strings.HasPrefix(lastArg, ".") || strings.Contains(lastArg, "/") {
-			params.Config = lastArg
-			params.Files = args[1 : len(args)-1]
+
+	// Parse remaining arguments
+	fileArgs := []string{}
+	for i := 1; i < len(args); i++ {
+		arg := args[i]
+		if strings.HasPrefix(arg, "--config=") {
+			params.Config = strings.TrimPrefix(arg, "--config=")
+		} else {
+			fileArgs = append(fileArgs, arg)
 		}
 	}
+
+	if len(fileArgs) == 0 {
+		return fmt.Errorf("no files specified to lint")
+	}
+
+	params.Files = fileArgs
 
 	result, err := LcJsLint(params)
 	if err != nil {
@@ -216,3 +248,4 @@ func LcJsLintMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToo
 
 	return mcp.NewToolResultText(string(jsonData)), nil
 }
+

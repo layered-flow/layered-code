@@ -197,3 +197,4 @@ func TestLcJsLint(t *testing.T) {
 		}
 	})
 }
+
