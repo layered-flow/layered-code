@@ -84,6 +84,7 @@ func registerTools(s *server.MCPServer) {
 	registerPnpmAddTool(s)
 	registerPnpmViewTool(s)
 	registerPnpmPm2Tool(s)
+	registerPnpmRunBuildTool(s)
 
 	// JavaScript/TypeScript tools
 	registerLcJsLintTool(s)
@@ -507,6 +508,16 @@ func registerPnpmPm2Tool(s *server.MCPServer) {
 	)
 
 	s.AddTool(tool, pnpm.PnpmPm2Mcp)
+}
+
+// registerPnpmRunBuildTool registers the pnpm_run_build tool
+func registerPnpmRunBuildTool(s *server.MCPServer) {
+	tool := mcp.NewTool("pnpm_run_build",
+		mcp.WithDescription("Create production builds for apps using pnpm (preferred) or npm"),
+		mcp.WithString("app_name", mcp.Required(), mcp.Description("Name of the app directory to build (must exactly match an app name from lc_apps_list)")),
+	)
+
+	s.AddTool(tool, pnpm.PnpmRunBuildMcp)
 }
 
 // registerLcJsLintTool registers the lc_js_lint tool

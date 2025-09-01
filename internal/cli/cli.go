@@ -43,6 +43,7 @@ func PrintUsage() {
 	fmt.Println("  tool pnpm_add             Add a package using pnpm (preferred) or npm")
 	fmt.Println("  tool pnpm_view            View package info from npm registry (name, version, description, dependencies, homepage)")
 	fmt.Println("  tool pnpm_pm2             Manage Node.js processes with PM2 (auto-detects scripts)")
+	fmt.Println("  tool pnpm_run_build       Create production builds for apps")
 	fmt.Println()
 	fmt.Println("  JavaScript/TypeScript Tools:")
 	fmt.Println("  tool lc_js_lint           Run ESLint analysis on JavaScript/TypeScript files (usage: lc_js_lint <app_name> <file1> [file2...] [config_file])")
@@ -121,6 +122,8 @@ func RunTool() error {
 		return pnpm.PnpmViewCli()
 	case "pnpm_pm2":
 		return pnpm.PnpmPm2Cli()
+	case "pnpm_run_build":
+		return pnpm.PnpmRunBuildCli()
 
 	// JavaScript/TypeScript tools
 	case "lc_js_lint":

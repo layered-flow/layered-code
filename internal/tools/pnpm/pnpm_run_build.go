@@ -1,0 +1,139 @@
+package pnpm
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
+
+	"github.com/layered-flow/layered-code/internal/config"
+	"github.com/layered-flow/layered-code/internal/helpers"
+	"github.com/mark3labs/mcp-go/mcp"
+)
+
+// Types
+type PnpmRunBuildResult struct {
+	AppName        string `json:"app_name"`
+	AppPath        string `json:"app_path"`
+	PackageManager string `json:"package_manager"`
+	Message        string `json:"message"`
+	Output         string `json:"output,omitempty"`
+	ErrorOutput    string `json:"error_output,omitempty"`
+}
+
+// PnpmRunBuild creates a production build for an app using pnpm or npm
+func PnpmRunBuild(appName string, showOutput bool) (PnpmRunBuildResult, error) {
+	// Validate app name
+	if appName == "" {
+		return PnpmRunBuildResult{}, fmt.Errorf("app name is required")
+	}
+	
+	if err := helpers.ValidateAppName(appName); err != nil {
+		return PnpmRunBuildResult{}, fmt.Errorf("invalid app name: %w", err)
+	}
+
+	// Get apps directory
+	appsDir, err := config.GetAppsDirectory()
+	if err != nil {
+		return PnpmRunBuildResult{}, fmt.Errorf("failed to get apps directory: %w", err)
+	}
+
+	// Create full app path
+	appPath := filepath.Join(appsDir, appName)
+
+	// Check if app exists
+	if _, err := os.Stat(appPath); os.IsNotExist(err) {
+		return PnpmRunBuildResult{}, fmt.Errorf("app '%s' does not exist", appName)
+	}
+
+	// Check if package.json exists
+	packageJsonPath := filepath.Join(appPath, "package.json")
+	if _, err := os.Stat(packageJsonPath); os.IsNotExist(err) {
+		return PnpmRunBuildResult{}, fmt.Errorf("package.json not found in app '%s'", appName)
+	}
+
+	// Determine package manager
+	packageManager, err := DetectPackageManager()
+	if err != nil {
+		return PnpmRunBuildResult{}, err
+	}
+
+	// Run build command
+	cmd := exec.Command(packageManager, "run", "build")
+	cmd.Dir = appPath
+	
+	// Capture output
+	var outBuf, errBuf bytes.Buffer
+	
+	if showOutput {
+		// For CLI, use MultiWriter to both stream and capture output
+		cmd.Stdout = io.MultiWriter(os.Stdout, &outBuf)
+		cmd.Stderr = io.MultiWriter(os.Stderr, &errBuf)
+	} else {
+		// For MCP, just capture to buffers
+		cmd.Stdout = &outBuf
+		cmd.Stderr = &errBuf
+	}
+
+	if err := cmd.Run(); err != nil {
+		return PnpmRunBuildResult{}, fmt.Errorf("failed to build app: %w\nError output: %s", err, errBuf.String())
+	}
+
+	return PnpmRunBuildResult{
+		AppName:        appName,
+		AppPath:        appPath,
+		PackageManager: packageManager,
+		Message:        fmt.Sprintf("Successfully built '%s' using %s", appName, packageManager),
+		Output:         outBuf.String(),
+		ErrorOutput:    errBuf.String(),
+	}, nil
+}
+
+// CLI
+func PnpmRunBuildCli() error {
+	args := os.Args[3:]
+
+	if len(args) != 1 {
+		return fmt.Errorf("usage: layered-code tool pnpm_run_build <app_name>")
+	}
+
+	appName := args[0]
+	result, err := PnpmRunBuild(appName, true) // showOutput = true for CLI
+	if err != nil {
+		return fmt.Errorf("failed to build app: %w", err)
+	}
+
+	fmt.Printf("\n%s\n", result.Message)
+	fmt.Printf("Location: %s\n", result.AppPath)
+	fmt.Printf("\nThe production build is ready in the output directory.\n")
+
+	return nil
+}
+
+// MCP
+func PnpmRunBuildMcp(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	var args struct {
+		AppName string `json:"app_name"`
+	}
+
+	if err := request.BindArguments(&args); err != nil {
+		return nil, err
+	}
+
+	result, err := PnpmRunBuild(args.AppName, false) // showOutput = false for MCP
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert result to JSON
+	jsonData, err := json.Marshal(result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal result: %w", err)
+	}
+
+	return mcp.NewToolResultText(string(jsonData)), nil
+}
