@@ -23,8 +23,8 @@ func TestRunTool(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "lc_apps_list subcommand",
-			args:    []string{"layered-code", "tool", "lc_apps_list"},
+			name:    "lc_app_list subcommand",
+			args:    []string{"layered-code", "tool", "lc_app_list"},
 			wantErr: false, // Don't assert on error since it depends on external state
 		},
 		{
@@ -57,8 +57,8 @@ func TestRunTool(t *testing.T) {
 			os.Args = tt.args
 			err := RunTool()
 
-			if tt.name == "lc_apps_list subcommand" || tt.name == "vite_app_create subcommand" || tt.name == "nextjs_app_create subcommand" || tt.name == "pnpm_install subcommand" || tt.name == "pnpm_add subcommand" {
-				// For lc_apps_list, vite_app_create, nextjs_app_create, pnpm_install, and pnpm_add, we just verify they don't panic and run the code path
+			if tt.name == "vite_app_create subcommand" || tt.name == "nextjs_app_create subcommand" || tt.name == "pnpm_install subcommand" || tt.name == "pnpm_add subcommand" {
+				// For vite_app_create, nextjs_app_create, pnpm_install, and pnpm_add, we just verify they don't panic and run the code path
 				// Don't assert on error since they depend on external dependencies
 				return
 			}

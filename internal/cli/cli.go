@@ -20,7 +20,7 @@ func PrintUsage() {
 	fmt.Println("  mcp_server                Start the MCP server")
 	fmt.Println()
 	fmt.Println("  File Management Tools:")
-	fmt.Println("  tool lc_apps_list         List all available apps")
+	fmt.Println("  tool lc_app_list          List all available apps")
 	fmt.Println("  tool lc_file_list         List files and directories within an app")
 	fmt.Println("  tool lc_text_search       Search for text patterns in files using ripgrep")
 	fmt.Println("  tool lc_file_read         Read the contents of a file within an app")
@@ -82,8 +82,8 @@ func RunTool() error {
 	subcommand := os.Args[2]
 	switch subcommand {
 	// File management tools
-	case "lc_apps_list":
-		return lc.LcAppsListCli()
+	case "lc_app_list":
+		return lc.LcAppListCli()
 	case "lc_file_list":
 		return lc.LcFileListCli()
 	case "lc_text_search":
